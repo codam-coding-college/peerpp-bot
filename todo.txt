@@ -1,0 +1,19 @@
+Connect the peer++ booking program to the slack bot.  50%
+find a way to get the user_id through the Displayname (intra names) through email CHECK
+Then open conversation to post the message to the returned ID from that function. CHECK
+add additional error logging. 50%
+Send DM on user joining Channel. CHECK
+For exam thingy:
+ngrok http:5000
+
+scale_teams
+output
+add project choice to get eval slack bot command.
+
+
+TO DO CODAM API :
+Get create_scale_team to work.
+Use the info that we got from the 42api script
+if 42api returns False, error has occurred.
+Add "project list" command, to slack bot. that prints out the list.
+add some additional error handling.
