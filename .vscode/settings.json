@@ -1,0 +1,8 @@
+{
+	"python.linting.enabled": false,
+	"python.linting.pylintEnabled": true,
+	"python.formatting.provider": "yapf",
+	"python.formatting.yapfArgs": [
+		"--style={based_on_style: google, use_tabs: true, column_limit: 99999999}"
+	],
+}

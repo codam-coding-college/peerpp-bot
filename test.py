@@ -31,8 +31,9 @@ load_dotenv(dotenv_path=env_path)
 client = slack.WebClient(token=os.environ['SLACK_TOKEN'])
 app = Flask(__name__)
 # Sets the signing secret from the env
-slack_event_adapter = SlackEventAdapter(os.environ['SLACK_SIGNING_SECRET'],event_endpoint, app)
+slack_event_adapter = SlackEventAdapter(os.environ['SLACK_SIGNING_SECRET'], event_endpoint, app)
 BOT_ID = client.api_call("auth.test")['user_id']
+
 
 def parse_projects():
 	projects = defaultdict(dict)
@@ -43,11 +44,14 @@ def parse_projects():
 		projects[project_name] = project_id
 	return projects
 
+
 def add_error_log(e):
 	with open("error_log.txt", "a") as error_log:
 		error_log.write(Response() + '\n' + e)
 
+
 class user_:
+
 	def __init__(self, user_data=dict()):
 		self.email = str()
 		self.display_name = str()
@@ -55,12 +59,14 @@ class user_:
 		self.user_id = str()
 		self.user_data = user_data
 
+
 class slack_commands:
+
 	def __init__(self):
 		self.token = os.environ['SLACK_TOKEN']
-		self.command_list = [["get", "eval", '[PROJECT NAME]'],["help"],["project", "list"]]
-	
-	def	help(self, user=user_()):
+		self.command_list = [["get", "eval", '[PROJECT NAME]'], ["help"], ["project", "list"]]
+
+	def help(self, user=user_()):
 
 		connector.send_private_message(user.user_id, "Possible commands (Case sensitive):"),
 		for command in self.command_list:
@@ -68,41 +74,41 @@ class slack_commands:
 				continue
 			payload = ''
 			for string in command:
-				time.sleep( ( 1 / 1000000.0)  * 50)
+				time.sleep((1 / 1000000.0) * 50)
 				payload += string + ' '
 			connector.send_private_message(user.user_id, payload),
 
 	def get_eval(self, display_name, evaluator_id, project_name):
-			response, target_email = main_(evaluator_intra=display_name, external=True, project_name=project_name)
-			if response == False:
-				connector.send_message(text="Something went wrong, or no available candidates.")
-			elif response == True:
-				target_user = connector.create_user(target_email=target_email)
-				# target_user = connector.create_user(target_email="zinobias@gmail.com")
-			# main_(evaluator_intra=display_name, external=True, project_name=project_name)
-			# return
-			
-			# send message to evaluator
-			connector.send_private_message(target_user_id=evaluator_id, text=f"Hi {display_name}, You have an eval booked with: {target_user.display_name}")
-			# send message to target
-			connector.send_private_message(target_user_id=target_user.user_id, text=f"Hey {target_user.display_name}! You have been selected for a p++ eval!\n {display_name}\n with: {target_user.display_name}.\n\n If you run into any issues, please contact the evaluator or the Education assistant!")
-			history_entry = {"evaluator":display_name, "evaluated":target_user.display_name, "booked at":str(datetime.now())}
-			with open("eval_history.json", "r+") as eval_history:
-				try:
-					data = json.load(eval_history)
-					data["eval_history"].append(history_entry)
-					eval_history.seek(0)
-					json.dump(data, eval_history, indent=4)
-				except:
-					eval_history.seek(0)
-					json.dump({"eval_history":[history_entry]}, eval_history)
-	
+		response, target_email = main_(evaluator_intra=display_name, external=True, project_name=project_name)
+		if response == False:
+			connector.send_message(text="Something went wrong, or no available candidates.")
+		elif response == True:
+			target_user = connector.create_user(target_email=target_email)
+			# target_user = connector.create_user(target_email="zinobias@gmail.com")
+		# main_(evaluator_intra=display_name, external=True, project_name=project_name)
+		# return
+
+		# send message to evaluator
+		connector.send_private_message(target_user_id=evaluator_id, text=f"Hi {display_name}, You have an eval booked with: {target_user.display_name}")
+		# send message to target
+		connector.send_private_message(target_user_id=target_user.user_id, text=f"Hey {target_user.display_name}! You have been selected for a p++ eval!\n {display_name}\n with: {target_user.display_name}.\n\n If you run into any issues, please contact the evaluator or the Education assistant!")
+		history_entry = {"evaluator": display_name, "evaluated": target_user.display_name, "booked at": str(datetime.now())}
+		with open("eval_history.json", "r+") as eval_history:
+			try:
+				data = json.load(eval_history)
+				data["eval_history"].append(history_entry)
+				eval_history.seek(0)
+				json.dump(data, eval_history, indent=4)
+			except:
+				eval_history.seek(0)
+				json.dump({"eval_history": [history_entry]}, eval_history)
+
 	def print_list(self, target_user_id):
 		project_list = parse_projects()
-		connector.send_private_message(target_user_id,text="Hi, following are the available projects:")
+		connector.send_private_message(target_user_id, text="Hi, following are the available projects:")
 		for project in project_list:
-			connector.send_private_message(target_user_id,text=project)
-			time.sleep( ( 1 / 1000000.0)  * 50)
+			connector.send_private_message(target_user_id, text=project)
+			time.sleep((1 / 1000000.0) * 50)
 
 	def check_project_list(self, msg):
 		p_list = parse_projects()
@@ -112,8 +118,8 @@ class slack_commands:
 			if msg[2] == project:
 				return True
 		return False
-	
-	def	parse_message(self, text, user_info = None):
+
+	def parse_message(self, text, user_info=None):
 		msg = str(text).split()[1:]
 		user = user_(user_info)
 		user.display_name = user_info['profile']['display_name']
@@ -128,8 +134,10 @@ class slack_commands:
 		else:
 			connector.send_message(text="Invalid command, try \"help\"")
 
+
 # Replace general with peerplusplus
 class slack_connector:
+
 	def __init__(self):
 		self.endpoint = event_endpoint
 		self.env_path = env_path
@@ -137,8 +145,8 @@ class slack_connector:
 		self.commands = slack_commands()
 		self.token = os.environ["SLACK_TOKEN"]
 		return
-	
-	def	create_user(self, target_email=str()):
+
+	def create_user(self, target_email=str()):
 		user_info__ = client.users_lookupByEmail(email=target_email)
 		new_user = user_(user_data=user_info__)
 		new_user.display_name = user_info__["user"]["profile"]["display_name"]
@@ -146,32 +154,36 @@ class slack_connector:
 		new_user.real_name = user_info__["user"]["real_name"]
 		new_user.user_id = user_info__["user"]["id"]
 		return new_user
-	
-	def	send_message(self, channel='#general', text=''):
+
+	def send_message(self, channel='#general', text=''):
 		try:
 			self.client.chat_postMessage(channel=channel, text=str(text))
 		except Exception as e:
 			self.client.chat_postMessage(channel=channel, text=str(text))
 			add_error_log(e)
-		return 
+		return
+
 	def send_private_message(self, target_user_id, text):
 		result = client.conversations_open(users=target_user_id)
 		target_channel_id = result["channel"]["id"]
 		connector.send_message(channel=target_channel_id, text=text)
-		result = client.conversations_close(token=self.token,channel=target_channel_id)
-	
-	def	parse_message(self, text, user_info=None):
+		result = client.conversations_close(token=self.token, channel=target_channel_id)
+
+	def parse_message(self, text, user_info=None):
 		self.commands.parse_message(text, user_info=user_info)
 
+
 connector = slack_connector()
+
+
 @slack_event_adapter.on('member_joined_channel')
-def	bot_message(payLoad):
+def bot_message(payLoad):
 	# set channel to peer++ channel id
 	# peerpp_channel_id = [p++id]
-	
+
 	user_id = payLoad['event']['user']
 	channel_id = payLoad['event']['channel']
-		
+
 	# if not channel_id == peerpp_channel_id:
 	# 	return
 	try:
@@ -181,6 +193,7 @@ def	bot_message(payLoad):
 		client.conversations_close(token=os.environ["SLACK_TOKEN"], channel=user_channel_id)
 	except Exception as e:
 		add_error_log(e)
+
 
 @slack_event_adapter.on('app_mention')
 def message(payLoad):
@@ -193,17 +206,17 @@ def message(payLoad):
 	# if not channel_id == peerpp_channel_id:
 	# 	return
 	try:
-		response = client.users_info(user = user_id)
+		response = client.users_info(user=user_id)
 		user_info = response['user']
-		if  user_info['profile']['display_name'] == '':
-			connector.send_message(channel = channel_id, text="Error : [Your account has no valid display_name]")
+		if user_info['profile']['display_name'] == '':
+			connector.send_message(channel=channel_id, text="Error : [Your account has no valid display_name]")
 		else:
 			connector.parse_message(text, user_info=user_info)
 	except SlackApiError as e:
 		error_message = e.response['error']
-		connector.send_message(channel = channel_id, text=f'Something went wrong :C\n Error: [{error_message}]')
+		connector.send_message(channel=channel_id, text=f'Something went wrong :C\n Error: [{error_message}]')
 		add_error_log(e)
-		
+
 
 if __name__ == "__main__":
 	app.run(debug=True)
