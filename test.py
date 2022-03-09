@@ -12,32 +12,15 @@ from werkzeug.wrappers import response
 from collections import defaultdict
 from datetime import datetime
 import json
-import logging
 import ssl
 import certifi
-from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN
-# Need to install slackclient w/ respective package manager.
-# Need to install Flask w/ repsective package manager.
-# Need to install slackeventsapi
-# Need to install dotenv & pathlib
-# ngrok for testing.
-# request port is forwarding thingy
-# running on default port 5000
-
-event_endpoint = '/slack/events'
-interactive_endpoint = 'slack/interactive-endpoint'
+from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN, EVENT_ENDPOINT
+from src_logging import add_error_log
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 client = slack.WebClient(token=SLACK_TOKEN, ssl=ssl_context)
 app = Flask(__name__)
-# Sets the signing secret from the env
-slack_event_adapter = SlackEventAdapter(SLACK_EVENTS_TOKEN, event_endpoint, app)
-# BOT_ID = client.api_call("auth.test")['user_id']
-
-
-def add_error_log(e):
-	with open("error_log.txt", "a") as error_log:
-		error_log.write(Response() + '\n' + e)
+slack_event_adapter = SlackEventAdapter(SLACK_EVENTS_TOKEN, EVENT_ENDPOINT, app)
 
 
 class user_:
@@ -129,7 +112,6 @@ class slack_commands:
 class slack_connector:
 
 	def __init__(self):
-		self.endpoint = event_endpoint
 		self.client = client
 		self.commands = slack_commands()
 		self.token = os.environ["SLACK_TOKEN"]
