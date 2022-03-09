@@ -13,6 +13,8 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
+import ssl
+import certifi
 # Need to install slackclient w/ respective package manager.
 # Need to install Flask w/ repsective package manager.
 # Need to install slackeventsapi
@@ -28,11 +30,13 @@ env_path = Path('.') / '.env'
 # Load_dotenv loads out env file.
 load_dotenv(dotenv_path=env_path)
 #  Initializes the slack webclient w/ tokens. & authenthicates.
-client = slack.WebClient(token=os.environ['SLACK_TOKEN'])
+
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+client = slack.WebClient(token=os.environ['SLACK_TOKEN'], ssl=ssl_context)
 app = Flask(__name__)
 # Sets the signing secret from the env
-slack_event_adapter = SlackEventAdapter(os.environ['SLACK_SIGNING_SECRET'], event_endpoint, app)
-BOT_ID = client.api_call("auth.test")['user_id']
+slack_event_adapter = SlackEventAdapter(os.environ['SLACK_EVENTS_TOKEN'], event_endpoint, app)
+# BOT_ID = client.api_call("auth.test")['user_id']
 
 
 def parse_projects():
