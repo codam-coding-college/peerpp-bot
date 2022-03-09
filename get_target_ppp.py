@@ -12,15 +12,8 @@ from collections import Counter, defaultdict
 import re
 import random
 from typing import List, Set, Dict, Tuple, Optional
+from project_constants import get_projects, campus_id
 
-campus_id = 14
-codam_id = 14
-# project_session_id =3300
-# user_id ="nico_codam"
-# project_id =2009
-# project_name="so_long"
-# project_id =1314
-# project_name="libft"
 endpoint_ = codamconnector.IntraConnector(root="https://api.intra.42.fr/v2/")
 
 
@@ -71,19 +64,11 @@ def save_as_json(target_list, project_name=""):
 
 
 # CURSUS_ID = 21
-def parse_projects() -> Dict[str, str]:
-	projects = dict()
-	with open("project_ids", "r+") as projects_f:
-		lines = projects_f.readlines()
-	for line in lines:
-		project_name, project_id = line.strip().split('=')
-		projects[project_name] = project_id
-	return projects
 
 
 def main_(argv=None, evaluator_intra=0, external=False, project_name=''):
 	try:
-		projects = parse_projects()
+		projects = get_projects()
 		if external == False:
 			argc = len(sys.argv)
 			if argc != 2:

@@ -15,6 +15,7 @@ import json
 import logging
 import ssl
 import certifi
+from project_constants import get_projects
 # Need to install slackclient w/ respective package manager.
 # Need to install Flask w/ repsective package manager.
 # Need to install slackeventsapi
@@ -37,16 +38,6 @@ app = Flask(__name__)
 # Sets the signing secret from the env
 slack_event_adapter = SlackEventAdapter(os.environ['SLACK_EVENTS_TOKEN'], event_endpoint, app)
 # BOT_ID = client.api_call("auth.test")['user_id']
-
-
-def parse_projects():
-	projects = defaultdict(dict)
-	with open("project_ids", "r+") as projects_f:
-		lines = projects_f.readlines()
-	for line in lines:
-		project_name, project_id = line.strip().split('=')
-		projects[project_name] = project_id
-	return projects
 
 
 def add_error_log(e):
@@ -108,14 +99,14 @@ class slack_commands:
 				json.dump({"eval_history": [history_entry]}, eval_history)
 
 	def print_list(self, target_user_id):
-		project_list = parse_projects()
+		project_list = get_projects()
 		connector.send_private_message(target_user_id, text="Hi, following are the available projects:")
 		for project in project_list:
 			connector.send_private_message(target_user_id, text=project)
 			time.sleep((1 / 1000000.0) * 50)
 
 	def check_project_list(self, msg):
-		p_list = parse_projects()
+		p_list = get_projects()
 		if len(msg) != 3:
 			return False
 		for project in p_list:
