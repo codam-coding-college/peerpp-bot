@@ -1,4 +1,6 @@
 from typing import List, Set, Dict, Tuple, Optional
+import os
+from dotenv import load_dotenv
 
 
 def get_projects() -> Dict[str, str]:
@@ -11,4 +13,7 @@ def get_projects() -> Dict[str, str]:
 	return projects
 
 
-campus_id = 14
+CAMPUS_ID = 14
+load_dotenv(dotenv_path='.env')
+SLACK_TOKEN = os.environ['SLACK_TOKEN']
+SLACK_EVENTS_TOKEN = os.environ['SLACK_EVENTS_TOKEN']

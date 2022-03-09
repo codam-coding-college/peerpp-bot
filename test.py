@@ -15,7 +15,7 @@ import json
 import logging
 import ssl
 import certifi
-from project_constants import get_projects
+from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN
 # Need to install slackclient w/ respective package manager.
 # Need to install Flask w/ repsective package manager.
 # Need to install slackeventsapi
@@ -26,17 +26,12 @@ from project_constants import get_projects
 
 event_endpoint = '/slack/events'
 interactive_endpoint = 'slack/interactive-endpoint'
-# Sets env Path so it knows where to load the environmental variables from.
-env_path = Path('.') / '.env'
-# Load_dotenv loads out env file.
-load_dotenv(dotenv_path=env_path)
-#  Initializes the slack webclient w/ tokens. & authenthicates.
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
-client = slack.WebClient(token=os.environ['SLACK_TOKEN'], ssl=ssl_context)
+client = slack.WebClient(token=SLACK_TOKEN, ssl=ssl_context)
 app = Flask(__name__)
 # Sets the signing secret from the env
-slack_event_adapter = SlackEventAdapter(os.environ['SLACK_EVENTS_TOKEN'], event_endpoint, app)
+slack_event_adapter = SlackEventAdapter(SLACK_EVENTS_TOKEN, event_endpoint, app)
 # BOT_ID = client.api_call("auth.test")['user_id']
 
 
@@ -58,7 +53,7 @@ class user_:
 class slack_commands:
 
 	def __init__(self):
-		self.token = os.environ['SLACK_TOKEN']
+		self.token = SLACK_TOKEN
 		self.command_list = [["get", "eval", '[PROJECT NAME]'], ["help"], ["project", "list"]]
 
 	def help(self, user=user_()):
@@ -135,7 +130,6 @@ class slack_connector:
 
 	def __init__(self):
 		self.endpoint = event_endpoint
-		self.env_path = env_path
 		self.client = client
 		self.commands = slack_commands()
 		self.token = os.environ["SLACK_TOKEN"]

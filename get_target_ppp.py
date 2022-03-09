@@ -12,7 +12,7 @@ from collections import Counter, defaultdict
 import re
 import random
 from typing import List, Set, Dict, Tuple, Optional
-from project_constants import get_projects, campus_id
+from constants import get_projects, CAMPUS_ID
 
 endpoint_ = codamconnector.IntraConnector(root="https://api.intra.42.fr/v2/")
 
@@ -87,7 +87,7 @@ def main_(argv=None, evaluator_intra=0, external=False, project_name=''):
 			else:
 				print("ERROR: INVALID PROJECT NAME")
 				return (False)
-		students_list, counter_list_students = probe(project_id, 14)
+		students_list, counter_list_students = probe(project_id, CAMPUS_ID)
 		i = 0
 		len_list = len(students_list)
 		target_list = []
