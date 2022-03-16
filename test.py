@@ -16,6 +16,7 @@ import ssl
 import certifi
 from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN, EVENT_ENDPOINT
 from src_logging import add_error_log
+from typing import List, Set, Dict, Tuple, Optional
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 client = slack.WebClient(token=SLACK_TOKEN, ssl=ssl_context)
@@ -36,20 +37,15 @@ class user_:
 class slack_commands:
 
 	def __init__(self):
-		self.token = SLACK_TOKEN
-		self.command_list = [["get", "eval", '[PROJECT NAME]'], ["help"], ["project", "list"]]
+		self.token: str = SLACK_TOKEN
+		self.command_list: Tuple[str] = ('get eval [PROJECT NAME]', 'help', 'project list')
 
-	def help(self, user=user_()):
-
-		connector.send_private_message(user.user_id, "Possible commands (Case sensitive):"),
-		for command in self.command_list:
-			if command[0] == 'help':
-				continue
-			payload = ''
-			for string in command:
-				time.sleep((1 / 1000000.0) * 50)
-				payload += string + ' '
-			connector.send_private_message(user.user_id, payload),
+	def help(self, user=user_()) -> None:
+		payload: str = 'Possible commands:\n'
+		for cmd in self.command_list:
+			payload += cmd + '\n'
+		connector.send_private_message(user.user_id, payload)
+		print('send message')
 
 	def get_eval(self, display_name, evaluator_id, project_name):
 		response, target_email = main_(evaluator_intra=display_name, external=True, project_name=project_name)
@@ -83,29 +79,22 @@ class slack_commands:
 			connector.send_private_message(target_user_id, text=project)
 			time.sleep((1 / 1000000.0) * 50)
 
-	def check_project_list(self, msg):
-		p_list = get_projects()
-		if len(msg) != 3:
-			return False
-		for project in p_list:
-			if msg[2] == project:
-				return True
-		return False
-
-	def parse_message(self, text, user_info=None):
-		msg = str(text).split()[1:]
+	def parse_message(self, text: str, user_info=None):
 		user = user_(user_info)
 		user.display_name = user_info['profile']['display_name']
 		user.user_id = user_info['id']
-		if msg in self.command_list or (msg[0] == 'get' and msg[1] == 'eval' and self.check_project_list(msg) == True):
-			if msg == ['help']:
-				self.help(user=user)
-			elif msg[0] == 'get' and msg[1] == 'eval' and self.check_project_list(msg):
-				self.get_eval(user.display_name, user.user_id, msg[2])
-			elif msg == ["project", "list"]:
-				self.print_list(user.user_id)
+
+		# every message is prefixed with "<@u036uss1tq8> " or something similar, delete that here
+		text_str = ''.join(str(text).split()[1:])
+		text_str = text_str.lower().strip()
+		if text_str == 'help':
+			self.help(user=user)
+		elif text_str.startswith('get eval'):
+			self.get_eval(user.display_name, user.user_id, text_str.replace('get eval', ''))
+		elif text_str == 'project list':
+			self.print_list(user.user_id)
 		else:
-			connector.send_message(text="Invalid command, try \"help\"")
+			connector.send_message(text='Invalid command, try \"help\"')
 
 
 # Replace general with peerplusplus
