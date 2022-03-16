@@ -10,6 +10,7 @@ from slackeventsapi import SlackEventAdapter
 from slack.errors import SlackApiError
 from werkzeug.wrappers import response
 from collections import defaultdict
+import re
 
 import ssl
 import certifi
@@ -67,7 +68,7 @@ class slack_commands:
 		user.user_id = user_info['id']
 
 		# every message is prefixed with "<@u036uss1tq8> " or something similar, delete that here
-		text_str = ''.join(str(text).split()[1:])
+		text_str = re.sub(r'^\<.+\> ', '', str(text))
 		text_str = text_str.lower().strip()
 		if text_str == 'help':
 			self.help(user=user)
