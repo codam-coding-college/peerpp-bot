@@ -41,11 +41,10 @@ class slack_commands:
 		self.command_list: Tuple[str] = ('get eval [PROJECT NAME]', 'help', 'project list')
 
 	def help(self, user=user_()) -> None:
-		payload: str = 'Possible commands:\n'
-		for cmd in self.command_list:
-			payload += cmd + '\n'
-		connector.send_private_message(user.user_id, payload)
-		print('send message')
+		project_list = get_projects()
+		payload = 'Hi, following are the available projects:\n'
+		payload += '\n'.join(project_list)
+		connector.send_private_message(user.user_id, text=payload)
 
 	def get_eval(self, display_name, evaluator_id, project_name):
 		response, target_email = main_(evaluator_intra=display_name, external=True, project_name=project_name)
@@ -71,12 +70,6 @@ class slack_commands:
 			except:
 				eval_history.seek(0)
 				json.dump({"eval_history": [history_entry]}, eval_history)
-
-	def print_list(self, target_user_id):
-		project_list = get_projects()
-		payload = 'Hi, following are the available projects:\n'
-		payload += '\n'.join(project_list)
-		connector.send_private_message(target_user_id, text=payload)
 
 	def parse_message(self, text: str, user_info=None):
 		user = user_(user_info)
