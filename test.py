@@ -74,10 +74,9 @@ class slack_commands:
 
 	def print_list(self, target_user_id):
 		project_list = get_projects()
-		connector.send_private_message(target_user_id, text="Hi, following are the available projects:")
-		for project in project_list:
-			connector.send_private_message(target_user_id, text=project)
-			time.sleep((1 / 1000000.0) * 50)
+		payload = 'Hi, following are the available projects:\n'
+		payload += '\n'.join(project_list)
+		connector.send_private_message(target_user_id, text=payload)
 
 	def parse_message(self, text: str, user_info=None):
 		user = user_(user_info)
