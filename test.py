@@ -40,9 +40,8 @@ class slack_commands:
 		self.command_list: Tuple[str] = ('get eval [PROJECT NAME]', 'help', 'project list')
 
 	def help(self, user=user_()) -> None:
-		project_list = get_projects()
-		payload = 'Hi, following are the available projects:\n'
-		payload += '\n'.join(project_list)
+		payload = 'Available commands:\n'
+		payload += '\n'.join(self.command_list)
 		connector.send_private_message(user.user_id, text=payload)
 
 	def get_eval(self, evaluator, project_name: str):
@@ -53,8 +52,14 @@ class slack_commands:
 
 		evaluee = connector.create_user(target_email=target_email)
 		connector.send_private_message(target_user_id=evaluator.user_id, text=f"Hi {evaluator.display_name}, You will eval {evaluee.display_name}")
-		connector.send_private_message(target_user_id=evaluee.user_id, text=f"Hey {evaluee.display_name}!\nYour Peer++ evaluator is {evaluator.display_name}.")
+		connector.send_private_message(target_user_id=evaluee.user_id, text=f"Hi {evaluee.display_name}!\nYour Peer++ evaluator is {evaluator.display_name}.")
 		add_eval_history(evaluator.display_name, evaluee.display_name)
+
+	def list_projects(self, user):
+		project_list = get_projects()
+		payload = 'Available projects:\n'
+		payload += '\n'.join(project_list)
+		connector.send_private_message(user.user_id, text=payload)
 
 	def parse_message(self, text: str, user_info=None):
 		user = user_(user_info)
@@ -69,7 +74,7 @@ class slack_commands:
 		elif text_str.startswith('get eval'):
 			self.get_eval(user, text_str.replace('get eval', ''))
 		elif text_str == 'project list':
-			self.print_list(user.user_id)
+			self.list_projects(user)
 		else:
 			connector.send_message(text='Invalid command, try \"help\"')
 
