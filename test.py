@@ -10,12 +10,11 @@ from slackeventsapi import SlackEventAdapter
 from slack.errors import SlackApiError
 from werkzeug.wrappers import response
 from collections import defaultdict
-from datetime import datetime
-import json
+
 import ssl
 import certifi
 from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN, EVENT_ENDPOINT
-from src_logging import add_error_log
+from src_logging import add_error_log, add_eval_history
 from typing import List, Set, Dict, Tuple, Optional
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
@@ -46,30 +45,16 @@ class slack_commands:
 		payload += '\n'.join(project_list)
 		connector.send_private_message(user.user_id, text=payload)
 
-	def get_eval(self, display_name, evaluator_id, project_name):
-		response, target_email = main_(evaluator_intra=display_name, external=True, project_name=project_name)
-		if response == False:
-			connector.send_message(text="Something went wrong, or no available candidates.")
-		elif response == True:
-			target_user = connector.create_user(target_email=target_email)
-			# target_user = connector.create_user(target_email="zinobias@gmail.com")
-		# main_(evaluator_intra=display_name, external=True, project_name=project_name)
-		# return
+	def get_eval(self, evaluator, project_name: str):
+		response, target_email = main_(evaluator_intra=evaluator, external=True, project_name=project_name)
+		if not response:
+			connector.send_message(text='Something went wrong, or no available candidates.')
+			return
 
-		# send message to evaluator
-		connector.send_private_message(target_user_id=evaluator_id, text=f"Hi {display_name}, You have an eval booked with: {target_user.display_name}")
-		# send message to target
-		connector.send_private_message(target_user_id=target_user.user_id, text=f"Hey {target_user.display_name}! You have been selected for a p++ eval!\n {display_name}\n with: {target_user.display_name}.\n\n If you run into any issues, please contact the evaluator or the Education assistant!")
-		history_entry = {"evaluator": display_name, "evaluated": target_user.display_name, "booked at": str(datetime.now())}
-		with open("eval_history.json", "r+") as eval_history:
-			try:
-				data = json.load(eval_history)
-				data["eval_history"].append(history_entry)
-				eval_history.seek(0)
-				json.dump(data, eval_history, indent=4)
-			except:
-				eval_history.seek(0)
-				json.dump({"eval_history": [history_entry]}, eval_history)
+		evaluee = connector.create_user(target_email=target_email)
+		connector.send_private_message(target_user_id=evaluator.user_id, text=f"Hi {evaluator.display_name}, You will eval {evaluee.display_name}")
+		connector.send_private_message(target_user_id=evaluee.user_id, text=f"Hey {evaluee.display_name}!\nYour Peer++ evaluator is {evaluator.display_name}.")
+		add_eval_history(evaluator.display_name, evaluee.display_name)
 
 	def parse_message(self, text: str, user_info=None):
 		user = user_(user_info)
@@ -82,7 +67,7 @@ class slack_commands:
 		if text_str == 'help':
 			self.help(user=user)
 		elif text_str.startswith('get eval'):
-			self.get_eval(user.display_name, user.user_id, text_str.replace('get eval', ''))
+			self.get_eval(user, text_str.replace('get eval', ''))
 		elif text_str == 'project list':
 			self.print_list(user.user_id)
 		else:
