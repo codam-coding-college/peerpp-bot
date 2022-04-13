@@ -2,7 +2,7 @@ from flask.typing import ResponseReturnValue
 import slack
 import os
 import time
-from get_target_ppp import main_
+from get_target_ppp import main
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
