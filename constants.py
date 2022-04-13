@@ -16,5 +16,5 @@ def get_projects() -> Dict[str, str]:
 CAMPUS_ID = 14
 load_dotenv(dotenv_path='.env')
 SLACK_TOKEN = os.environ['SLACK_TOKEN']
-SLACK_EVENTS_TOKEN = os.environ['SLACK_EVENTS_TOKEN']
+SIGNING_SECRET = os.environ['SIGNING_SECRET']
 EVENT_ENDPOINT = '/slack/events'

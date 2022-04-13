@@ -14,14 +14,14 @@ import re
 
 import ssl
 import certifi
-from constants import get_projects, SLACK_TOKEN, SLACK_EVENTS_TOKEN, EVENT_ENDPOINT
+from constants import get_projects, SLACK_TOKEN, SIGNING_SECRET, EVENT_ENDPOINT
 from src_logging import add_error_log, add_eval_history
 from typing import List, Set, Dict, Tuple, Optional
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 client = slack.WebClient(token=SLACK_TOKEN, ssl=ssl_context)
 app = Flask(__name__)
-slack_event_adapter = SlackEventAdapter(SLACK_EVENTS_TOKEN, EVENT_ENDPOINT, app)
+slack_event_adapter = SlackEventAdapter(SIGNING_SECRET, EVENT_ENDPOINT, app)
 
 
 class user_:
@@ -86,7 +86,7 @@ class slack_connector:
 	def __init__(self):
 		self.client = client
 		self.commands = slack_commands()
-		self.token = os.environ["SLACK_TOKEN"]
+		self.token = SLACK_TOKEN
 		return
 
 	def create_user(self, target_email=str()):
@@ -133,7 +133,7 @@ def bot_message(payLoad):
 		result = client.conversations_open(users=user_id)
 		user_channel_id = result["channel"]["id"]
 		connector.send_message(channel=user_channel_id, text="Hi welcome to the peerplusplus channel!\n I am the Bot you need when you want to do a P++eval :D !\n Type @[my_name] following a command in the peerplusplus channel to reach me, try \"help\"")
-		client.conversations_close(token=os.environ["SLACK_TOKEN"], channel=user_channel_id)
+		client.conversations_close(token=SLACK_TOKEN, channel=user_channel_id)
 	except Exception as e:
 		add_error_log(e)
 
