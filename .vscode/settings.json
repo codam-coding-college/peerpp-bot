@@ -5,4 +5,5 @@
 	"python.formatting.yapfArgs": [
 		"--style={based_on_style: google, use_tabs: true, column_limit: 99999999}"
 	],
+	"editor.formatOnSave": true
 }

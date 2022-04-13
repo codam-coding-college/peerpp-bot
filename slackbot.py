@@ -45,8 +45,8 @@ class slack_commands:
 		payload += '\n'.join(self.command_list)
 		connector.send_private_message(user.user_id, text=payload)
 
-	def get_eval(self, evaluator, project_name: str):
-		response, target_email = main_(evaluator_intra=evaluator, external=True, project_name=project_name)
+	def open_slot(self, evaluator, project_name: str):
+		response, target_email = main_(project_name, evaluator)
 		if not response:
 			connector.send_message(text='Something went wrong, or no available candidates.')
 			return
@@ -73,7 +73,7 @@ class slack_commands:
 		if text_str == 'help':
 			self.help(user=user)
 		elif text_str.startswith('get eval'):
-			self.get_eval(user, text_str.replace('get eval', ''))
+			self.open_slot(user, text_str.replace('get eval', ''))
 		elif text_str == 'project list':
 			self.list_projects(user)
 		else:
