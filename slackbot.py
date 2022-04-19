@@ -46,7 +46,7 @@ class slack_commands:
 		connector.send_private_message(user.user_id, text=payload)
 
 	def open_slot(self, evaluator, project_name: str):
-		response, target_email = main_(project_name, evaluator)
+		response, target_email = main(project_name, evaluator)
 		if not response:
 			connector.send_message(text='Something went wrong, or no available candidates.')
 			return
