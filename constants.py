@@ -1,6 +1,6 @@
 from typing import List, Set, Dict, Tuple, Optional
 import os
-from dotenv import load_dotenv
+from decouple import config
 
 
 def get_projects() -> Dict[str, str]:
@@ -14,7 +14,7 @@ def get_projects() -> Dict[str, str]:
 
 
 CAMPUS_ID = 14
-load_dotenv(dotenv_path='.env')
-SLACK_TOKEN = os.environ['SLACK_TOKEN']
-SIGNING_SECRET = os.environ['SIGNING_SECRET']
+SLACK_TOKEN = config('SLACK_TOKEN')
+SIGNING_SECRET = config('SIGNING_SECRET')
+WEBHOOK_SECRET = config('WEBHOOK_SECRET')
 EVENT_ENDPOINT = '/slack/events'
