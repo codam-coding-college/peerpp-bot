@@ -2,8 +2,10 @@ import slack
 import ssl
 import constants
 import certifi
+import re
 from flask import Flask
 from slackeventsapi import SlackEventAdapter
+from typing import List, Set, Dict, Tuple, Optional
 
 webclient = slack.WebClient(token=constants.SLACK_TOKEN, ssl=ssl.create_default_context(cafile=certifi.where()))
 app = Flask(__name__)
@@ -30,6 +32,30 @@ def get_display_name(user_id) -> str:
 	return user_info['profile']['display_name']
 
 
+def send_message_help(user_id):
+	command_list: Tuple[str] = ('help', 'list_project_ids')
+	text = 'Available commands:\n'
+	text += '\n'.join(command_list)
+	send_private_message(user_id, text)
+
+
+def send_message_list_project_ids(user_id):
+	text = 'Project IDs:\n'
+	text += '\n'.join(constants.PROJECT_NAMES)
+	send_private_message(user_id, text)
+
+
+def respond_to_mention(text: str, user_id):
+	# every message is prefixed with "<@u036uss1tq8> " or something similar, delete that here
+	text_normalized = re.sub(r'^\<.+\> ', '', str(text))
+	text_normalized = text_normalized.lower().strip()
+
+	if text_normalized == 'list_project_ids':
+		send_message_list_project_ids(user_id)
+	else:
+		send_message_help(user_id)
+
+
 @slack_event_adapter.on('app_mention')
 def message(payLoad):
 	# if not channel_id == peerpp_channel_id: # TODO
@@ -45,7 +71,7 @@ def message(payLoad):
 		send_private_message(user_id, 'Error : your account has no display name')
 		return
 
-	send_private_message(user_id, 'Hello World!')
+	respond_to_mention(text, user_id)
 
 
 if __name__ == "__main__":
