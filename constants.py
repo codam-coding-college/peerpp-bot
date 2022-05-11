@@ -9,7 +9,7 @@ def get_projects() -> Dict[str, int]:
 		lines = projects_f.readlines()
 	for line in lines:
 		project_name, project_id = line.strip().split('=')
-		projects[project_name] = int(project_id)
+		projects[project_name.lower()] = int(project_id)
 	return projects
 
 

@@ -33,7 +33,7 @@ def get_display_name(user_id) -> str:
 
 
 def send_message_help(user_id):
-	command_list: Tuple[str] = ('help', 'list_project_ids')
+	command_list: Tuple[str] = ('help', 'list_project_ids', 'list_evaluations', 'book_evaluation <PROJECT_ID>')
 	text = 'Available commands:\n'
 	for command in command_list:
 		text += f"- `{command}`\n"
@@ -47,6 +47,17 @@ def send_message_list_project_ids(user_id):
 	send_private_message(user_id, text)
 
 
+def send_message_possible_evaluations(user_id):
+	# TODO
+	send_private_message(user_id, 'No-one needs to be evaluated')
+
+
+def book_evaluation(user_id, project_name: str):
+	# TODO
+	send_private_message(user_id, f'You will evaluate <username> on `{project_name}`')
+	return
+
+
 def respond_to_mention(text: str, user_id):
 	# If the message is prefixed with "<@u036uss1tq8> " or something similar, delete that here, you would expect it to be <@peer_pp_bot> but no
 	text_normalized = re.sub(r'^\<.+\> ', '', text)
@@ -56,6 +67,14 @@ def respond_to_mention(text: str, user_id):
 		send_message_list_project_ids(user_id)
 	elif text_normalized == 'help':
 		send_message_help(user_id)
+	elif text_normalized == 'list_evaluations':
+		send_message_possible_evaluations(user_id)
+	elif text_normalized.startswith('book_evaluation'):
+		project_name = re.sub(r'^book_evaluation *', '', text_normalized)
+		if project_name in constants.PROJECT_NAMES:
+			book_evaluation(user_id, project_name)
+		else:
+			send_private_message(user_id, f'Project "{project_name}" does not exist, run `help` for more info')
 	else:
 		send_private_message(user_id, f'Unexpected command "{text}"')
 		send_message_help(user_id)
