@@ -35,24 +35,29 @@ def get_display_name(user_id) -> str:
 def send_message_help(user_id):
 	command_list: Tuple[str] = ('help', 'list_project_ids')
 	text = 'Available commands:\n'
-	text += '\n'.join(command_list)
+	for command in command_list:
+		text += f"- `{command}`\n"
 	send_private_message(user_id, text)
 
 
 def send_message_list_project_ids(user_id):
 	text = 'Project IDs:\n'
-	text += '\n'.join(constants.PROJECT_NAMES)
+	for name in constants.PROJECT_NAMES:
+		text += f"- `{name}`\n"
 	send_private_message(user_id, text)
 
 
 def respond_to_mention(text: str, user_id):
-	# every message is prefixed with "<@u036uss1tq8> " or something similar, delete that here
-	text_normalized = re.sub(r'^\<.+\> ', '', str(text))
+	# If the message is prefixed with "<@u036uss1tq8> " or something similar, delete that here, you would expect it to be <@peer_pp_bot> but no
+	text_normalized = re.sub(r'^\<.+\> ', '', text)
 	text_normalized = text_normalized.lower().strip()
 
 	if text_normalized == 'list_project_ids':
 		send_message_list_project_ids(user_id)
+	elif text_normalized == 'help':
+		send_message_help(user_id)
 	else:
+		send_private_message(user_id, f'Unexpected command "{text}"')
 		send_message_help(user_id)
 
 
