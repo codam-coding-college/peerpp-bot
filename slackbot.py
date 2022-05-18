@@ -5,7 +5,7 @@ import certifi
 import re
 from flask import Flask
 from slackeventsapi import SlackEventAdapter
-from typing import List, Set, Dict, Tuple, Optional
+from typing import Tuple
 
 webclient = slack.WebClient(token=constants.SLACK_TOKEN, ssl=ssl.create_default_context(cafile=certifi.where()))
 app = Flask(__name__)

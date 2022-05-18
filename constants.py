@@ -1,5 +1,4 @@
-from typing import List, Set, Dict, Tuple, Optional
-import os
+from typing import Dict
 from decouple import config
 
 

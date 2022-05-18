@@ -1,6 +1,6 @@
 from flask import Flask, request
 import codamconnector
-from useful.logger import log_create, log_close, log_print, log_print_json, get_dt
+from useful.logger import log_create, log_close, get_dt
 from creator.hook_handler import hook_handler, body_handler
 from constants import WEBHOOK_SECRET
 
