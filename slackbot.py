@@ -6,6 +6,8 @@ import re
 from flask import Flask
 from slackeventsapi import SlackEventAdapter
 from typing import List, Set, Dict, Tuple, Optional
+from get_evaluation_locks import get_evaluation_locks
+from datetime import datetime
 
 webclient = slack.WebClient(token=constants.SLACK_TOKEN, ssl=ssl.create_default_context(cafile=certifi.where()))
 app = Flask(__name__)
@@ -47,9 +49,46 @@ def send_message_list_project_ids(user_id):
 	send_private_message(user_id, text)
 
 
+def pretty_relative_time(time_diff_secs):
+	# Each tuple in the sequence gives the name of a unit, and the number of
+	# previous units which go into it.
+	weeks_per_month = 365.242 / 12 / 7
+	intervals = [('minute', 60), ('hour', 60), ('day', 24), ('week', 7), ('month', weeks_per_month), ('year', 12)]
+
+	unit, number = 'second', abs(time_diff_secs)
+	for new_unit, ratio in intervals:
+		new_number = float(number) / ratio
+		# If the new number is too small, don't go to the next unit.
+		if new_number < 2:
+			break
+		unit, number = new_unit, new_number
+	shown_num = int(number)
+	return '{} {}'.format(shown_num, unit + ('' if shown_num == 1 else 's'))
+
+
 def send_message_possible_evaluations(user_id):
-	# TODO
-	send_private_message(user_id, 'No-one needs to be evaluated')
+	projects = get_evaluation_locks()
+	if len(projects) == 0:
+		send_private_message(user_id, 'No-one needs to be evaluated')
+		return
+
+	longest_name_len = 0
+	for project in projects:
+		l = len(project['project_name'])
+		if l > longest_name_len:
+			longest_name_len = l
+
+	text = 'Peer++ evaluations, highest priority first\n'
+	text += 'Format: <project_name> <number_of_evaluations> <time_since_lock>\n'
+	text += '```\n'
+	for project in projects:
+		name = project['project_name'].rjust(longest_name_len)
+		users = str(len(project['scale_teams']))  #.rjust(2)
+		time_locked = pretty_relative_time(datetime.now().timestamp() - project['scale_teams'][0]['created_at'])
+		text += f"{name} | {users} users waiting, {time_locked} locked\n"
+
+	text += '\n```'
+	send_private_message(user_id, text)
 
 
 def book_evaluation(user_id, project_name: str):

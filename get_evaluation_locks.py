@@ -55,7 +55,7 @@ def get_evaluation_locks():
 		scale_team['id'] = evaluation.id
 		scale_team['scale_id'] = evaluation.scale_id
 		scale_team['team_id'] = evaluation.team.id
-		scale_team['created_at'] = evaluation.created_at.isoformat()
+		scale_team['created_at'] = evaluation.created_at.timestamp()
 		scale_team['correcteds'] = []
 		for corrected in evaluation.correcteds:
 			copy = {}
