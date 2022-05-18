@@ -1,8 +1,26 @@
 import codamconnector
-from constants import PEERPP_BOT_UID, PROJECTS
+from constants import PEERPP_BOT_UID, PROJECTS, GET_EVALUATION_LOCKS_TTL
 import json
+from datetime import datetime
 
 endpoint = codamconnector.IntraConnector()
+
+last_sync = 0
+evaluations_cache = None
+
+
+def get_evaluations():
+	global last_sync
+	global evaluations_cache
+	now = datetime.now().timestamp()
+	if now - last_sync < GET_EVALUATION_LOCKS_TTL:
+		return evaluations_cache
+
+	last_sync = now
+	exchange = codamconnector.Exchange(f'users/{PEERPP_BOT_UID}/scale_teams?filter[future]=true')
+	endpoint.get(exchange)
+	evaluations_cache = exchange.result
+	return exchange.result
 
 
 # returns:
@@ -30,12 +48,9 @@ endpoint = codamconnector.IntraConnector()
 # The first object in the array is the project with the most priority
 # The first object in the project's scale_teams array is the one with the most priority
 def get_evaluation_locks():
-	exchange = codamconnector.Exchange(f'users/{PEERPP_BOT_UID}/scale_teams?filter[future]=true')
-	endpoint.get(exchange)
-	exchange_result = exchange.result
 
 	projects = []
-	for evaluation in exchange_result:
+	for evaluation in get_evaluations():
 		scale_team = {}
 		scale_team['id'] = evaluation.id
 		scale_team['scale_id'] = evaluation.scale_id
@@ -64,6 +79,3 @@ def get_evaluation_locks():
 		projects[eval_index]['scale_teams'].sort(key=lambda t: t['created_at'])
 	projects.sort(key=lambda p: p['scale_teams'][0]['created_at'])
 	return projects
-
-
-print(get_available_evals())
