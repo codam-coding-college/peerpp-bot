@@ -3,13 +3,13 @@ import os
 from decouple import config
 
 
-def get_projects() -> Dict[str, int]:
+def get_projects() -> Dict[int, str]:
 	projects = dict()
 	with open("project_ids", "r+") as projects_f:
 		lines = projects_f.readlines()
 	for line in lines:
 		project_name, project_id = line.strip().split('=')
-		projects[project_name.lower()] = int(project_id)
+		projects[int(project_id)] = project_name.lower()
 	return projects
 
 
@@ -17,5 +17,7 @@ CAMPUS_ID = 14
 SLACK_TOKEN = config('SLACK_TOKEN')
 SIGNING_SECRET = config('SIGNING_SECRET')
 WEBHOOK_SECRET = config('WEBHOOK_SECRET')
+PEERPP_BOT_UID = config('PEERPP_BOT_UID')
 EVENT_ENDPOINT = '/slack/events'
-PROJECT_NAMES = list(get_projects().keys())
+PROJECT_NAMES = list(get_projects().values())
+PROJECTS = get_projects()
