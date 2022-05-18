@@ -14,8 +14,11 @@ def get_projects() -> Dict[str, int]:
 
 
 CAMPUS_ID = 14
+CURSUS_ID = 21
 SLACK_TOKEN = config('SLACK_TOKEN')
 SIGNING_SECRET = config('SIGNING_SECRET')
 WEBHOOK_SECRET = config('WEBHOOK_SECRET')
+PEERPP_BOT_UID = config('PEERPP_BOT_UID')
+PEERPP_GROUP_ID = config('PEERPP_GROUP_ID')
 EVENT_ENDPOINT = '/slack/events'
 PROJECT_NAMES = list(get_projects().keys())
