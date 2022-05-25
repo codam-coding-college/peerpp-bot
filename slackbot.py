@@ -8,10 +8,14 @@ from slackeventsapi import SlackEventAdapter
 from typing import Dict
 from get_evaluation_locks import get_evaluation_locks
 from datetime import datetime
+import logging
 
 webclient = slack.WebClient(token=constants.SLACK_TOKEN, ssl=ssl.create_default_context(cafile=certifi.where()))
 app = Flask(__name__)
 slack_event_adapter = SlackEventAdapter(constants.SIGNING_SECRET, constants.EVENT_ENDPOINT, app)
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 def send_message(channel: str, text: str):
