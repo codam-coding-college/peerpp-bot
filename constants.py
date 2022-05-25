@@ -26,3 +26,5 @@ PROJECTS = get_projects()
 # number of seconds to keep the evaluation locks in cache
 # as to not send a (slow) request to intra very time a moderator lists the possible peer++ evals
 GET_EVALUATION_LOCKS_TTL = 5 * 60
+
+PEERPP_SLACKBOT_ID = config('PEERPP_SLACKBOT_ID')

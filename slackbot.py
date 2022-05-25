@@ -119,16 +119,18 @@ def respond_to_mention(text: str, user_id):
 		send_message_help(user_id)
 
 
-@slack_event_adapter.on('app_mention')
+# Fires when bot receives private message
+@slack_event_adapter.on('message')
 def message(payLoad):
-	# if not channel_id == peerpp_channel_id: # TODO
-	# 	return
-
 	event = payLoad.get('event', {})
 	channel_id = event.get('channel')
 	user_id = event.get('user')
 	text = event.get('text')
 	display_name = get_display_name(user_id)
+
+	# Do not respond to it's own messages
+	if user_id == constants.PEERPP_SLACKBOT_ID:
+		return
 
 	if display_name == '':
 		send_private_message(user_id, 'Error : your account has no display name')
