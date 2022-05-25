@@ -8,10 +8,14 @@ from slackeventsapi import SlackEventAdapter
 from typing import Dict
 from get_evaluation_locks import get_evaluation_locks
 from datetime import datetime
+import logging
 
 webclient = slack.WebClient(token=constants.SLACK_TOKEN, ssl=ssl.create_default_context(cafile=certifi.where()))
 app = Flask(__name__)
 slack_event_adapter = SlackEventAdapter(constants.SIGNING_SECRET, constants.EVENT_ENDPOINT, app)
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 def send_message(channel: str, text: str):
@@ -87,7 +91,7 @@ def send_message_possible_evaluations(user_id):
 		time_locked = pretty_relative_time(datetime.now().timestamp() - project['scale_teams'][0]['created_at'])
 		text += f"{name} | {users} users waiting, {time_locked} locked\n"
 
-	text += '\n```'
+	text += '```'
 	send_private_message(user_id, text)
 
 
@@ -99,8 +103,8 @@ def book_evaluation(user_id, project_name: str):
 
 def respond_to_mention(text: str, user_id):
 	# If the message is prefixed with "<@u036uss1tq8> " or something similar, delete that here, you would expect it to be <@peer_pp_bot> but no
-	text_normalized = re.sub(r'^\<.+\> ', '', text)
-	text_normalized = text_normalized.lower().strip()
+	text_normalized = text.lower().strip()
+	text_normalized = re.sub(r'^\<.+\> ', '', text_normalized)
 
 	if text_normalized == 'list_project_ids':
 		send_message_list_project_ids(user_id)
@@ -119,22 +123,35 @@ def respond_to_mention(text: str, user_id):
 		send_message_help(user_id)
 
 
-@slack_event_adapter.on('app_mention')
+# Store received messages, so that when the same message comes in twice we can ignore it the second time
+message_ids = []
+
+
+# TODO: rate limiting
+# Fires when bot receives private message
+@slack_event_adapter.on('message')
 def message(payLoad):
-	# if not channel_id == peerpp_channel_id: # TODO
-	# 	return
-
 	event = payLoad.get('event', {})
-	channel_id = event.get('channel')
-	user_id = event.get('user')
-	text = event.get('text')
-	display_name = get_display_name(user_id)
 
-	if display_name == '':
-		send_private_message(user_id, 'Error : your account has no display name')
+	# Do not respond to it's own messages and other bots
+	if event.get('bot_id'):
 		return
 
-	respond_to_mention(text, user_id)
+	# delete received message history as to not grow the memory too much
+	global message_ids
+	if len(message_ids) > 10000:
+		message_ids = message_ids[-10000:]
+
+	# ignore message if we already received it
+	if event.get('client_msg_id') in message_ids:
+		return
+	message_ids.append(event.get('client_msg_id'))
+
+	if get_display_name(event.get('user')) == '':
+		send_private_message(event.get('user'), 'Error : your account has no display name')
+		return
+
+	respond_to_mention(event.get('text'), event.get('user'))
 
 
 if __name__ == "__main__":
