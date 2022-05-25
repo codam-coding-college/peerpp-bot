@@ -87,7 +87,7 @@ def send_message_possible_evaluations(user_id):
 		time_locked = pretty_relative_time(datetime.now().timestamp() - project['scale_teams'][0]['created_at'])
 		text += f"{name} | {users} users waiting, {time_locked} locked\n"
 
-	text += '\n```'
+	text += '```'
 	send_private_message(user_id, text)
 
 
@@ -99,8 +99,8 @@ def book_evaluation(user_id, project_name: str):
 
 def respond_to_mention(text: str, user_id):
 	# If the message is prefixed with "<@u036uss1tq8> " or something similar, delete that here, you would expect it to be <@peer_pp_bot> but no
-	text_normalized = re.sub(r'^\<.+\> ', '', text)
-	text_normalized = text_normalized.lower().strip()
+	text_normalized = text.lower().strip()
+	text_normalized = re.sub(r'^\<.+\> ', '', text_normalized)
 
 	if text_normalized == 'list_project_ids':
 		send_message_list_project_ids(user_id)
