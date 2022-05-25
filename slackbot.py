@@ -119,24 +119,35 @@ def respond_to_mention(text: str, user_id):
 		send_message_help(user_id)
 
 
+# Store received messages, so that when the same message comes in twice we can ignore it the second time
+message_ids = []
+
+
+# TODO: rate limiting
 # Fires when bot receives private message
 @slack_event_adapter.on('message')
 def message(payLoad):
 	event = payLoad.get('event', {})
-	channel_id = event.get('channel')
-	user_id = event.get('user')
-	text = event.get('text')
-	display_name = get_display_name(user_id)
 
-	# Do not respond to it's own messages
-	if user_id == constants.PEERPP_SLACKBOT_ID:
+	# Do not respond to it's own messages and other bots
+	if event.get('bot_id'):
 		return
 
-	if display_name == '':
-		send_private_message(user_id, 'Error : your account has no display name')
+	# delete received message history as to not grow the memory too much
+	global message_ids
+	if len(message_ids) > 10000:
+		message_ids = message_ids[-10000:]
+
+	# ignore message if we already received it
+	if event.get('client_msg_id') in message_ids:
+		return
+	message_ids.append(event.get('client_msg_id'))
+
+	if get_display_name(event.get('user')) == '':
+		send_private_message(event.get('user'), 'Error : your account has no display name')
 		return
 
-	respond_to_mention(text, user_id)
+	respond_to_mention(event.get('text'), event.get('user'))
 
 
 if __name__ == "__main__":
