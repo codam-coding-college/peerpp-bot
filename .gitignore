@@ -3,3 +3,5 @@ __pycache__
 /token.*
 /.env
 /logs
+/corrector_logs
+/tmp.*
