@@ -20,8 +20,8 @@ WEBHOOK_SECRET = config('WEBHOOK_SECRET')
 PEERPP_BOT_UID = config('PEERPP_BOT_UID')
 PEERPP_GROUP_ID = config('PEERPP_GROUP_ID')
 EVENT_ENDPOINT = '/slack/events'
-PROJECT_NAMES = list(get_projects().values())
 PROJECTS = get_projects()
+PROJECT_NAMES = list(PROJECTS.values())
 
 # number of seconds to keep the evaluation locks in cache
 # as to not send a (slow) request to intra very time a moderator lists the possible peer++ evals
