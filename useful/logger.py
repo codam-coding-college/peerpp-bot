@@ -1,5 +1,7 @@
 import json
 from datetime import datetime
+import os
+
 
 def get_dt_file():
 	return datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
@@ -20,6 +22,16 @@ def log_announce(log_file, msg):
 
 def log_print(log_file, msg):
 	log_file.write(f"\n{str(msg)}\n")
+
+
+def log_corrector_action(evaluator_login: str, msg: str) -> None:
+	print(msg)
+	directory = 'corrector_logs/'
+	if not os.path.exists(directory):
+		os.makedirs(directory)
+
+	with open(directory + evaluator_login, 'a+') as file:
+		file.write(get_dt() + ' | ' + str(msg) + '\n')
 
 
 def log_print_json(log_file, json_obj):

@@ -20,3 +20,11 @@ def book_placeholder_eval(endpoint, log_file, scale_id, team_id):
 	log_announce(log_file, 'Created Placeholder Evaluation')
 	log_print(log_file, str(exchange.result))
 	return exchange.result
+
+
+def book_eval(endpoint, scale_id, team_id, evaluator_uid):
+	begin = datetime.now() + timedelta(minutes=20)
+	body = {"scale_teams": [{"begin_at": begin.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:00 %Z'), "scale_id": str(scale_id), "team_id": str(team_id), "user_id": str(evaluator_uid)}]}
+	exchange = codamconnector.Exchange(f"scale_teams/multiple_create", body=body)
+	endpoint.post(exchange)
+	return exchange.result
