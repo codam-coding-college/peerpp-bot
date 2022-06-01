@@ -7,7 +7,7 @@ from flask import Flask
 from slackeventsapi import SlackEventAdapter
 from typing import Dict
 from get_evaluation_locks import get_evaluation_locks, delete_evaluation_lock
-from useful.users import get_intra_uid_by_login
+from useful.users import get_user_by_login
 from useful.projects import book_eval
 from useful.logger import log_create, log_print, log_announce, log_close, log_corrector_action
 from datetime import datetime
@@ -46,20 +46,27 @@ def get_display_name(user_id) -> str:
 
 class User:
 
-	def __init__(self, slack_uid: str, intra_login: str, intra_uid: int):
+	def __init__(self, slack_uid: str, intra_login: str, intra_uid: int, email: str):
 		self.slack_uid = slack_uid
 		self.intra_login = intra_login
 		self.intra_uid = intra_uid
+		self.email = email
 
 
 def get_user_from_slack_uid(slack_uid: str) -> User:
 	try:
 		response = webclient.users_info(user=slack_uid)
 		intra_login = response['user']['profile']['display_name'].lower()
-		intra_uid = get_intra_uid_by_login(endpoint, intra_login)
-		if not intra_uid:
+		intra_user = get_user_by_login(endpoint, intra_login)
+		email = intra_user.email
+		slack_user = webclient.users_lookupByEmail(email=email)
+
+		if not slack_user['ok'] or slack_user.get('user')['profile']['display_name'] != intra_login:
 			return None
-		return User(slack_uid, intra_login, intra_uid)
+		if not intra_user:
+			return None
+
+		return User(slack_uid, intra_login, intra_user.id, email)
 
 	except Exception as e:
 		print(e)
