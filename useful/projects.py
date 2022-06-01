@@ -14,8 +14,8 @@ def get_evals(endpoint, log_file, project_id, scale_id, team_id):
 
 def book_placeholder_eval(endpoint, log_file, scale_id, team_id):
 	next_week = datetime.now() + timedelta(days=7)
-	scale_team = {"scale_team": {"begin_at": next_week.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:00 %Z'), "scale_id": str(scale_id), "team_id": str(team_id), "user_id": PEERPP_BOT_UID}}
-	exchange = codamconnector.Exchange(f"scale_teams/multiple_create", body=scale_team)
+	body = {"scale_teams": [{"begin_at": next_week.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:00 %Z'), "scale_id": str(scale_id), "team_id": str(team_id), "user_id": PEERPP_BOT_UID}]}
+	exchange = codamconnector.Exchange(f"scale_teams/multiple_create", body=body)
 	endpoint.post(exchange)
 	log_announce(log_file, 'Created Placeholder Evaluation')
 	log_print(log_file, str(exchange.result))
