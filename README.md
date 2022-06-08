@@ -16,3 +16,6 @@ Please do not other variable names for storing id's in this project since we're 
 - corrector_intra_uid = 75138
 - corrected_intra_login = fbes
 - corrected_intra_uid = 69696
+
+- project_name = libft
+- project_id = 1314

@@ -13,6 +13,7 @@ from useful.logger import log_create, log_print, log_announce, log_close, log_co
 from datetime import datetime
 import logging
 import codamconnector
+import slack_message_builders as slack_message
 
 endpoint = codamconnector.IntraConnector()
 
@@ -71,6 +72,12 @@ def get_user_from_slack_uid(slack_uid: str) -> User:
 	except Exception as e:
 		print(e)
 		return None
+
+
+def get_slack_uid_from_intra_login(intra_login: str) -> str:
+	intra_user = get_user_by_login(intra_login)
+	slack_user = webclient.users_lookupByEmail(email=intra_user.email)
+	return slack_user['user']['id']
 
 
 def send_message_help(user_id):
@@ -155,7 +162,10 @@ def book_evaluation(corrector: User, project_name: str):
 
 			log_corrector_action(corrector.intra_login, 'deleted evaluation')
 
-			# TODO message to corrected users
+			# for corrected in scale_team['correcteds']:
+			# 	message = slack_message.you_will_be_evaluated_by(corrected['login'], corrector.intra_login, project_name)
+			# 	slack_uid = get_slack_uid_from_intra_login(corrected['login'])
+			# 	send_private_message(slack_uid)
 
 			text = 'You will evaluate '
 			for corrected in scale_team['correcteds']:
