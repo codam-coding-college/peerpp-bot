@@ -32,8 +32,10 @@ function isDirect(message: KnownEventFromType<'message'>) {
 		else if (text.match(/^list-evaluations/))
 			onMessage.listEvaluations(say)
 		else if (text.match(/^book-evaluation/)) {
-			const project: string = text.replace(/^book-evaluation/, '')[0]!.trim()
-			if (Object.keys(env.projectSlugs).includes(project))
+			const project: string = text.replace(/^book-evaluation/, '').trim()
+			if (project.length == 0)
+				onMessage.listProjectIds(say)
+			else if (Object.keys(env.projectSlugs).includes(project))
 				onMessage.bookEvaluation(say, text)
 			else
 				say(`project \`${project}\` not recognized, see help for more info`)
