@@ -10,11 +10,15 @@ interface Env {
 	PEERPP_GROUP_ID: number
 	PEERPP_SLACKBOT_ID: string
 	SLACK_APP_TOKEN: string
-	projectSlugs: { [key: string]: number }[]
+
+	INTRA_UID: string
+	INTRA_SECRET: string
+
+	projectSlugs: { [key: string]: string }[]
 }
 
 const file = dotenv.parse(fs.readFileSync('.env'))
-const projectSlugs: { [key: string]: number }[] = JSON.parse(fs.readFileSync('env/project_slugs.json').toString())
+const projectSlugs: { [key: string]: string }[] = JSON.parse(fs.readFileSync('env/project_slugs.json').toString())
 
 export const env: Env = {
 	SLACK_TOKEN: file['SLACK_TOKEN']!,
@@ -25,5 +29,7 @@ export const env: Env = {
 	PEERPP_GROUP_ID: parseInt(file['PEERPP_GROUP_ID']!),
 	PEERPP_SLACKBOT_ID: file['PEERPP_SLACKBOT_ID']!,
 	SLACK_APP_TOKEN: file['SLACK_APP_TOKEN']!,
+	INTRA_UID: file['INTRA_UID']!,
+	INTRA_SECRET: file['INTRA_SECRET']!,
 	projectSlugs,
 }
