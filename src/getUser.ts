@@ -10,7 +10,8 @@ interface IncompleteUser {
 	email?: string
 	slackUID?: string // not allowed
 }
-// give this function one of
+
+// give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin and email
 	if (u.intraUID && (!u.intraLogin || !u.email)) {
