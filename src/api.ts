@@ -67,24 +67,23 @@ class API {
 		this._limiter = new RequestLimiter(maxRequestPerSecond)
 	}
 
-	private async _fetch(path: string, opt: Object, isTokenUpdateRequest: boolean): Promise<Response> {
-		console.log('fetch', isTokenUpdateRequest)
+	private async _fetch(address: string, opt: Object, isTokenUpdateRequest: boolean): Promise<Response> {
 		if (!isTokenUpdateRequest) {
 			await this._updateToken()
 			Object.assign(opt, { headers: { Authorization: `Bearer ${this._accessToken?.access_token}` } })
 		}
 
 		if (this._logging)
-			console.log(`${new Date().toISOString()} REQUEST ${path}, ${JSON.stringify(opt)}`)
+			console.log(`${new Date().toISOString()} REQUEST ${address}, ${JSON.stringify(opt)}`)
 
 		await this._limiter.limit()
-		const response = await fetch(path, opt)
+		const response = await fetch(address, opt)
 		if (response.status === 429) {
 			if (this._logging)
 				console.log(`${new Date().toISOString()} [fetch error]: status: ${response?.status} body: ${JSON.stringify(response)} retrying in ${this._cooldown / 1000} seconds`)
 			await new Promise(resolve => setTimeout(resolve, this._cooldown))
 			this._cooldown *= this._cooldownGrowthFactor
-			return await this._fetch(path, opt, isTokenUpdateRequest)
+			return await this._fetch(address, opt, isTokenUpdateRequest)
 		}
 		this._cooldown = this._startCooldown
 		let json = undefined
