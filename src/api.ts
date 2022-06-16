@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import urlParameterAppend from 'url-parameter-append'
 import parameterAppend from 'url-parameter-append'
 import { env } from './env'
 
@@ -112,13 +113,8 @@ class API {
 			console.log(`[new token]: expires in ${this._accessToken!.expires_in} seconds, on ${new Date(this._accessTokenExpiry).toISOString()}`)
 	}
 
-	async get(path: string, parameters?: { [key: string]: string | number }[]): Promise<Response> {
-		let requestPath = `${this._root}${path}`
-		if (parameters)
-			for (const key of parameters)
-				requestPath = parameterAppend(requestPath, key)
-
-		return await this._fetch(requestPath, {}, false)
+	async get(path: string): Promise<Response> {
+		return await this._fetch(`${this._root}${path}`, {}, false)
 	}
 
 	async post(path: string, body: Object): Promise<Response> {
@@ -140,31 +136,22 @@ class API {
 	}
 
 
-	async getPaged(path: string, parameters?: { [key: string]: string | number }[], onPage?: (response: any) => void): Promise<Response> {
+	async getPaged(path: string, onPage?: (response: any) => void): Promise<Response> {
 		let items: any[] = []
-		let block
 
-		if (!parameters)
-			parameters = []
-		if (!parameters['page[number]'] && !parameters['page_size'])
-			parameters.push({ 'page[size]': 100 })
-		parameters.push({ 'page[number]': '<placeholder>' })
+		const address = `${this._root}${path}`
 		for (let i = 1; ; i++) {
-			for (let p of parameters)
-				if (p['page[number]'])
-					p['page[number]'] = i
-
-			block = await this.get(path, parameters)
-			if (!block.ok)
+			const addressI = urlParameterAppend(address, `page[number]=${i}`)
+			const response: Response = await this._fetch(addressI, {}, false)
+			if (!response.ok)
 				return { ok: false, json: items }
-			if (block.json.length === 0)
+			if (response.json.length === 0)
 				break
 			if (onPage)
-				onPage(block)
-			items = items.concat(block)
+				onPage(response)
+			items = items.concat(response.json)
 		}
 		return { ok: false, json: items }
-
 	}
 }
 
