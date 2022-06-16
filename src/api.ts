@@ -1,10 +1,7 @@
 import fetch from 'node-fetch'
 import parameterAppend from 'url-parameter-append'
+import { env } from './env'
 
-interface Tokens {
-	clientUID: string
-	clientSecret: string
-}
 
 interface AccessToken {
 	access_token: string
@@ -39,9 +36,15 @@ class RequestLimiter {
 	}
 }
 
-export class API {
+interface Response {
+	ok: boolean
+	json: any | any[] | undefined
+}
+
+class API {
 	private _root: string
-	private _tokens: Tokens
+	private _UID: string
+	private _secret: string
 	private _accessToken: AccessToken | null
 	private _logging: boolean
 	private _accessTokenExpiry: number
@@ -53,7 +56,8 @@ export class API {
 	constructor(clientUID: string, clientSecret: string, maxRequestPerSecond: number = 1 / 3, logging: boolean = false, root = 'https://api.intra.42.fr') {
 		this._logging = logging
 		this._root = root
-		this._tokens = { clientUID, clientSecret }
+		this._UID = clientUID
+		this._secret = clientSecret
 		this._accessToken = null
 		this._accessTokenExpiry = -1
 		this._startCooldown = 1500
@@ -62,59 +66,83 @@ export class API {
 		this._limiter = new RequestLimiter(maxRequestPerSecond)
 	}
 
-	private async _fetch(path: string, opt: Object, isTokenUpdateRequest: boolean): Promise<Object> {
-		if (!isTokenUpdateRequest)
+	private async _fetch(path: string, opt: Object, isTokenUpdateRequest: boolean): Promise<Response> {
+		console.log('fetch', isTokenUpdateRequest)
+		if (!isTokenUpdateRequest) {
 			await this._updateToken()
+			Object.assign(opt, { headers: { Authorization: `Bearer ${this._accessToken?.access_token}` } })
+		}
+
 		if (this._logging)
-			console.log(`${new Date().toISOString()} REQUEST ${path}`)
-		let response
-		try {
-			await this._limiter.limit()
-			response = await fetch(path, opt)
-			const json = await response.json()
-			this._cooldown = this._startCooldown
-			return json
-		} catch (err) {
-			if (this._logging || response?.status != 429)
+			console.log(`${new Date().toISOString()} REQUEST ${path}, ${JSON.stringify(opt)}`)
+
+		await this._limiter.limit()
+		const response = await fetch(path, opt)
+		if (response.status === 429) {
+			if (this._logging)
 				console.log(`${new Date().toISOString()} [fetch error]: status: ${response?.status} body: ${JSON.stringify(response)} retrying in ${this._cooldown / 1000} seconds`)
 			await new Promise(resolve => setTimeout(resolve, this._cooldown))
 			this._cooldown *= this._cooldownGrowthFactor
 			return await this._fetch(path, opt, isTokenUpdateRequest)
 		}
+		this._cooldown = this._startCooldown
+		let json = undefined
+		try {
+			json = await response.json()
+		} catch (err) {
+			console.log('no parse', err)
+		}
+		return { ok: true, json }
 	}
 
 	private async _updateToken() {
+		console.log('update')
 		if (this._accessTokenExpiry > Date.now() + 60 * 1000)
 			return
 		const opt = {
 			method: 'POST',
-			body: `grant_type=client_credentials&client_id=${this._tokens.clientUID}&client_secret=${this._tokens.clientSecret}&scopes=public,projects`,
+			body: `grant_type=client_credentials&client_id=${this._UID}&client_secret=${this._secret}&scopes=public,projects`,
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
 		}
-		this._accessToken = await this._fetch(`${this._root}/oauth/token`, opt, true) as AccessToken
+		this._accessToken = (await this._fetch(`${this._root}/oauth/token`, opt, true)).json as AccessToken
 		this._accessTokenExpiry = + Date.now() + this._accessToken!.expires_in * 1000
 		if (this._logging)
 			console.log(`[new token]: expires in ${this._accessToken!.expires_in} seconds, on ${new Date(this._accessTokenExpiry).toISOString()}`)
 	}
 
-	async get(path: string, parameters?: { [key: string]: string | number }[]): Promise<any> {
-		await this._updateToken()
+	async get(path: string, parameters?: { [key: string]: string | number }[]): Promise<Response> {
 		let requestPath = `${this._root}${path}`
 		if (parameters)
 			for (const key of parameters)
 				requestPath = parameterAppend(requestPath, key)
-		const opt = {
-			headers: {
-				Authorization: `Bearer ${this._accessToken!.access_token}`,
-			}
-		}
-		return await this._fetch(requestPath, opt, false)
+
+		return await this._fetch(requestPath, {}, false)
 	}
 
-	async getPaged(path: string, parameters?: { [key: string]: string | number }[], onPage?: (response: any) => void): Promise<any[]> {
+	async post(path: string, body: Object): Promise<Response> {
+		const opt = {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			method: 'POST',
+			body: JSON.stringify(body)
+		}
+		return await this._fetch(`${this._root}${path}`, opt, false)
+	}
+
+	async delete(path: string): Promise<Response> {
+		const opt = {
+			method: 'DELETE',
+		}
+		return await this._fetch(`${this._root}${path}`, opt, false)
+	}
+
+
+	async getPaged(path: string, parameters?: { [key: string]: string | number }[], onPage?: (response: any) => void): Promise<Response> {
 		let items: any[] = []
+		let block
 
 		if (!parameters)
 			parameters = []
@@ -126,13 +154,18 @@ export class API {
 				if (p['page[number]'])
 					p['page[number]'] = i
 
-			const block = await this.get(path, parameters)
-			if (block.length == 0)
+			block = await this.get(path, parameters)
+			if (!block.ok)
+				return { ok: false, json: items }
+			if (block.json.length === 0)
 				break
 			if (onPage)
 				onPage(block)
 			items = items.concat(block)
 		}
-		return items
+		return { ok: false, json: items }
+
 	}
 }
+
+export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, 100, true)
