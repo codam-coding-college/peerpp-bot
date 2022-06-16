@@ -1,5 +1,5 @@
 import { SayFn } from "@slack/bolt";
-import { getEvaluationLocks, ScaleTeam } from "./apiFunctions";
+import { Intra } from "./intra/intra";
 import { env } from './env'
 import prettyMilliseconds from 'pretty-ms'
 
@@ -10,6 +10,7 @@ export function help(say: SayFn) {
 	- \`list-project-ids\`
 	- \`list-evaluations\`
 	- \`book-evaluation [PROJECT_NAME]\`
+	- \`whoami\`
 	`
 	say(text)
 }
@@ -23,9 +24,9 @@ export function listProjectIds(say: SayFn) {
 }
 
 
-function highestPriorityScaleTeam(scaleTeams: ScaleTeam[]): ScaleTeam {
+function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.ScaleTeam {
 	let shortestAgo = Date.now()
-	let best: ScaleTeam | null = null
+	let best: Intra.ScaleTeam | null = null
 
 	for (const scaleTeam of scaleTeams) {
 		if (scaleTeam.createdAt.getTime() < shortestAgo) {
@@ -34,11 +35,11 @@ function highestPriorityScaleTeam(scaleTeams: ScaleTeam[]): ScaleTeam {
 		}
 	}
 
-	return best as ScaleTeam // TODO: this is pretty unsafe
+	return best as Intra.ScaleTeam // TODO: this is pretty unsafe
 }
 
 export async function listEvaluations(say: SayFn) {
-	const locks = await getEvaluationLocks()
+	const locks = await Intra.getEvaluationLocks()
 	if (locks.length == 0) {
 		say('No-one needs to be evaluated')
 		return

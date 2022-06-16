@@ -1,29 +1,27 @@
 import { App, KnownEventFromType } from '@slack/bolt'
 import { env } from './env'
-import { Intra } from './intra/intra';
+import { getFullUser } from './getUser';
 import * as onMessage from './messageParsers';
-import { User, ErrorMsg } from './types'
+import { User, } from './types'
 
 export const app = new App({
-	signingSecret: env.SIGNING_SECRET,
 	token: env.SLACK_TOKEN,
 	socketMode: true,
 	appToken: env.SLACK_APP_TOKEN,
 })
 
-function isDirect(message: KnownEventFromType<'message'>) {
-	return message.channel === 'D0367EABH28' // TODO this can be done better
-}
-
-app.message(/.*/i, async ({ message, say }) => {
-	if (!isDirect(message))
+app.message(/.*/i, async ({ message, say, client, }) => {
+	if (message.channel[0] !== 'D') // if not direct message
 		return
 	//@ts-ignore
 	let text: string = message.text
 	if (!text)
 		return
 	text = text.trim().toLowerCase()
+	//@ts-ignore
+	const slackUID = message!.user
 
+	const user: User = await getFullUser({ slackUID })
 	if (text.match(/^help/))
 		onMessage.help(say)
 	else if (text.match(/^list-projects/))
@@ -38,6 +36,9 @@ app.message(/.*/i, async ({ message, say }) => {
 			onMessage.bookEvaluation(say, text)
 		else
 			say(`project \`${project}\` not recognized, see help for more info`)
+	}
+	else if (text.match(/^whoami/)) {
+		say(`\`\`\`${JSON.stringify(user, null, 4)}\`\`\``)
 	}
 	else
 		say(`command \`${text}\` not recognized, see help for more info`)
