@@ -1,6 +1,5 @@
 import fetch from 'node-fetch'
 import urlParameterAppend from 'url-parameter-append'
-import parameterAppend from 'url-parameter-append'
 import { env } from './env'
 
 
@@ -154,4 +153,4 @@ class API {
 	}
 }
 
-export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, 100, true)
+export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, 100, false)
