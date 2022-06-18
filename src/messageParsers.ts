@@ -10,7 +10,7 @@ import { app } from "./slack";
 
 
 export async function help(say: SayFn) {
-	const text = `Commands:\`\`\`
+	const text = `\`\`\`
 help                                              show this help
 list-project-slugs                                list all projects which a peer++ evaluator can evaluate
 list-evaluations                                  list all evaluations that were locked by the peer++ bot
