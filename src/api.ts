@@ -95,7 +95,6 @@ class API {
 	}
 
 	private async _updateToken() {
-		console.log('update')
 		if (this._accessTokenExpiry > Date.now() + 60 * 1000)
 			return
 		const opt = {
@@ -139,7 +138,7 @@ class API {
 
 		const address = `${this._root}${path}`
 		for (let i = 1; ; i++) {
-			const addressI = urlParameterAppend(address, `page[number]=${i}`)
+			const addressI = urlParameterAppend(address, { 'page[number]': i })
 			const response: Response = await this._fetch(addressI, {}, false)
 			if (!response.ok)
 				return { ok: false, json: items }

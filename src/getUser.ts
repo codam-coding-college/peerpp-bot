@@ -4,11 +4,11 @@ import { User } from './types'
 import { api } from './api'
 import { UsersInfoResponse } from '@slack/web-api';
 
-interface IncompleteUser {
+export interface IncompleteUser {
 	intraUID?: Intra.UID
 	intraLogin?: Intra.Login
 	email?: string
-	slackUID?: string // not allowed
+	slackUID?: string
 }
 
 // give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
@@ -25,14 +25,11 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 
 	// use intraLogin to generate intraUID and email
 	if (u.intraLogin && (!u.intraUID || !u.email)) {
-		const response = await api.get(`/v2/users?filter[login]=${u.intraLogin}`)
-		if (!response.ok || response.json.length === 0)
+		const response = await api.get(`/v2/users/${u.intraLogin}`)
+		if (!response.ok)
 			throw `Could not find user "${u.intraLogin}"`
-		if (response.json.length !== 1)
-			throw `Found multiple users with the login "${u.intraLogin}"`
-		const intraUser = response.json[0]
-		u.intraUID = intraUser.id
-		u.email = intraUser.email
+		u.intraUID = response.json.id
+		u.email = response.json.email
 		return getFullUser(u)
 	}
 

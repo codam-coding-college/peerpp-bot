@@ -1,6 +1,7 @@
 import { api } from '../api'
 import { User } from '../types'
 import { env } from '../env'
+import { IncompleteUser } from '../getUser'
 
 export namespace Intra {
 
@@ -12,7 +13,7 @@ export namespace Intra {
 		scaleID: number
 		teamID: number
 		createdAt: Date
-		correcteds: User[]
+		correcteds: IncompleteUser[]
 	}
 
 	export interface EvaluationLock {
@@ -32,7 +33,7 @@ export namespace Intra {
 				scaleID: evaluation['scale_id']!,
 				teamID: evaluation['team_id']!,
 				createdAt: new Date(evaluation['created_at'])!,
-				correcteds: evaluation.correcteds
+				correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
 			}
 			if (!locks.find(project => project.projectID == evaluation['team']['project_id'])) {
 				locks.push({
