@@ -9,23 +9,23 @@ import { getFullUser } from "./getUser";
 import { app } from "./slack";
 
 
-export function help(say: SayFn) {
+export async function help(say: SayFn) {
 	const text = `
-	Available commands:
-	- \`help\`
-	- \`list-project-ids\`
-	- \`list-evaluations\`
-	- \`book-evaluation [PROJECT_NAME]\`
-	- \`whoami\`
+Available commands:
+- \`help\`
+- \`list-project-ids\`
+- \`list-evaluations\`
+- \`book-evaluation [PROJECT_NAME]\`
+- \`whoami\`
 	`
-	say(text)
+	await say(text)
 }
 
-export function listProjectIds(say: SayFn) {
+export async function listProjectIds(say: SayFn) {
 	let text = `Possible projects to evaluate:\n`
 	for (const project of env.projects)
 		text += `- \`${project.slug}\`\n`
-	say(text)
+	await say(text)
 }
 
 export function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.ScaleTeam {
@@ -43,10 +43,10 @@ export function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.S
 }
 
 export async function listEvaluations(say: SayFn) {
-	say('Getting evaluation locks, this can take more than 10 seconds...')
+	await say('Getting evaluation locks, this can take more than 10 seconds...')
 	const locks = await Intra.getEvaluationLocks()
 	if (locks.length == 0) {
-		say('No-one needs to be evaluated')
+		await say('No-one needs to be evaluated')
 		return
 	}
 	locks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
@@ -74,7 +74,7 @@ export async function listEvaluations(say: SayFn) {
 		text += `${name} | ${nUsers} teams waiting, ${timeLocked} locked\n`
 	}
 	text += '```'
-	say(text)
+	await say(text)
 }
 
 async function sendYouWillBeEvaluatedMsg(corrected: User, corrector: User, projectSlug: string): Promise<void> {

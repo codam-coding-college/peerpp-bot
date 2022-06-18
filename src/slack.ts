@@ -25,27 +25,27 @@ app.message(/.*/i, async ({ message, say, }) => {
 	try {
 		user = await getFullUser({ slackUID })
 	} catch (err) {
-		await say(`Could not match your Slack ID to a Intra user`)
+		await await say(`Could not match your Slack ID to a Intra user`)
 		return
 	}
 	if (text.match(/^help/))
-		onMessage.help(say)
+		await onMessage.help(say)
 	else if (text.match(/^list-projects/))
-		onMessage.listProjectIds(say)
+		await onMessage.listProjectIds(say)
 	else if (text.match(/^list-evaluations/))
-		onMessage.listEvaluations(say)
+		await onMessage.listEvaluations(say)
 	else if (text.match(/^book-evaluation/)) {
 		const project: string = text.replace(/^book-evaluation/, '').trim()
 		if (project.length == 0)
-			onMessage.listProjectIds(say)
+			await onMessage.listProjectIds(say)
 		else if (env.projects.find((p) => p.slug == project))
-			onMessage.bookEvaluation(say, user, project)
+			await onMessage.bookEvaluation(say, user, project)
 		else
-			say(`project \`${project}\` not recognized, see help for more info`)
+			await say(`project \`${project}\` not recognized, see help for more info`)
 	}
 	else if (text.match(/^whoami/)) {
-		say(`\`\`\`${JSON.stringify(user, null, 4)}\`\`\``)
+		await say(`\`\`\`${JSON.stringify(user, null, 4)}\`\`\``)
 	}
 	else
-		say(`command \`${text}\` not recognized, see help for more info`)
+		await say(`command \`${text}\` not recognized, see help for more info`)
 })
