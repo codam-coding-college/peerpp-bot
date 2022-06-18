@@ -39,6 +39,7 @@ function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.ScaleTea
 }
 
 export async function listEvaluations(say: SayFn) {
+	say('Getting evaluation locks, this might take a long time...')
 	const locks = await Intra.getEvaluationLocks()
 	if (locks.length == 0) {
 		say('No-one needs to be evaluated')
