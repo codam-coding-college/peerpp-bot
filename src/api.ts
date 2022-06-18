@@ -66,10 +66,12 @@ class API {
 		this._limiter = new RequestLimiter(maxRequestPerSecond)
 	}
 
-	private async _fetch(address: string, opt: Object, isTokenUpdateRequest: boolean): Promise<Response> {
+	private async _fetch(address: string, opt: any, isTokenUpdateRequest: boolean): Promise<Response> {
 		if (!isTokenUpdateRequest) {
 			await this._updateToken()
-			Object.assign(opt, { headers: { Authorization: `Bearer ${this._accessToken?.access_token}` } })
+			if (!opt.headers)
+				opt.headers = {}
+			opt.headers['Authorization'] = `Bearer ${this._accessToken!.access_token}`
 		}
 
 		if (this._logging)
@@ -85,12 +87,7 @@ class API {
 			return await this._fetch(address, opt, isTokenUpdateRequest)
 		}
 		this._cooldown = this._startCooldown
-		let json = undefined
-		try {
-			json = await response.json()
-		} catch (err) {
-			console.log('no parse', err)
-		}
+		const json = await response.json()
 		return { ok: true, json }
 	}
 
