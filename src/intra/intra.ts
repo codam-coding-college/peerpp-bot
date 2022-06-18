@@ -24,7 +24,7 @@ export namespace Intra {
 			scaleID: evaluation['scale_id']!,
 			teamID: evaluation['team']['id']!,
 			projectID: evaluation['team']['project_id'] as number,
-			projectSlug: env.projectSlugs[String(evaluation['team']!['project_id']!)] as string,
+			projectSlug: env.projects.find(p => p.id === evaluation['team']!['project_id'])!.slug,
 			createdAt: new Date(evaluation['created_at'])!,
 			correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id })),
 		}))

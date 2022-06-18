@@ -1,4 +1,4 @@
-import { App, KnownEventFromType } from '@slack/bolt'
+import { App } from '@slack/bolt'
 import { env } from './env'
 import { getFullUser } from './getUser';
 import * as onMessage from './messageParsers';
@@ -32,7 +32,7 @@ app.message(/.*/i, async ({ message, say, client, }) => {
 		const project: string = text.replace(/^book-evaluation/, '').trim()
 		if (project.length == 0)
 			onMessage.listProjectIds(say)
-		else if (Object.keys(env.projectSlugs).includes(project))
+		else if (env.projects.find((p) => p.slug == project))
 			onMessage.bookEvaluation(say, text)
 		else
 			say(`project \`${project}\` not recognized, see help for more info`)

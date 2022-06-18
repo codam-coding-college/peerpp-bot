@@ -16,10 +16,9 @@ export function help(say: SayFn) {
 }
 
 export function listProjectIds(say: SayFn) {
-	const slugs = Object.values(env.projectSlugs)
 	let text = `Possible projects to evaluate:\n`
-	for (const slug of slugs)
-		text += `- \`${slug}\`\n`
+	for (const project of env.projects)
+		text += `- \`${project.slug}\`\n`
 	say(text)
 }
 
@@ -66,12 +65,13 @@ export async function listEvaluations(say: SayFn) {
 		const nUsers = count[key]!.teamsN
 		const timeLocked = prettyMilliseconds(Date.now() - count[key]!.createdAt.getTime(), { verbose: true, unitCount: 1 })
 
-		text += `${name} | ${nUsers} teamså waiting, ${timeLocked} locked\n`
+		text += `${name} | ${nUsers} teams waiting, ${timeLocked} locked\n`
 	}
 	text += '```'
 	say(text)
 }
 
-export function bookEvaluation(say: SayFn, projectName: string) {
-	say('bookEvaluation ' + projectName)
+export function bookEvaluation(say: SayFn, projectSlug: string) {
+	say('bookEvaluation ' + projectSlug)
+
 }
