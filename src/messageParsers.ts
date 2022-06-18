@@ -1,7 +1,13 @@
 import { SayFn } from "@slack/bolt";
+import { ChatPostMessageArguments } from '@slack/web-api';
 import { Intra } from "./intra/intra";
 import { env } from './env'
 import prettyMilliseconds from 'pretty-ms'
+import { User } from "./types";
+import { api } from "./api";
+import { getFullUser } from "./getUser";
+import { app } from "./slack";
+
 
 export function help(say: SayFn) {
 	const text = `
@@ -71,7 +77,39 @@ export async function listEvaluations(say: SayFn) {
 	say(text)
 }
 
-export function bookEvaluation(say: SayFn, projectSlug: string) {
-	say('bookEvaluation ' + projectSlug)
+async function sendYouWillBeEvaluatedMsg(corrected: User, corrector: User, projectSlug: string): Promise<void> {
+	const opt: ChatPostMessageArguments = {
+		channel: corrected.slackUID,
+		text: `You will be evaluated by ${corrector.intraLogin} on your \`${projectSlug}\`\nContact them to set a date for the evaluation`,
+	}
+	const response = await app.client.chat.postMessage(opt)
+	if (!response.ok)
+		throw new Error(response.error)
+}
 
+export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: string): Promise<void> {
+	await say(`requested peer++ eval for \`${projectSlug}\``)
+	const locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) => lock.projectSlug === projectSlug)
+	if (locks.length == 0) {
+		await say(`No-one needs to be evaluated on \`${projectSlug}\``)
+		return
+	}
+	const lock: Intra.ScaleTeam = highestPriorityScaleTeam(locks)
+	await say(`Found a team to be evaluated`)
+
+	// intra requires a eval to be minimum of 15 minutes in the future
+	const startEval = new Date(Date.now() + 20 * 60 * 1000)
+	await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)
+	await api.delete(`/v2/scale_teams/${lock.id}`)
+
+	let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `
+	const correcteds: User[] = await Promise.all(lock.correcteds.map(c => getFullUser(c)))
+	for (const user of correcteds)
+		text += `@${user.intraLogin} `
+	text += `at ${startEval}` // TODO: timezone?
+	text += `, they will be sent a message on Slack letting them know you've booked an eval, and asking them to contact you`
+	await say(text)
+
+	for (const user of correcteds)
+		await sendYouWillBeEvaluatedMsg(user, corrector, lock.projectSlug)
 }

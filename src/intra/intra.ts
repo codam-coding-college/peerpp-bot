@@ -11,6 +11,7 @@ export namespace Intra {
 		id: number						// the id of the evaluation itself
 		scaleID: number					// the id of the type of evaluation (v1 or v2 or whatever)
 		teamID: number					// the id of the team created by the matching of corrector and corrected
+		teamName: string
 		projectID: number				// eg: 1314  - the id of the project to be evaluated
 		projectSlug: string				// eg: libft - the slug of the project id
 		createdAt: Date
@@ -23,6 +24,7 @@ export namespace Intra {
 			id: evaluation['id']!,
 			scaleID: evaluation['scale_id']!,
 			teamID: evaluation['team']['id']!,
+			teamName: evaluation['team']['name']!,
 			projectID: evaluation['team']['project_id'] as number,
 			projectSlug: env.projects.find(p => p.id === evaluation['team']!['project_id'])!.slug,
 			createdAt: new Date(evaluation['created_at'])!,

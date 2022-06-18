@@ -10,7 +10,7 @@ export const app = new App({
 	appToken: env.SLACK_APP_TOKEN,
 })
 
-app.message(/.*/i, async ({ message, say, client, }) => {
+app.message(/.*/i, async ({ message, say, }) => {
 	if (message.channel[0] !== 'D') // if not direct message
 		return
 	//@ts-ignore
@@ -21,7 +21,13 @@ app.message(/.*/i, async ({ message, say, client, }) => {
 	//@ts-ignore
 	const slackUID = message!.user
 
-	const user: User = await getFullUser({ slackUID })
+	let user: User
+	try {
+		user = await getFullUser({ slackUID })
+	} catch (err) {
+		await say(`Could not match your Slack ID to a Intra user`)
+		return
+	}
 	if (text.match(/^help/))
 		onMessage.help(say)
 	else if (text.match(/^list-projects/))
@@ -33,7 +39,7 @@ app.message(/.*/i, async ({ message, say, client, }) => {
 		if (project.length == 0)
 			onMessage.listProjectIds(say)
 		else if (env.projects.find((p) => p.slug == project))
-			onMessage.bookEvaluation(say, text)
+			onMessage.bookEvaluation(say, user, project)
 		else
 			say(`project \`${project}\` not recognized, see help for more info`)
 	}
