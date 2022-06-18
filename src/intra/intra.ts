@@ -1,6 +1,7 @@
 import { api } from '../api'
 import { env } from '../env'
 import { IncompleteUser } from '../getUser'
+import { User } from '../types'
 
 export namespace Intra {
 
@@ -60,6 +61,12 @@ export namespace Intra {
 	export async function bookPlaceholderEval(scaleID: number, teamID: number): Promise<void> {
 		const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 		await bookEval(scaleID, teamID, env.PEERPP_BOT_UID, nextWeek)
+	}
+
+	export async function isPeerPPAdmin(user: User): Promise<boolean> {
+		// TODO: use some kind of intra title instead of this?
+		const admins = ['joppe', 'jkoers', 'fbes', 'freek']
+		return admins.includes(user.intraLogin)
 	}
 
 }

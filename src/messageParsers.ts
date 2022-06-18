@@ -15,9 +15,9 @@ Available commands:
 - \`help\`
 - \`list-project-ids\`
 - \`list-evaluations\`
-- \`book-evaluation [PROJECT_NAME]\`
+- \`book-evaluation [PROJECT_NAME] [CORRECTOR_LOGIN]\`
 - \`whoami\`
-	`
+`
 	await say(text)
 }
 
