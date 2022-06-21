@@ -4,6 +4,14 @@ import { env } from '../env'
 export const app = express()
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
+app.use((err, req, res, next) => {
+	// @ts-ignore
+    if (err instanceof SyntaxError && err.statusCode === 400 && 'body' in err) {
+		// @ts-ignore
+        return res.status(400).send({ status: 400, message: err.message }); // Bad request
+    }
+    next()
+})
 
 // returns true when a eval was created
 async function createEval(json: any): Promise<boolean> {
@@ -26,5 +34,4 @@ app.post('/webhook', async (req, res) => {
 		return res.status(201).send()
 	else
 		return res.status(204).send()
-
 })
