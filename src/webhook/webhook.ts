@@ -8,7 +8,7 @@ app.use((err, req, res, next) => {
 	// @ts-ignore
     if (err instanceof SyntaxError && err.statusCode === 400 && 'body' in err) {
 		// @ts-ignore
-        return res.status(400).send({ status: 400, message: err.message }); // Bad request
+        return res.status(400).send({ status: 400, message: err.message })
     }
     next()
 })
@@ -22,11 +22,11 @@ async function createEval(json: any): Promise<boolean> {
 app.post('/webhook', async (req, res) => {
 	if (!req.is('application/json'))
 		return res.status(400).send('Content-Type is not application/json')
-	if (!req.headers['X-Delivery'])
+	if (!req.headers['x-delivery'])
 		return res.status(400).send('X-Delivery header missing')
-	if (!req.headers['X-Secret'])
+	if (!req.headers['x-secret'])
 		return res.status(400).send('X-Secret header missing')
-	if (req.headers['X-Secret'] !== env.WEBHOOK_SECRET)
+	if (req.headers['x-secret'] !== env.WEBHOOK_SECRET)
 		return res.status(412).send('X-Secret header missing')
 
 	const created: boolean = await createEval(req.body);
