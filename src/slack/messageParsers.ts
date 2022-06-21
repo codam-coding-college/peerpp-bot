@@ -1,11 +1,11 @@
 import { SayFn } from "@slack/bolt";
 import { ChatPostMessageArguments } from '@slack/web-api';
-import { Intra } from "./intra/intra";
-import { env } from './env'
+import { Intra } from "../intra/intra";
+import { env } from '../env'
 import prettyMilliseconds from 'pretty-ms'
-import { User } from "./types";
-import { api } from "./api";
-import { getFullUser } from "./getUser";
+import { User } from "../types";
+import { api } from "../api";
+import { getFullUser } from "../getUser";
 import { app } from "./slack";
 
 

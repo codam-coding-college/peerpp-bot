@@ -1,4 +1,4 @@
-import { app } from './slack'
+import { app } from './slack/slack'
 import { Intra } from './intra/intra';
 import { User } from './types'
 import { api } from './api'

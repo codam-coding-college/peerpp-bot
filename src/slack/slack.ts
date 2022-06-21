@@ -1,9 +1,9 @@
 import { App, SayFn } from '@slack/bolt'
-import { env } from './env'
-import { getFullUser } from './getUser';
-import { Intra } from './intra/intra';
+import { env } from '../env'
+import { getFullUser } from '../getUser';
+import { Intra } from '../intra/intra';
 import * as onMessage from './messageParsers';
-import { User, } from './types'
+import { User, } from '../types'
 
 export const app = new App({
 	token: env.SLACK_TOKEN,
