@@ -1,7 +1,6 @@
 import { app } from './slack/slack'
 import { Intra } from './intra/intra';
 import { User } from './types'
-import { api } from './api'
 import { UsersInfoResponse } from '@slack/web-api';
 
 export interface IncompleteUser {
@@ -15,7 +14,7 @@ export interface IncompleteUser {
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin and email
 	if (u.intraUID && (!u.intraLogin || !u.email)) {
-		const response = await api.get(`/v2/users/${u.intraUID}`)
+		const response = await Intra.api.get(`/v2/users/${u.intraUID}`)
 		if (!response.ok)
 			throw `Cannot get user from uid "${u.intraUID}"`
 		u.intraLogin = response.json.login

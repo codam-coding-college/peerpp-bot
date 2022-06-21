@@ -4,7 +4,6 @@ import { Intra } from "../intra/intra";
 import { env } from '../env'
 import prettyMilliseconds from 'pretty-ms'
 import { User } from "../types";
-import { api } from "../api";
 import { getFullUser } from "../getUser";
 import { app } from "./slack";
 
@@ -101,7 +100,7 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 	// intra requires a eval to be minimum of 15 minutes in the future
 	const startEval = new Date(Date.now() + 20 * 60 * 1000)
 	await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)
-	await api.delete(`/v2/scale_teams/${lock.id}`)
+	await Intra.api.delete(`/v2/scale_teams/${lock.id}`)
 
 	let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `
 	const correcteds: User[] = await Promise.all(lock.correcteds.map(c => getFullUser(c)))

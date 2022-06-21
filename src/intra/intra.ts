@@ -1,12 +1,14 @@
-import { api } from '../api'
 import { env } from '../env'
 import { IncompleteUser } from '../getUser'
+import { API } from '42-connector'
 import { User } from '../types'
 
 export namespace Intra {
 
 	export type Login = string
 	export type UID = number
+
+	export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, 100, false)
 
 	export interface ScaleTeam {
 		id: number						// the id of the evaluation itself
