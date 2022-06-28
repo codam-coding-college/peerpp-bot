@@ -15,6 +15,7 @@ interface Env {
 	INTRA_SECRET: string
 
 	projects: { id: number, slug: string }[]
+	CURSUS_ID: number
 }
 
 const file = dotenv.parse(fs.readFileSync('.env'))
@@ -30,5 +31,6 @@ export const env: Env = {
 	SLACK_APP_TOKEN: file['SLACK_APP_TOKEN']!,
 	INTRA_UID: file['INTRA_UID']!,
 	INTRA_SECRET: file['INTRA_SECRET']!,
-	projects: JSON.parse(fs.readFileSync('env/project_slugs.json').toString())
+	projects: JSON.parse(fs.readFileSync('env/project_slugs.json').toString()),
+	CURSUS_ID: 21,
 }

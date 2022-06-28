@@ -1,30 +1,38 @@
 import { app } from './slack/slack'
-import { Intra } from './intra/intra';
+import { Intra } from './intra/intra'
 import { User } from './types'
-import { UsersInfoResponse } from '@slack/web-api';
+import { UsersInfoResponse } from '@slack/web-api'
+import { env } from './env'
 
 export interface IncompleteUser {
 	intraUID?: Intra.UID
 	intraLogin?: Intra.Login
 	email?: string
 	slackUID?: string
+	level?: number
 }
 
 // give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin and email
-	if (u.intraUID && (!u.intraLogin || !u.email)) {
-		const response = await Intra.api.get(`/v2/users/${u.intraUID}`)
-		if (!response.ok)
-			throw `Cannot get user from uid "${u.intraUID}"`
+	if (u.intraUID && (!u.intraLogin || !u.email || u.level === undefined)) {
+		const response = await Intra.api.get<any>(`/v2/users/${u.intraUID}`)
 		u.intraLogin = response.json.login
 		u.email = response.json.email
+		for (const user of response.json.cursus_users) {
+			if (user.cursus.id === env.CURSUS_ID) {
+				u.level = user.level
+				break
+			}
+		}
+		if (u.level === undefined)
+			throw `Could not find user in cursus ${env.CURSUS_ID} | ${response.json}`
 		return getFullUser(u)
 	}
 
 	// use intraLogin to generate intraUID and email
 	if (u.intraLogin && (!u.intraUID || !u.email)) {
-		const response = await api.get(`/v2/users/${u.intraLogin}`)
+		const response = await Intra.api.get<any>(`/v2/users/${u.intraLogin}`)
 		if (!response.ok)
 			throw `Could not find user "${u.intraLogin}"`
 		u.intraUID = response.json.id
@@ -60,5 +68,6 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		intraLogin: u.intraLogin!,
 		email: u.email!,
 		slackUID: u.slackUID!,
+		level: u.level!,
 	}
 }

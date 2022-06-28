@@ -1,14 +1,18 @@
 import { env } from '../env'
 import { IncompleteUser } from '../getUser'
 import { API } from '42-connector'
-import { User } from '../types'
+import { IntraResponse, User } from '../types'
 
 export namespace Intra {
 
 	export type Login = string
 	export type UID = number
 
-	export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, 100, false)
+	export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, {
+		maxRequestPerSecond: 8,
+		timeout: 4000,
+		logging: true,
+	})
 
 	export interface ScaleTeam {
 		id: number						// the id of the evaluation itself
@@ -23,7 +27,7 @@ export namespace Intra {
 
 	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
 		const { json } = await api.getPaged(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`)
-		const locks: ScaleTeam[] = json.map(evaluation => ({
+		const locks: ScaleTeam[] = json!.map(evaluation => ({
 			id: evaluation['id']!,
 			scaleID: evaluation['scale_id']!,
 			teamID: evaluation['team']['id']!,
@@ -43,8 +47,10 @@ export namespace Intra {
 		await api.post('/v2/groups_users', groupUser)
 	}
 
-	export async function getEvals(projectID: number, scaleID: number, teamID): Promise<any> {
+	export async function getEvaluations(projectID: number, scaleID: number, teamID): Promise<IntraResponse.Evaluation[]> {
 		const { json } = await api.getPaged(`/v2/projects/${projectID}/scale_teams?filter[scale_id]=${scaleID}&filter[team_id]=${teamID}`)
+		if (!json)
+			throw 'invalid response'
 		return json
 	}
 
