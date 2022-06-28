@@ -10,10 +10,10 @@ fs.mkdirSync('logs', { recursive: true })
 
 export async function log(line: string) {
 	console.log(`${nowISO()} | ${line}`)
-	await fs.promises.appendFile('logs/out.log', `${nowISO()} | ${line}`)
+	await fs.promises.appendFile('logs/out.log', `${nowISO()} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
 }
 
 export async function logErr(line: string) {
 	console.error(`${nowISO()} | ${line}`)
-	await fs.promises.appendFile('logs/err.log', `${nowISO()} | ${line}`)
+	await fs.promises.appendFile('logs/err.log', `${nowISO()} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
 }
