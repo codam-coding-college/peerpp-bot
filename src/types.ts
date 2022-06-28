@@ -6,6 +6,8 @@ export interface User {
 	email: string
 	slackUID: string
 	level: number
+	staff: boolean
+	// groups: array of group IDs
 }
 
 // below are all intra types

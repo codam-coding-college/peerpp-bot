@@ -74,7 +74,7 @@ export namespace Intra {
 	export async function isPeerPPAdmin(user: User): Promise<boolean> {
 		// TODO: use some kind of intra title instead of this?
 		const admins = ['joppe', 'jkoers', 'fbes', 'freek']
-		return admins.includes(user.intraLogin)
+		return admins.includes(user.intraLogin) || user.staff
 	}
 
 }

@@ -43,6 +43,7 @@ async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): Promise
 
 	// TODO: check if previous evals were passed
 	// TODO: ignore books form peer++ bot
+	// TODO: ignore non codam student
 
 	// only do check for peer++ eval if this is the second to last evaluation
 	const nEvalsRequired = hook.scale.correction_number
