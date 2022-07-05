@@ -10,8 +10,8 @@ export namespace Intra {
 
 	export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, {
 		maxRequestPerSecond: 8,
-		timeout: 4000,
-		logging: true,
+		timeout: 10000,
+		logging: false,
 	})
 
 	export interface ScaleTeam {
