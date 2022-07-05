@@ -73,20 +73,31 @@ async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): Promise
 // shouldCreatePeerppEval(JSON.parse(fs.readFileSync('src/webhook/webhookExample.json').toString())).then((a) => {
 // 	console.log(a)
 // })
+function filter(req): { code: number, msg: string } | null {
+	if (!req.is('application/json'))
+		return { code: 400, msg: 'Content-Type is not application/json' }
+	if (!req.headers['x-delivery'])
+		return { code: 400, msg: 'X-Delivery header missing' }
+	if (!req.headers['x-secret'])
+		return { code: 400, msg: 'X-Secret header missing' }
+	if (req.headers['x-secret'] !== env.WEBHOOK_SECRET)
+		return { code: 412, msg: 'X-Secret header incorrect' }
+	return null
+}
+
 
 app.post('/webhook', async (req, res) => {
-	if (!req.is('application/json'))
-		return res.status(400).send('Content-Type is not application/json')
-	if (!req.headers['x-delivery'])
-		return res.status(400).send('X-Delivery header missing')
-	if (!req.headers['x-secret'])
-		return res.status(400).send('X-Secret header missing')
-	if (req.headers['x-secret'] !== env.WEBHOOK_SECRET)
-		return res.status(412).send('X-Secret header incorrect')
-	console.log(JSON.stringify(req.body))
+	const filterRes = filter(req)
+	if (filterRes)
+		await fs.promises.appendFile('webhook.log', 'REJECTED ' + JSON.stringify(filterRes) + '\n' + JSON.stringify(req.body) + '\n\n\n')
 
+	if (filterRes) {
+		res.status(filterRes.code).send(filterRes.msg)
+		return
+	}
+	await fs.promises.appendFile('webhook.json', JSON.stringify(req.body) + ',\n')
 	// return res.status(200).send('OK')
 	// TODO: actually create evaluation
-	const create: boolean = await shouldCreatePeerppEval(req.body)
-	return res.status(create ? 201 : 204).send('')
+
+	return res.status(201).send('')
 })

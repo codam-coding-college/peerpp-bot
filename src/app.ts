@@ -6,7 +6,7 @@ import util from 'util'
 util.inspect.defaultOptions.depth = null;
 
 (async () => {
-	await slackApp.start()
+	// await slackApp.start()
 	await webhookApp.listen(8080)
 	console.log('express started')
 })()
