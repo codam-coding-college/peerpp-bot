@@ -57,7 +57,7 @@ app.message(/.*/i, async ({ message, say, }) => {
 		await await say(`Could not match your Slack ID to a Intra user`)
 		return
 	}
-	console.log(user)
+
 	if (text.match(/^help/))
 		await onMessage.help(say)
 	else if (text.match(/^list-projects/))
@@ -72,3 +72,11 @@ app.message(/.*/i, async ({ message, say, }) => {
 	else
 		await say(`command \`${text}\` not recognized, see help for more info`)
 })
+
+export async function sendPrivateMessge(user: User, text: string) {
+	const convo = await app.client.conversations.open({ users: user.slackUID })
+	if (!convo.ok || !convo?.channel?.id)
+		throw `clould not open conversation with user ${user} | ${convo}`
+
+	await app.client.chat.postMessage({ channel: convo.channel.id, text })
+}
