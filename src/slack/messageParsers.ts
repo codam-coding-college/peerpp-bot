@@ -93,19 +93,21 @@ async function sendYouWillBeEvaluatedMsg(corrected: User, corrector: User, proje
 }
 
 export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: string): Promise<void> {
-	await say(`requested peer++ eval for \`${projectSlug}\``)
+	await say(`Requested peer++ eval by ${corrector.intraLogin} for \`${projectSlug}\`...`)
 	const locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) => lock.projectSlug === projectSlug)
 	if (locks.length == 0) {
 		await say(`No-one needs to be evaluated on \`${projectSlug}\``)
 		return
 	}
 	const lock: Intra.ScaleTeam = highestPriorityScaleTeam(locks)
-	await say(`Found a team to be evaluated`)
+	await say(`Found a team to be evaluated, booking evaluation...`)
 
 	// intra requires a eval to be minimum of 15 minutes in the future
 	const startEval = new Date(Date.now() + 20 * 60 * 1000)
 	await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)
+	await log(`Booked evaluation corrector: ${corrector.intraLogin}, correcteds ${lock.correcteds} on ${projectSlug}`)
 	await Intra.api.delete(`/v2/scale_teams/${lock.id}`)
+	await log(`Deleted evaluation lock ${JSON.stringify(lock)}`)
 
 	let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `
 	const correcteds: User[] = await Promise.all(lock.correcteds.map(c => getFullUser(c)))
