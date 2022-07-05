@@ -17,7 +17,7 @@ export interface IncompleteUser {
 
 // give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
 export async function getFullUser(u: IncompleteUser): Promise<User> {
-	// use intraUID to generate intraLogin and email
+	// use intraUID to generate intraLogin, email, level, staff
 	if (u.intraUID && (!u.intraLogin || !u.email || u.level === undefined || u.staff === undefined)) {
 		const response = await Intra.api.get<any>(`/v2/users/${u.intraUID}`)
 		u.intraLogin = response.json.login
@@ -30,7 +30,7 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 			}
 		}
 		if (u.level === undefined)
-			throw `Could not find user in cursus ${env.CURSUS_ID} | ${response.json}`
+			throw `Could not find user in cursus ${env.CURSUS_ID} | ${JSON.stringify(response.json)}`
 		return getFullUser(u)
 	}
 
