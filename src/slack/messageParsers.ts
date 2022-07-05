@@ -11,11 +11,11 @@ import { app } from "./slack";
 export async function help(say: SayFn) {
 	const text = `\`\`\`
 help                                              show this help
-list-project-slugs                                list all projects which a peer++ evaluator can evaluate
+list-projects                                     list all projects which a peer++ evaluator can evaluate
 list-evaluations                                  list all evaluations that were locked by the peer++ bot
 book-evaluation [PROJECT_SLUG] [CORRECTOR_LOGIN]  book an evaluation for a project
-                                                    [PROJECT_SLUG]:    (optional) the project slug of the project you want to evaluate
-                                                    [CORRECTOR_LOGIN]: (optional, restricted) book an evaluation for someone else
+                                                      [PROJECT_SLUG]:    (optional) the project slug of the project you want to evaluate
+                                                      [CORRECTOR_LOGIN]: (optional, restricted) book an evaluation for someone else
 whoami                                            show who this bot thinks you are
 \`\`\``
 	await say(text)
