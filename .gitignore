@@ -5,3 +5,5 @@ __pycache__
 /logs
 /corrector_logs
 /tmp.*
+/node_modules/
+/build
