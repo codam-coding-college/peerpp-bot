@@ -6,6 +6,7 @@ import prettyMilliseconds from 'pretty-ms'
 import { User } from "../types";
 import { getFullUser } from "../getUser";
 import { app } from "./slack";
+import { log } from "../log";
 
 
 export async function help(say: SayFn) {
@@ -42,6 +43,18 @@ export function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.S
 	return best as Intra.ScaleTeam // TODO: this is pretty unsafe
 }
 
+function countProjects(locks: Intra.ScaleTeam[]) {
+	const count: { [key: string]: { teamsN: number, createdAt: Date } } = {}
+	for (const lock of locks) {
+		if (!count[lock.projectSlug])
+			count[lock.projectSlug] = { teamsN: 0, createdAt: new Date() }
+		count[lock.projectSlug]!.teamsN++
+		if (lock.createdAt.getTime() < count[lock.projectSlug]!.createdAt.getTime())
+			count[lock.projectSlug]!.createdAt = lock.createdAt
+	}
+	return count
+}
+
 export async function listEvaluations(say: SayFn) {
 	await say('Getting evaluation locks, this can take more than 10 seconds...')
 	const locks = await Intra.getEvaluationLocks()
@@ -57,15 +70,7 @@ export async function listEvaluations(say: SayFn) {
 	text += 'Format: <project_name> <number_of_evaluations> <time_since_lock>\n'
 	text += '```\n'
 
-	const count: { [key: string]: { teamsN: number, createdAt: Date } } = {}
-	for (const lock of locks) {
-		if (!count[lock.projectSlug])
-			count[lock.projectSlug] = { teamsN: 0, createdAt: new Date() }
-		count[lock.projectSlug]!.teamsN++
-		if (lock.createdAt.getTime() < count[lock.projectSlug]!.createdAt.getTime())
-			count[lock.projectSlug]!.createdAt = lock.createdAt
-	}
-
+	const count = countProjects(locks)
 	for (const key in count) {
 		const name = key.padEnd(longestName, ' ')
 		const nUsers = count[key]!.teamsN
