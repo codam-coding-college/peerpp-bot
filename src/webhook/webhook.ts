@@ -33,8 +33,10 @@ app.post('/webhook', async (req, res) => {
 		return
 	}
 
-	// return res.status(200).send('OK')
-	// TODO: actually create evaluation
 	const create: boolean = await shouldCreatePeerppEval(req.body)
-	return res.status(create ? 201 : 204).send('')
+	if (!create)
+		return res.status(204).send('Peer++ evaluation not required')
+	// TODO: actually create evaluation
+
+	return res.status(201).send(`Peer++ placeholder evaluation created`)
 })
