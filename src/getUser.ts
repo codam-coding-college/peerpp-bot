@@ -13,12 +13,13 @@ export interface IncompleteUser {
 	// do not pass these
 	level?: number
 	staff?: boolean
+	campusID?: number
 }
 
 // give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin, email, level, staff
-	if (u.intraUID && (!u.intraLogin || !u.email || u.level === undefined || u.staff === undefined)) {
+	if (u.intraUID && (!u.intraLogin || !u.email || u.level === undefined || !u.staff || u.campusID)) {
 		const response = await Intra.api.get<any>(`/v2/users/${u.intraUID}`)
 		u.intraLogin = response.json.login
 		u.email = response.json.email
@@ -31,6 +32,12 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		}
 		if (u.level === undefined)
 			throw `Could not find user in cursus ${env.CURSUS_ID} | ${JSON.stringify(response.json)}`
+
+		u.campusID = 1 // default is paris
+		for (const campusUser of response.json.campus_users) {
+			if (campusUser.is_primary)
+				u.campusID = campusUser.campus_id
+		}
 		return getFullUser(u)
 	}
 
@@ -74,5 +81,6 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		slackUID: u.slackUID!,
 		level: u.level!,
 		staff: u.staff!,
+		campusID: u.campusID!,
 	}
 }

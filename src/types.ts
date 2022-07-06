@@ -7,6 +7,7 @@ export interface User {
 	slackUID: string
 	level: number
 	staff: boolean
+	campusID: number
 	// groups: array of group IDs
 }
 

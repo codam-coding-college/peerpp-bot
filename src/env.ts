@@ -14,6 +14,7 @@ interface Env {
 
 	projects: { id: number, slug: string }[]
 	CURSUS_ID: number
+	WATCHED_CAMPUSES: number[]
 }
 
 const file = dotenv.parse(fs.readFileSync('.env'))
@@ -29,4 +30,5 @@ export const env: Env = {
 	INTRA_SECRET: file['INTRA_SECRET']!,
 	projects: JSON.parse(fs.readFileSync('env/project_slugs.json').toString()),
 	CURSUS_ID: 21,
+	WATCHED_CAMPUSES: [14],
 }
