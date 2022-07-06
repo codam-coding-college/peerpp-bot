@@ -15,11 +15,28 @@ async function levelHighEnough(hook: IntraResponse.Webhook.Root, evals: IntraRes
 				return true
 			}
 		}
-		log(`hook | required | booking evaluation for : ${corrected.intraLogin}'s team`)
 		return false
-	} catch (err) {
+	}
+	catch (err) {
 		logErr(`shouldCreatePeerppEval 2 | ${err}`)
 		return true
+	}
+}
+
+async function isFromWatchedCampus(user: User) {
+	const isPart = env.WATCHED_CAMPUSES.includes(user.campusID)
+	if (!isPart)
+		log(`hook | not required | user ${JSON.stringify(user)} is not part of the watched campuses: ${env.WATCHED_CAMPUSES}`)
+	return isPart
+}
+
+async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
+	try {
+		return await getFullUser({ intraUID: hook.user.id, intraLogin: hook.user.login })
+	}
+	catch (err) {
+		logErr(`hook | not required | could not parse user from hook with err: ${err} hook: ${JSON.stringify(hook)}`)
+		return null
 	}
 }
 
@@ -27,7 +44,7 @@ async function levelHighEnough(hook: IntraResponse.Webhook.Root, evals: IntraRes
 // Get amount of evals required from the last one (if the amount has been changed during hand-in of the project,
 // this eval is the last one done, so the number will likely be most up-to-date)
 export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): Promise<boolean> {
-	if (!env.projects.find(p => p.id === hook?.project?.id)) {
+	if (!env.projects.find(p => p.id === hook.project.id)) {
 		log(`hook | not required | projectid ${hook.project.id} is not in the list of projects`)
 		return false
 	}
@@ -45,8 +62,10 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 	}
 
 	// ignore hooks coming from the peer++ bot itself
-	if (hook.user.id === env.PEERPP_BOT_UID)
+	if (hook.user.id === env.PEERPP_BOT_UID) {
+		log(`hook | not required | hook is from peer++ bot`)
 		return false
+	}
 
 	// TODO: check if previous evals were passed
 	// TODO: ignore non codam student
@@ -58,8 +77,16 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 		return false
 	}
 
+	const corrected: User | null = await getUser(hook)
+	if (!corrected)
+		return false
+	if (!(await isFromWatchedCampus(corrected)))
+		return false
+
+	// this should be the last check
 	if (await levelHighEnough(hook, evals))
 		return false
 
+	log(`hook | required | book an evaluation for: ${corrected.intraLogin} now`)
 	return true
 }
