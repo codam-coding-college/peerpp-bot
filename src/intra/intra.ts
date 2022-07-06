@@ -10,7 +10,7 @@ export namespace Intra {
 
 	export const api: API = new API(env.INTRA_UID, env.INTRA_SECRET, {
 		maxRequestPerSecond: 8,
-		timeout: 10000,
+		timeout: 30000,
 		logging: false,
 	})
 
