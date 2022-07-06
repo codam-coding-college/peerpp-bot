@@ -1,7 +1,7 @@
 import express from 'express'
 import { env } from '../env'
 import { shouldCreatePeerppEval } from './shouldCreatePeerppEval'
-import { Intra } from '../intra/intra'
+import { logErr } from '../log'
 import { IntraResponse } from '../types'
 
 export const app = express()
@@ -46,6 +46,7 @@ app.post('/webhook', async (req, res) => {
 		return res.status(201).send(`Peer++ placeholder evaluation created`)
 	}
 	catch (err) {
+		logErr(err)
 		return res.status(500).send(err)
 	}
 })

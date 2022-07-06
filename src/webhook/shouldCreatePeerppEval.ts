@@ -12,14 +12,14 @@ async function levelHighEnough(hook: IntraResponse.Webhook.Root, evals: IntraRes
 		for (const evalu of evals) {
 			const corrector: User = await getFullUser({ intraUID: evalu.corrector.id, intraLogin: evalu.corrector.login })
 			if (corrector.level - 2 > corrected.level) {
-				await logHook(false, hook, `corrector ${corrector} level is high enough`)
+				await logHook('ignored', hook, `corrector ${corrector} level is high enough`)
 				return true
 			}
 		}
 		return false
 	}
 	catch (err) {
-		logErr(`shouldCreatePeerppEval 2 | ${err}`)
+		await logHook('error', hook, `levelHighEnough ${err}`)
 		return true
 	}
 }
@@ -27,7 +27,7 @@ async function levelHighEnough(hook: IntraResponse.Webhook.Root, evals: IntraRes
 async function isFromWatchedCampus(user: User, hook: IntraResponse.Webhook.Root) {
 	const isPart = env.WATCHED_CAMPUSES.includes(user.campusID)
 	if (!isPart)
-		await logHook(false, hook, `user ${JSON.stringify(user)} is not part of the watched campuses: ${env.WATCHED_CAMPUSES}`)
+		await logHook('ignored', hook, `user ${JSON.stringify(user)} is not part of the watched campuses: ${env.WATCHED_CAMPUSES}`)
 	return isPart
 }
 
@@ -36,7 +36,7 @@ async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
 		return await getFullUser({ intraUID: hook.user.id, intraLogin: hook.user.login })
 	}
 	catch (err) {
-		await logErr(`could not parse user from hook with err: ${err} hook: ${JSON.stringify(hook)}`)
+		await logHook('error', hook, `could not parse user from hook with err: ${err} hook: ${JSON.stringify(hook)}`)
 		return null
 	}
 }
@@ -46,7 +46,7 @@ async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
 // this eval is the last one done, so the number will likely be most up-to-date)
 export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): Promise<boolean> {
 	if (!env.projects.find(p => p.id === hook.project.id)) {
-		await logHook(false, hook, `projectid ${hook.project.id} is not in the list of projects`)
+		await logHook('ignored', hook, `projectid ${hook.project.id} is not in the list of projects`)
 		return false
 	}
 
@@ -58,13 +58,13 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 		return false
 	}
 	if (evals?.length === 0) {
-		await logHook(false, hook, `project has no evaluations completed`)
+		await logHook('ignored', hook, `project has no evaluations completed`)
 		return false
 	}
 
 	// ignore hooks coming from the peer++ bot itself
 	if (hook.user.id === env.PEERPP_BOT_UID) {
-		await logHook(false, hook, `hook is from peer++ bot`)
+		await logHook('ignored', hook, `hook is from peer++ bot`)
 		return false
 	}
 
@@ -74,7 +74,7 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 	// only do check for peer++ eval if this is the second to last evaluation
 	const nEvalsRequired = hook.scale.correction_number
 	if (nEvalsRequired - 1 != evals.length) {
-		await logHook(false, hook, `user did ${evals.length}, of the required ${nEvalsRequired} evals`)
+		await logHook('ignored', hook, `user did ${evals.length}, of the required ${nEvalsRequired} evals`)
 		return false
 	}
 
@@ -88,6 +88,6 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 	if (await levelHighEnough(hook, evals))
 		return false
 
-	await logHook(true, hook, `book an evaluation for: ${corrected.intraLogin} now`)
+	await logHook('required', hook, `book an evaluation for: ${corrected.intraLogin} now`)
 	return true
 }

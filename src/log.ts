@@ -21,10 +21,10 @@ export async function logErr(line: string, path: string = 'logs/err.log') {
 	await fs.promises.appendFile(path, `${now} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
 }
 
-export async function logHook(required: boolean, hook: IntraResponse.Webhook.Root | null, reason: string) {
+export async function logHook(status: 'required' | 'ignored' | 'error', hook: IntraResponse.Webhook.Root | null, reason: string) {
 	const now = nowISO()
 	const path = './logs/hook.log'
-	const line = `${now} | hook | ${required ? 'REQUIRED' : 'IGNORED '} | ${reason} | `
+	const line = `${now} | ${status.padEnd(8, ' ')} | ${reason} | `
 	console.log(line + `<see ${path}>`)
 
 	await fs.promises.appendFile(path, line + JSON.stringify(hook) + '\n')
