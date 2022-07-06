@@ -1,6 +1,8 @@
 import express from 'express'
 import { env } from '../env'
 import { shouldCreatePeerppEval } from './shouldCreatePeerppEval'
+import { Intra } from '../intra/intra'
+import { IntraResponse } from '../types'
 
 export const app = express()
 app.use(express.json())
@@ -33,10 +35,17 @@ app.post('/webhook', async (req, res) => {
 		return
 	}
 
-	const create: boolean = await shouldCreatePeerppEval(req.body)
-	if (!create)
-		return res.status(204).send('Peer++ evaluation not required')
-	// TODO: actually create evaluation
+	try {
+		const hook: IntraResponse.Webhook.Root = req.body
+		const create: boolean = await shouldCreatePeerppEval(hook)
+		if (!create)
+			return res.status(204).send('Peer++ evaluation not required')
 
-	return res.status(201).send(`Peer++ placeholder evaluation created`)
+		// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id) // TODO: uncomment
+
+		return res.status(201).send(`Peer++ placeholder evaluation created`)
+	}
+	catch (err) {
+		return res.status(500).send(err)
+	}
 })
