@@ -5,6 +5,23 @@ import { IntraResponse } from '../types'
 import { User } from '../types'
 import { env } from '../env'
 
+async function levelHighEnough(hook: IntraResponse.Webhook.Root, evals: IntraResponse.Evaluation[]): Promise<boolean> {
+	try {
+		const corrected: User = await getFullUser({ intraUID: hook.user.id, intraLogin: hook.user.login })
+		for (const evalu of evals) {
+			const corrector: User = await getFullUser({ intraUID: evalu.corrector.id, intraLogin: evalu.corrector.login })
+			if (corrector.level - 2 > corrected.level) {
+				log(`hook | not required | corrector ${corrector} level is high enough`)
+				return true
+			}
+		}
+		log(`hook | required | booking evaluation for : ${corrected.intraLogin}'s team`)
+		return false
+	} catch (err) {
+		logErr(`shouldCreatePeerppEval 2 | ${err}`)
+		return true
+	}
+}
 
 // Only check if a peer++ evaluation is required if the second-to-last evaluation has been completed
 // Get amount of evals required from the last one (if the amount has been changed during hand-in of the project,
@@ -38,19 +55,8 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 		return false
 	}
 
-	try {
-		const corrected: User = await getFullUser({ intraUID: hook.user.id, intraLogin: hook.user.login })
-		for (const evalu of evals) {
-			const corrector: User = await getFullUser({ intraUID: evalu.corrector.id, intraLogin: evalu.corrector.login })
-			if (corrector.level - 2 > corrected.level) {
-				log(`hook | not required | corrector ${corrector} level is high enough`)
-				return false
-			}
-		}
-		log(`hook | required | booking evaluation for : ${corrected.intraLogin}'s team`)
-		return true
-	} catch (err) {
-		logErr(`shouldCreatePeerppEval 2 | ${err}`)
+	if (await levelHighEnough(hook, evals))
 		return false
-	}
+
+	return true
 }
