@@ -26,6 +26,7 @@ export namespace Intra {
 	}
 
 	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
+		// const { json } = await api.getPaged(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`) // TODO?
 		const { json } = await api.getPaged(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`)
 		const locks: ScaleTeam[] = json!.map(evaluation => ({
 			id: evaluation['id']!,
