@@ -16,7 +16,7 @@ port 3000  is used to receives slack messages on the slack bolt api
 docker build -t peerpp-bot .
 docker stop peerpp-bot || true
 docker rm peerpp-bot || true
-docker run -d -p 8080:8080 -p 3000:3000 --name peerpp-bot peerpp-bot
+docker run -d --restart unless-stopped -p 8080:8080 -p 3000:3000 --name peerpp-bot peerpp-bot
 ```
 
 ## Local development
