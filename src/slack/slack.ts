@@ -9,6 +9,7 @@ export const app = new App({
 	token: env.SLACK_TOKEN,
 	socketMode: true,
 	appToken: env.SLACK_APP_TOKEN,
+	port: parseInt(process.env['PORT'] || '3000')
 })
 
 async function bookEvaluation(text: string, say: SayFn, corrector: User) {
