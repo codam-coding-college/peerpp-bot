@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { IntraResponse } from './types'
 
 export function nowISO(d?: Date): string {
 	if (!d)
@@ -8,14 +9,23 @@ export function nowISO(d?: Date): string {
 
 fs.mkdirSync('logs', { recursive: true })
 
-export async function log(line: string) {
+export async function log(line: string, path: string = 'logs/out.log') {
 	const now = nowISO()
 	console.log(`${now} | ${line}`)
-	await fs.promises.appendFile('logs/out.log', `${now} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
+	await fs.promises.appendFile(path, `${now} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
 }
 
-export async function logErr(line: string) {
+export async function logErr(line: string, path: string = 'logs/err.log') {
 	const now = nowISO()
 	console.error(`${now} | ${line}`)
-	await fs.promises.appendFile('logs/err.log', `${now} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
+	await fs.promises.appendFile(path, `${now} | ${line}${line.match(/\n$/) ? '' : '\n'}`)
+}
+
+export async function logHook(required: boolean, hook: IntraResponse.Webhook.Root | null, reason: string) {
+	const now = nowISO()
+	const path = './logs/hook.log'
+	const line = `${now} | hook | ${required ? 'REQUIRED' : 'IGNORED '} | ${reason} | `
+	console.log(line + `<see ${path}>`)
+
+	await fs.promises.appendFile(path, line + JSON.stringify(hook) + '\n')
 }
