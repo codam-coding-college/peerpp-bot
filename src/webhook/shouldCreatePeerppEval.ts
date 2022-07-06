@@ -44,8 +44,11 @@ export async function shouldCreatePeerppEval(hook: IntraResponse.Webhook.Root): 
 		return false
 	}
 
+	// ignore hooks coming from the peer++ bot itself
+	if (hook.user.id === env.PEERPP_BOT_UID)
+		return false
+
 	// TODO: check if previous evals were passed
-	// TODO: ignore books form peer++ bot
 	// TODO: ignore non codam student
 
 	// only do check for peer++ eval if this is the second to last evaluation
