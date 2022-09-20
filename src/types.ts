@@ -1,165 +1,160 @@
-
-export type ErrorMsg = string
+export type ErrorMsg = string;
 export interface User {
-	intraUID: number
-	intraLogin: string
-	email: string
-	slackUID: string
-	level: number
-	staff: boolean
-	campusID: number
+	intraUID: number;
+	intraLogin: string;
+	email: string;
+	slackUID: string;
+	level: number;
+	staff: boolean;
+	campusID: number;
 	// groups: array of group IDs
 }
 
 // below are all intra types
 
 export namespace IntraResponse {
-
 	export interface Flag {
-		id: number
-		name: string
-		positive: boolean
-		icon: string
-		created_at: Date
-		updated_at: Date
+		id: number;
+		name: string;
+		positive: boolean;
+		icon: string;
+		created_at: Date;
+		updated_at: Date;
 	}
 
 	export interface Corrected {
-		id: number
-		login: string
-		url: string
+		id: number;
+		login: string;
+		url: string;
 	}
 
 	export interface Corrector {
-		id: number
-		login: string
-		url: string
+		id: number;
+		login: string;
+		url: string;
 	}
 
-	export interface Truant {
-	}
+	export interface Truant {}
 
 	export interface Answer {
-		value: number
-		answer?: any
+		value: number;
+		answer?: any;
 	}
 
 	export interface QuestionsWithAnswer {
-		id: number
-		name: string
-		guidelines: string
-		rating: string
-		kind: string
-		position: number
-		answers: Answer[]
+		id: number;
+		name: string;
+		guidelines: string;
+		rating: string;
+		kind: string;
+		position: number;
+		answers: Answer[];
 	}
 
 	export interface Language {
-		id: number
-		name: string
-		identifier: string
-		created_at: Date
-		updated_at: Date
+		id: number;
+		name: string;
+		identifier: string;
+		created_at: Date;
+		updated_at: Date;
 	}
 
 	export interface Flag2 {
-		id: number
-		name: string
-		positive: boolean
-		icon: string
-		created_at: Date
-		updated_at: Date
+		id: number;
+		name: string;
+		positive: boolean;
+		icon: string;
+		created_at: Date;
+		updated_at: Date;
 	}
 
 	export interface Scale {
-		id: number
-		evaluation_id: number
-		name: string
-		is_primary: boolean
-		comment: string
-		introduction_md: string
-		disclaimer_md: string
-		guidelines_md: string
-		created_at: Date
-		correction_number: number
-		duration: number
-		manual_subscription: boolean
-		languages: Language[]
-		flags: Flag2[]
-		free: boolean
+		id: number;
+		evaluation_id: number;
+		name: string;
+		is_primary: boolean;
+		comment: string;
+		introduction_md: string;
+		disclaimer_md: string;
+		guidelines_md: string;
+		created_at: Date;
+		correction_number: number;
+		duration: number;
+		manual_subscription: boolean;
+		languages: Language[];
+		flags: Flag2[];
+		free: boolean;
 	}
 
 	export interface User {
-		id: number
-		login: string
-		url: string
-		leader: boolean
-		occurrence: number
-		validated: boolean
-		projects_user_id: number
+		id: number;
+		login: string;
+		url: string;
+		leader: boolean;
+		occurrence: number;
+		validated: boolean;
+		projects_user_id: number;
 	}
 
 	export interface Team {
-		id: number
-		name: string
-		url: string
-		final_mark: number
-		project_id: number
-		created_at: Date
-		updated_at: Date
-		status: string
-		terminating_at?: any
-		users: User[]
-		locked?: boolean
-		validated?: boolean
-		closed?: boolean
-		repo_url?: any
-		repo_uuid: string
-		locked_at: Date
-		closed_at: Date
-		project_session_id: number
-		project_gitlab_path: string
+		id: number;
+		name: string;
+		url: string;
+		final_mark: number;
+		project_id: number;
+		created_at: Date;
+		updated_at: Date;
+		status: string;
+		terminating_at?: any;
+		users: User[];
+		locked?: boolean;
+		validated?: boolean;
+		closed?: boolean;
+		repo_url?: any;
+		repo_uuid: string;
+		locked_at: Date;
+		closed_at: Date;
+		project_session_id: number;
+		project_gitlab_path: string;
 	}
 
 	export interface User {
-		login: string
-		id: number
-		url: string
+		login: string;
+		id: number;
+		url: string;
 	}
 
 	export interface Feedback {
-		id: number
-		user: User
-		feedbackable_type: string
-		feedbackable_id: number
-		comment: string
-		rating: number
-		created_at: Date
+		id: number;
+		user: User;
+		feedbackable_type: string;
+		feedbackable_id: number;
+		comment: string;
+		rating: number;
+		created_at: Date;
 	}
 
 	export interface Evaluation {
-		id: number
-		scale_id: number
-		comment: string
-		created_at: Date
-		updated_at: Date
-		feedback: string
-		final_mark: number
-		flag: Flag
-		begin_at: Date
-		correcteds: Corrected[]
-		corrector: Corrector
-		truant: Truant
-		filled_at: Date
-		questions_with_answers: QuestionsWithAnswer[]
-		scale: Scale
-		team: Team
-		feedbacks: Feedback[]
+		id: number;
+		scale_id: number;
+		comment: string;
+		created_at: Date;
+		updated_at: Date;
+		feedback: string;
+		final_mark: number;
+		flag: Flag;
+		begin_at: Date;
+		correcteds: Corrected[];
+		corrector: Corrector;
+		truant: Truant;
+		filled_at: Date;
+		questions_with_answers: QuestionsWithAnswer[];
+		scale: Scale;
+		team: Team;
+		feedbacks: Feedback[];
 	}
 
-
 	export namespace Webhook {
-
 		export interface Team {
 			id: number;
 			project_id: number;
@@ -250,6 +245,5 @@ export namespace IntraResponse {
 			project: Project;
 			user: User;
 		}
-
 	}
 }

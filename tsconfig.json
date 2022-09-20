@@ -2,9 +2,9 @@
 // Visit https://aka.ms/tsconfig.json to read more about this file
 {
 	"compilerOptions": {
-		"target": "es2017",
+		"target": "esnext",
 		"module": "commonjs",
-		"allowJs": true,
+		"allowJs": false,
 		// "checkJs": true,
 		"outDir": "./build/",
 		"rootDir": "./src/",
