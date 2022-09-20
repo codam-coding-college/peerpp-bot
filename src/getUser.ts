@@ -25,7 +25,6 @@ export interface IncompleteUser {
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin, email, level, staff
 
-
 	// TODO: Ugly disgusting hack, this whole function will get nuked later ...
 	if (
 		u.campusID != undefined &&

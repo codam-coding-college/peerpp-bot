@@ -1,16 +1,16 @@
-export type ErrorMsg = string;
 export interface User {
 	intraUID: number;
 	intraLogin: string;
 	email: string;
 	slackUID: string;
+	
 	level: number;
 	staff: boolean;
 	campusID: number;
 	// groups: array of group IDs
 }
 
-// below are all intra types
+/* ************************************************************************** */
 
 export namespace IntraResponse {
 	export interface Flag {

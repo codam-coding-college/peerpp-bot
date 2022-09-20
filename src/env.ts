@@ -1,12 +1,23 @@
 import dotenv from "dotenv";
 import fs from "fs";
+import { sys } from "typescript";
+import Logger from "./log";
 
-// TODO: Verify each IO action and give proper error messages.
 /* ************************************************************************** */
+
+if (!fs.existsSync(".env")) {
+	Logger.err("Missing '.env' file.")
+	sys.exit(1);
+}
+if (!fs.existsSync("project_slugs.json")) {
+	Logger.err("Missing 'project_slugs.json' file.")
+	sys.exit(1);
+}
 
 const file = dotenv.parse(fs.readFileSync(".env"));
 
 /* ************************************************************************** */
+
 interface Env {
 	SLACK_TOKEN: string;
 	WEBHOOK_SECRET: string;

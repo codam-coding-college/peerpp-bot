@@ -38,7 +38,8 @@ export function highestPriorityScaleTeam(scaleTeams: Intra.ScaleTeam[]): Intra.S
 		}
 	}
 
-	return best as Intra.ScaleTeam; // TODO: this is pretty unsafe
+	// TODO: Unsafe: We need to actually check that scale teams is not null.
+	return best as Intra.ScaleTeam; 
 }
 
 function countProjects(locks: Intra.ScaleTeam[]) {
