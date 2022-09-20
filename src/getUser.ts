@@ -3,6 +3,9 @@ import { Intra } from "./intra/intra";
 import { User } from "./types";
 import { UsersInfoResponse } from "@slack/web-api";
 import { env } from "./env";
+import Logger from "./log";
+
+/* ************************************************************************** */
 
 export interface IncompleteUser {
 	intraUID?: Intra.UID;
@@ -16,12 +19,12 @@ export interface IncompleteUser {
 	campusID?: number;
 }
 
+/* ************************************************************************** */
+
 // give this function 1-n of the IncompleteUser params and it will return a fully completed User Object
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin, email, level, staff
 
-	console.log("Fetching data ...");
-	console.log(u);
 
 	// TODO: Ugly disgusting hack, this whole function will get nuked later ...
 	if (
@@ -32,7 +35,9 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		u.level != undefined &&
 		u.slackUID != undefined &&
 		u.staff != undefined
-	)
+	) {
+		Logger.log("Fetched data:")
+		Logger.log(u);
 		return {
 			intraUID: u.intraUID,
 			intraLogin: u.intraLogin,
@@ -42,6 +47,7 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 			staff: u.staff,
 			campusID: u.campusID,
 		};
+	}
 
 	if (
 		u.intraUID &&

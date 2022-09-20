@@ -25,10 +25,7 @@ export namespace Intra {
 	}
 
 	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
-		// const { json } = await api.getPaged(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`) // TODO?
-		const { json } = await api.getPaged(
-			`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`
-		);
+		const { json } = await api.getPaged(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams?filter[future]=true`);
 		const locks: ScaleTeam[] = json!.map((evaluation) => ({
 			id: evaluation["id"]!,
 			scaleID: evaluation["scale_id"]!,
@@ -84,7 +81,7 @@ export namespace Intra {
 	}
 
 	export async function isPeerPPAdmin(user: User): Promise<boolean> {
-		// TODO: use some kind of intra title instead of this?
+		// TODO: Change this to later just check if user is a staff member. 
 		const admins = ["joppe", "jkoers", "fbes", "freek"];
 		return admins.includes(user.intraLogin) || user.staff;
 	}

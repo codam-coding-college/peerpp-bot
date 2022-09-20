@@ -1,6 +1,12 @@
 import dotenv from "dotenv";
 import fs from "fs";
 
+// TODO: Verify each IO action and give proper error messages.
+/* ************************************************************************** */
+
+const file = dotenv.parse(fs.readFileSync(".env"));
+
+/* ************************************************************************** */
 interface Env {
 	SLACK_TOKEN: string;
 	WEBHOOK_SECRET: string;
@@ -17,8 +23,6 @@ interface Env {
 	WATCHED_CAMPUSES: number[];
 }
 
-const file = dotenv.parse(fs.readFileSync(".env"));
-
 export const env: Env = {
 	SLACK_TOKEN: file["SLACK_TOKEN"]!,
 	WEBHOOK_SECRET: file["WEBHOOK_SECRET"]!,
@@ -28,7 +32,7 @@ export const env: Env = {
 	SLACK_APP_TOKEN: file["SLACK_APP_TOKEN"]!,
 	INTRA_UID: file["INTRA_UID"]!,
 	INTRA_SECRET: file["INTRA_SECRET"]!,
-	projects: JSON.parse(fs.readFileSync("env/project_slugs.json").toString()),
+	projects: JSON.parse(fs.readFileSync("project_slugs.json").toString()),
 	CURSUS_ID: 21,
 	WATCHED_CAMPUSES: [14],
 };
