@@ -1,22 +1,14 @@
 import express from "express";
+import { Request, Response, NextFunction } from "express";
 import { env } from "../env";
-import { shouldCreatePeerppEval } from "./shouldCreatePeerppEval";
-import { logErr } from "../log";
+import { requiresEvaluation } from "./evalRequirements";
 import { IntraResponse } from "../types";
+import Logger from "../log";
 
-export const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use((err, req, res, next) => {
-	// @ts-ignore
-	if (err instanceof SyntaxError && err.statusCode === 400 && "body" in err) {
-		// @ts-ignore
-		return res.status(400).send({ status: 400, message: err.message });
-	}
-	next();
-});
+// Helper functions
+/* ************************************************************************** */
 
-function filterHook(req): { code: number; msg: string } | null {
+function filterHook(req: Request): { code: number; msg: string } | null {
 	if (!req.is("application/json"))
 		return { code: 400, msg: "Content-Type is not application/json" };
 	if (!req.headers["x-delivery"])
@@ -28,24 +20,40 @@ function filterHook(req): { code: number; msg: string } | null {
 	return null;
 }
 
-app.post("/webhook", async (req, res) => {
+// Express setup
+/* ************************************************************************** */
+
+export const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+	if (err.statusCode === 400 && "body" in err)
+		res.status(400).send({ status: 400, message: err.message });
+	next();
+});
+
+// Post
+/* ************************************************************************** */
+
+app.post("/webhook", async (req: Request, res: Response) => {
 	const filter = filterHook(req);
-	if (filter) {
-		res.status(filter.code).send(filter.msg);
-		return;
-	}
+	if (filter) 
+		return res.status(filter.code).send(filter.msg);
 
 	try {
 		const hook: IntraResponse.Webhook.Root = req.body;
-		const create: boolean = await shouldCreatePeerppEval(hook);
+		const create: boolean = await requiresEvaluation(hook);
+
 		if (!create)
 			return res.status(204).send("Peer++ evaluation not required");
 
-		// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id) // TODO: uncomment
+		// TODO: Uncomment to actually book evals
+		// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
 
 		return res.status(201).send(`Peer++ placeholder evaluation created`);
 	} catch (err) {
-		logErr(err);
+		Logger.err(err);
 		return res.status(500).send(err);
 	}
 });
