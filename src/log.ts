@@ -20,8 +20,8 @@ class Logger {
 	 * Logs a message, prints to console and writes to the log file.
 	 * @param msg The message to log.
 	 */
-	public static async log(msg: any) {
-		const line = `[INFO] [${this.nowISO()}] : ${JSON.stringify(msg)}`
+	public static async log(msg: string) {
+		const line = `[INFO] [${this.nowISO()}] : ${msg}`
 		
 		console.log(line);
 		await fs.promises.appendFile(logPath, `${line}${line.match(/\n$/) ? "" : "\n"}`);
@@ -32,7 +32,7 @@ class Logger {
 	 * @param msg The message to log.
 	 */
 	public static async err(msg: string) {
-		const line = `[ERROR] [${this.nowISO()}] : ${JSON.stringify(msg)}`
+		const line = `[ERROR] [${this.nowISO()}] : ${msg}`
 
 		console.error(line);
 		await fs.promises.appendFile(logPath, `${line}${line.match(/\n$/) ? "" : "\n"}`);

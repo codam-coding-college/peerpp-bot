@@ -36,7 +36,7 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		u.staff != undefined
 	) {
 		Logger.log("Fetched data:")
-		Logger.log(u);
+		Logger.log(`User:`);
 		return {
 			intraUID: u.intraUID,
 			intraLogin: u.intraLogin,
@@ -56,34 +56,34 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 			!u.staff ||
 			u.campusID)
 	) {
-		const response = await Intra.api.get<any>(`/v2/users/${u.intraUID}`);
-		u.intraLogin = response.json.login;
-		u.email = response.json.email;
-		u.staff = !!response.json["staff?"];
-		for (const user of response.json.cursus_users) {
+		const response = await (await Intra.api.get(`/v2/users/${u.intraUID}`)).json();
+		
+		u.intraLogin = response.login;
+		u.email = response.email;
+		u.staff = !!response["staff?"];
+		for (const user of response.cursus_users) {
 			if (user.cursus.id === env.CURSUS_ID) {
 				u.level = user.level;
 				break;
 			}
 		}
 		if (u.level === undefined)
-			throw `Could not find user in cursus ${
-				env.CURSUS_ID
-			} | ${JSON.stringify(response.json)}`;
+			throw `Could not find user in cursus ${env.CURSUS_ID} | ${JSON.stringify(response)}`;
 
 		u.campusID = 1; // default is paris
-		for (const campusUser of response.json.campus_users) {
-			if (campusUser.is_primary) u.campusID = campusUser.campus_id;
+		for (const campusUser of response.campus_users) {
+			if (campusUser.is_primary) 
+				u.campusID = campusUser.campus_id;
 		}
 		return getFullUser(u);
 	}
 
 	// use intraLogin to generate intraUID and email
 	if (u.intraLogin && (!u.intraUID || !u.email)) {
-		const response = await Intra.api.get<any>(`/v2/users/${u.intraLogin}`);
+		const response = await (await Intra.api.get(`/v2/users/${u.intraLogin}`)).json();
 		if (!response.ok) throw `Could not find user "${u.intraLogin}"`;
-		u.intraUID = response.json.id;
-		u.email = response.json.email;
+		u.intraUID = response.id;
+		u.email = response.email;
 		return getFullUser(u);
 	}
 
