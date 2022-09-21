@@ -54,12 +54,10 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 			throw `Could not find user in cursus ${env.CURSUS_ID}}`;
 
 		// Get the campus
-		user.campusID = 1;
-		const campusUsers = json.campus_id as IntraResponse.CampusUser[];
-		for (const campusUser of campusUsers) {
-			if (campusUser.is_primary) {
-				user.campusID = campusUser.campus_id;
-			}
+		user.campusID = 1; // Default to Paris
+		for (const campusUser of json.campus_users) {
+			if (campusUser.is_primary) 
+			user.campusID = campusUser.campus_id;
 		}
 
 		return getFullUser(user);
