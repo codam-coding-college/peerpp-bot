@@ -68,13 +68,7 @@ async function isFromWatchedCampus(user: User, hook: IntraResponse.Webhook.Root)
 async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
 	try { return await getFullUser({intraUID: hook.user.id, intraLogin: hook.user.login}); } 
 	catch (err) {
-		await Logger.logHook(
-			"error",
-			hook,
-			`could not parse user from hook with err: ${err} hook: ${JSON.stringify(
-				hook
-			)}`
-		);
+		await Logger.logHook("error", hook, `could not parse user from hook with err: ${err} hook: ${JSON.stringify(hook.user.displayname)}`);
 		return null;
 	}
 }
@@ -110,7 +104,7 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 	let evals: IntraResponse.Evaluation[] = [];
 	try { evals = await Intra.getEvaluations(hook.team.project_id, hook.scale.id, hook.team.id); } 
 	catch (err) {
-		Logger.err(`shouldCreatePeerppEval | ${err} | ${JSON.stringify(hook)}`);
+		Logger.err(`shouldCreatePeerppEval | ${err}`);
 		return false;
 	}
 	if (evals?.length === 0) {
@@ -121,7 +115,7 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 	// Only do check for peer++ eval if this is the second to last evaluation
 	const nEvalsRequired = hook.scale.correction_number;
 	if (nEvalsRequired - 1 != evals.length) {
-		await Logger.logHook("ignored", hook, `user did ${evals.length}, of the required ${nEvalsRequired} evals`);
+		await Logger.logHook("ignored", hook, `user ${hook.user.login} did ${evals.length}, of the required ${nEvalsRequired} evals`);
 		return false;
 	}
 

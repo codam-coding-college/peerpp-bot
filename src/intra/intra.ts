@@ -30,35 +30,33 @@ export namespace Intra {
 	 * @returns 
 	 */
 	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
-		const pages = await api.getAllPages(`/v2/users/${env.PEERPP_BOT_UID}/scale_teams`, {
+		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/scale_teams`, {
 			"filter[future]": "true",
 		});
 
 		await Promise.all(pages)
 		const teams: ScaleTeam[] = []
-		for await (const response of pages) {
+		for await (const response of pages) {			
 			if (!response.ok) {
 				Logger.err(`Failed to get evaluation locks with status ${response.status}`);
 				throw Error("Failed to get evaluation locks");
 			}
-
-			Logger.log(await response.json())
-
-			// const scaleTeam: ScaleTeam = {
-			// 	id: response["id"],
-			// 	scaleID: response["scale_id"],
-			// 	teamID: response["team"]["id"],
-			// 	teamName: response["team"]["name"],
-			// 	projectID: response["team"]["project_id"] as number,
-			// 	projectSlug: env.projects.find((p) => p.id === response["team"]!["project_id"])!.slug,
-			// 	createdAt: new Date(response["created_at"]),
-
-			// 	correcteds: response.correcteds.map((c) => ({
-			// 		intraLogin: c.login,
-			// 		intraUID: c.id,
-			// 	})),
-			// }
-			// teams.push(scaleTeam)
+			
+			const json = await response.json();
+			const scaleTeam: ScaleTeam = {
+				id: json["id"],
+				scaleID: json["scale_id"],
+				teamID: json["team"]["id"],
+				teamName: json["team"]["name"],
+				projectID: json["team"]["project_id"] as number,
+				projectSlug: env.projects.find((p) => p.id === json["team"]!["project_id"])!.slug,
+				createdAt: new Date(json["created_at"]),
+				correcteds: json.correcteds.map((c) => ({
+					intraLogin: c.login,
+					intraUID: c.id,
+				})),
+			}
+			teams.push(scaleTeam)
 		}
 		return teams;
 	}
@@ -69,7 +67,7 @@ export namespace Intra {
 	 * @param login The user login.
 	 */
 	export async function addToGroup(groupID: number, login: string): Promise<void> {
-		await api.post("/v2/groups_users", {
+		await api.post("/groups_users", {
 			groups_user: { group_id: groupID, user_id: login },
 		}).catch((reason: any) => {
 			Logger.err(`Failed to add to group ${reason}`);
@@ -77,7 +75,7 @@ export namespace Intra {
 	}
 
 	/**
-	 *
+	 * 
 	 * @param projectID
 	 * @param scaleID
 	 * @param teamID
@@ -86,7 +84,7 @@ export namespace Intra {
 	export async function getEvaluations(projectID: number, scaleID: number, teamID: number
 	): Promise<IntraResponse.Evaluation[]> {
 
-		const pages = await api.getAllPages(`/v2/projects/${projectID}/scale_teams`, {
+		const pages = await api.getAllPages(`/projects/${projectID}/scale_teams`, {
 			"filter[scale_id]": scaleID.toString(),
 			"filter[team_id]": teamID.toString(),
 		});
@@ -123,8 +121,8 @@ export namespace Intra {
 			],
 		};
 
-		await api.post("/v2/scale_teams/multiple_create", body
-		).catch((reason: any) => {
+		await api.post("/scale_teams/multiple_create", body)
+		.catch((reason: any) => {
 			Logger.err(`Failed to book evaluation ${reason}`);
 		});
 	}

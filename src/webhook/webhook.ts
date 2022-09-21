@@ -37,9 +37,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 /* ************************************************************************** */
 
 app.post("/webhook", async (req: Request, res: Response) => {
-
-	Logger.log("Incoming request ...");
-
 	const filter = filterHook(req);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);
@@ -56,7 +53,7 @@ app.post("/webhook", async (req: Request, res: Response) => {
 
 		return res.status(201).send(`Peer++ placeholder evaluation created`);
 	} catch (err) {
-		Logger.err(err);
+		Logger.err("Something went wrong ...");
 		return res.status(500).send(err);
 	}
 });

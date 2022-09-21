@@ -56,7 +56,7 @@ app.message(/.*/i, async ({ message, say }) => {
 	try {
 		user = await getFullUser({ slackUID });
 	} catch (err) {
-		await await say(`Could not match your Slack ID to a Intra user`);
+		await say(`Could not match your Slack ID to a Intra user`);
 		return;
 	}
 

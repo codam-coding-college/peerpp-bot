@@ -34,7 +34,7 @@ class Logger {
 	public static async err(msg: string) {
 		const line = `[ERROR] [${this.nowISO()}] : ${msg}`
 
-		console.error(line);
+		console.trace(line);
 		await fs.promises.appendFile(logPath, `${line}${line.match(/\n$/) ? "" : "\n"}`);
 	}
 
@@ -49,10 +49,10 @@ class Logger {
 		hook: IntraResponse.Webhook.Root | null,
 		reason: string) {
 
-		const line = `[HOOK] [${this.nowISO()}] : ${status.padEnd(8, " ")} | ${reason} | `;
-		console.log(line + `<see ${path}>`);
+		const line = `[HOOK] [${this.nowISO()}] : ${status.padEnd(8, " ")} | ${reason}`;
+		console.log(`${line} -> ${JSON.stringify(hook?.project)}`);
 	
-		await fs.promises.appendFile(logPath, line + JSON.stringify(hook) + "\n");
+		await fs.promises.appendFile(logPath, `${line}-> ${JSON.stringify(hook?.project)}\n`);
 	}
 
 	/// Private ///

@@ -4,6 +4,7 @@ import { User } from "./types";
 import { UsersInfoResponse } from "@slack/web-api";
 import { env } from "./env";
 import Logger from "./log";
+import { Console } from "console";
 
 /* ************************************************************************** */
 
@@ -25,6 +26,9 @@ export interface IncompleteUser {
 export async function getFullUser(u: IncompleteUser): Promise<User> {
 	// use intraUID to generate intraLogin, email, level, staff
 
+	console.log("Fetching user data ...");
+	console.log(u);
+
 	// TODO: Ugly disgusting hack, this whole function will get nuked later ...
 	if (
 		u.campusID != undefined &&
@@ -35,8 +39,6 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 		u.slackUID != undefined &&
 		u.staff != undefined
 	) {
-		Logger.log("Fetched data:")
-		Logger.log(`User:`);
 		return {
 			intraUID: u.intraUID,
 			intraLogin: u.intraLogin,
@@ -56,7 +58,7 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 			!u.staff ||
 			u.campusID)
 	) {
-		const response = await (await Intra.api.get(`/v2/users/${u.intraUID}`)).json();
+		const response = await (await Intra.api.get(`/users/${u.intraUID}`)).json();
 		
 		u.intraLogin = response.login;
 		u.email = response.email;
@@ -80,7 +82,7 @@ export async function getFullUser(u: IncompleteUser): Promise<User> {
 
 	// use intraLogin to generate intraUID and email
 	if (u.intraLogin && (!u.intraUID || !u.email)) {
-		const response = await (await Intra.api.get(`/v2/users/${u.intraLogin}`)).json();
+		const response = await (await Intra.api.get(`/users/${u.intraLogin}`)).json();
 		if (!response.ok) throw `Could not find user "${u.intraLogin}"`;
 		u.intraUID = response.id;
 		u.email = response.email;
