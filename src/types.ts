@@ -1,3 +1,16 @@
+
+export interface IncompleteUser {
+	// ID
+	intraUID?: number;
+	slackUID?: string;
+	intraLogin?: string;
+	email?: string;
+
+	// Additional info
+	level?: number;
+	staff?: boolean;
+	campusID?: number;
+}
 export interface User {
 	intraUID: number;
 	intraLogin: string;
@@ -7,7 +20,6 @@ export interface User {
 	level: number;
 	staff: boolean;
 	campusID: number;
-	// groups: array of group IDs
 }
 
 /* ************************************************************************** */
@@ -20,6 +32,26 @@ export namespace IntraResponse {
 		icon: string;
 		created_at: Date;
 		updated_at: Date;
+	}
+
+	export interface CursusUser {
+		id: number
+		begin_at: string
+		end_at: any
+		grade: any
+		level: number
+		skills: any[]
+		cursus_id: number
+		has_coalition: boolean
+		user: User
+		cursus: Cursus
+	}
+
+	export interface CampusUser {
+		id: number
+		user_id: number
+		campus_id: number
+		is_primary: boolean
 	}
 
 	export interface Corrected {
@@ -94,6 +126,13 @@ export namespace IntraResponse {
 		occurrence: number;
 		validated: boolean;
 		projects_user_id: number;
+	}
+
+	export interface Cursus {
+		id: number
+		created_at: string
+		name: string
+		slug: string
 	}
 
 	export interface Team {

@@ -1,8 +1,7 @@
 import Fast42 from "@codam/fast42";
 import { env } from "../env";
-import { IncompleteUser } from "../getUser";
 import Logger from "../log";
-import { IntraResponse, User } from "../types";
+import { IncompleteUser, IntraResponse, User } from "../types";
 
 /**
  * Intra api utils
@@ -10,8 +9,6 @@ import { IntraResponse, User } from "../types";
 export namespace Intra {
 	// Intra V2 endpoint
 	export let api: Fast42;
-	export type Login = string;
-	export type UID = number;
 
 	// Evaluation object
 	export interface ScaleTeam {
