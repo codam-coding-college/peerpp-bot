@@ -45,15 +45,16 @@ app.post("/webhook", async (req: Request, res: Response) => {
 		const hook: IntraResponse.Webhook.Root = req.body;
 		const create: boolean = await requiresEvaluation(hook);
 
-		if (!create)
+		if (!create) {
 			return res.status(204).send("Peer++ evaluation not required");
+		}
 
 		// TODO: Uncomment to actually book evals
 		// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
 
 		return res.status(201).send(`Peer++ placeholder evaluation created`);
 	} catch (err) {
-		Logger.err("Something went wrong ...");
+		Logger.err(`Something went wrong: ${err}`);
 		return res.status(500).send(err);
 	}
 });

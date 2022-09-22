@@ -1,7 +1,6 @@
 import { env } from "../env";
-import { IncompleteUser } from "../getUser";
 import { API } from "42-connector";
-import { IntraResponse, User } from "../types";
+import { IncompleteUser, IntraResponse, User } from "../types";
 
 export namespace Intra {
 	export type Login = string;

@@ -50,13 +50,7 @@ async function isFromWatchedCampus(user: User, hook: IntraResponse.Webhook.Root)
 	const isPart = env.WATCHED_CAMPUSES.includes(user.campusID);
 
 	if (!isPart)
-		await Logger.logHook(
-			"ignored",
-			hook,
-			`user ${JSON.stringify(
-				user
-			)} is not part of the watched campuses: ${env.WATCHED_CAMPUSES}`
-		);
+		await Logger.logHook("ignored", hook, `user ${user.intraLogin} is not part of the watched campuses: ${env.WATCHED_CAMPUSES}`);
 	return isPart;
 }
 
@@ -87,8 +81,13 @@ async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
  */
 export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Promise<boolean> {
 	// Ignore hooks coming from the peer++ bot itself.
+	
+	if (hook.user == null) {
+		await Logger.logHook("ignored", hook, `Missing evaluator, possibly missing evaluation`);
+		return false;
+	}
 	if (hook.user.id === env.PEERPP_BOT_UID) {
-		await Logger.logHook("ignored", hook, `hook is from peer++ bot`);
+		await Logger.logHook("ignored", hook, `Evaluator is Peer++ bot`);
 		return false;
 	}
 
@@ -102,7 +101,11 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 
 	// Inspect the evaluations.
 	let evals: IntraResponse.Evaluation[] = [];
-	try { evals = await Intra.getEvaluations(hook.team.project_id, hook.scale.id, hook.team.id); } 
+	try {
+		
+		evals = await Intra.getEvaluations(hook.team.project_id, hook.scale.id, hook.team.id);
+		console.log("Getting evaluations")
+	} 
 	catch (err) {
 		Logger.err(`shouldCreatePeerppEval | ${err}`);
 		return false;

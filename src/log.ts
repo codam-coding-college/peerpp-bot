@@ -21,7 +21,7 @@ class Logger {
 	 * @param msg The message to log.
 	 */
 	public static async log(msg: string) {
-		const line = `[INFO] [${this.nowISO()}] : ${msg}`
+		const line = `[${this.nowISO()}] [INFO]: ${msg}`
 		
 		console.log(line);
 		await fs.promises.appendFile(logPath, `${line}${line.match(/\n$/) ? "" : "\n"}`);
@@ -32,7 +32,7 @@ class Logger {
 	 * @param msg The message to log.
 	 */
 	public static async err(msg: string) {
-		const line = `[ERROR] [${this.nowISO()}] : ${msg}`
+		const line = `[${this.nowISO()}] [ERROR] : ${msg}`
 
 		console.trace(line);
 		await fs.promises.appendFile(logPath, `${line}${line.match(/\n$/) ? "" : "\n"}`);
@@ -49,10 +49,10 @@ class Logger {
 		hook: IntraResponse.Webhook.Root | null,
 		reason: string) {
 
-		const line = `[HOOK] [${this.nowISO()}] : ${status.padEnd(8, " ")} | ${reason}`;
-		console.log(`${line} -> ${JSON.stringify(hook?.project)}`);
+		const line = `[${this.nowISO()}] [HOOK] : ${status.padEnd(8, " ")} | ${reason}`;
+		console.log(`${line} -> ${hook?.project.name}`);
 	
-		await fs.promises.appendFile(logPath, `${line}-> ${JSON.stringify(hook?.project)}\n`);
+		await fs.promises.appendFile(logPath, `${line}-> ${hook?.project.name}\n`);
 	}
 
 	/// Private ///
