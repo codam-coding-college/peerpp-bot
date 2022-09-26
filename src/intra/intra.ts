@@ -39,7 +39,13 @@ export namespace Intra {
 				throw Error("Failed to get evaluation locks");
 			}
 			
+			// Check if json is empty
 			const json = await response.json();
+			if (json.length == 0) {
+				Logger.log("No locks!");
+				continue;
+			}
+
 			const scaleTeam: ScaleTeam = {
 				id: json["id"],
 				scaleID: json["scale_id"],
