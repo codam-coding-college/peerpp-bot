@@ -24,16 +24,14 @@ async function checkLocks() {
 	catch (error) {
 		Logger.err(`Failed to fetch locks: ${error}`)
 	}
-	if (locks.length == 0) {
-		Logger.log("No outdated locks to clear");
+	if (locks.length == 0)
 		return;
-	}
 
 	for (const lock of locks) {
 		if (lock.createdAt.getTime() >= new Date().getTime()) {
 			await Intra.api.delete(`/scale_teams/${lock.id}`)
 			.catch((error) => {
-				Logger.err("Failed to delete lock, is intra down ?")
+				Logger.err(`Failed to delete lock: ${error}`)
 				return;	
 			});
 			
@@ -55,7 +53,7 @@ async function checkLocks() {
 	Logger.log("Connected to Intra V2");
 	
 	// Check everyday for our reserved locks if any of them are older than a week.
-    const lockJob = new CronJob("0 0 * * *", checkLocks);
+    const lockJob = new CronJob("*/15 * * * *", checkLocks);
 	if (!lockJob.running)
         lockJob.start();
 
