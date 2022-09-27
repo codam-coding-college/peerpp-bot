@@ -118,12 +118,24 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 	// Only do check for peer++ eval if this is the second to last evaluation
 	const nEvalsRequired = hook.scale.correction_number;
 	if (nEvalsRequired - 1 != evals.length) {
-		await Logger.logHook("ignored", hook, `user ${hook.user.login} did ${evals.length}, of the required ${nEvalsRequired} evals`);
+		await Logger.logHook("ignored", hook, `team ${hook.team.name} did ${evals.length}, of the required ${nEvalsRequired} evals`);
 		return false;
 	}
 
-	// TODO: Check if previous evals were passed
-	
+	for (let i = 0; i < evals.length; i++) {
+		const evaluation = evals[i]!;
+		// Evaluation is not finished yet, we wait for the webhook to fire again later when the scale is updated.
+		if (evaluation.team.validated == undefined) {
+			await Logger.logHook("ignored", hook, `team ${hook.team.name} is currently doing an evaluation`);
+			return false;
+		}
+		// They failed the evaluation, ignore them.
+		else if (evaluation.team.validated == false) {
+			await Logger.logHook("ignored", hook, `team ${hook.team.name} has failed an evaluation`);
+			return false;
+		}
+	}
+
 	const corrected: User | null = await getUser(hook);
 	if (!corrected || !(await isFromWatchedCampus(corrected, hook)))
 		return false;
