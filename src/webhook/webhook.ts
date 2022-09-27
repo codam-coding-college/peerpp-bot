@@ -4,6 +4,7 @@ import { env } from "../env";
 import { requiresEvaluation } from "./evalRequirements";
 import { IntraResponse } from "../types";
 import Logger from "../log";
+import { Intra } from "../intra/intra";
 
 // Helper functions
 /* ************************************************************************** */
@@ -36,6 +37,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Post
 /* ************************************************************************** */
 
+// ScaleTeam - Create
 app.post("/webhook", async (req: Request, res: Response) => {
 	const filter = filterHook(req);
 	if (filter) 
@@ -45,12 +47,13 @@ app.post("/webhook", async (req: Request, res: Response) => {
 		const hook: IntraResponse.Webhook.Root = req.body;
 		const create: boolean = await requiresEvaluation(hook);
 
-		if (!create) {
+		if (!create)
 			return res.status(204).send("Peer++ evaluation not required");
-		}
 
-		// TODO: Uncomment to actually book evals
-		// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
+		Logger.log("Booking a Peer++ evaluation!");
+		
+		// TODO: Uncomment to actually book evals and lock them.
+		//await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
 
 		return res.status(201).send(`Peer++ placeholder evaluation created`);
 	} catch (err) {

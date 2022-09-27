@@ -45,7 +45,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 	
 	// Ensure that we have at least one required property is filled.
 	if (!user.intraUID && !user.slackUID && !user.intraLogin && !user.email)
-		throw Error(`Unable to fetch full user, missing required ID fields`);
+		throw new Error(`Unable to fetch full user, missing required ID fields`);
 
 	// TODO: Split into two functions.
 	// Fetch intra data if we have at least the login or UID.
@@ -57,12 +57,12 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 
 		// Check which one we have, pick either.
 		const response = await Intra.api.get(`/users/${id}`).catch((reason: any) => {
-			throw Error(`Unable to fetch user ${id}, reason ${reason}`)
+			throw new Error(`Unable to fetch user ${id}, reason ${reason}`)
 		})
 
 		if (!response.ok) {
 			Logger.err(`Failed to fetch user "${id}" with response ${response.status}`);
-			throw Error(`Unable to fetch user ${id}: Reason: "${response.statusText}"`)
+			throw new Error(`Unable to fetch user ${id}: Reason: "${response.statusText}"`)
 		}
 
 		// Get the user name / id.
@@ -105,10 +105,10 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 				user: user.slackUID!,
 			}).catch((reason: any) => {
 				Logger.err(`Unable to find slack account: "${user.slackUID}:"`);
-				throw Error(`Could not find slackID ${user.slackUID}: ${reason}`);
+				throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
 			}).then((value: UsersInfoResponse) => {
 				if (!value.user?.profile?.display_name)
-					throw Error(`User from slackUID "${user.slackUID}" has no display name`);
+					throw new Error(`User from slackUID "${user.slackUID}" has no display name`);
 				user.intraLogin = value.user.profile.display_name;
 			})
 		}
@@ -118,7 +118,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 				email: user.email!,
 			}).catch((reason) => {
 				Logger.err(`Unable to find slack account with email: "${user.email}:" Possible mismatch?`);
-				throw Error(`Could not get email ${user.email}: ${reason}`);
+				throw new Error(`Could not get email ${user.email}: ${reason}`);
 			}).then((value) => {
 				user.slackUID = value.user!.id;
 			});
@@ -129,7 +129,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 
 	// Make sure we have all the data, also
 	if (Object.values(user).find((value) => value == undefined))
-		throw Error(`Failed to fetch full data: ${JSON.stringify(user)}`);
+		throw new Error(`Failed to fetch full data: ${JSON.stringify(user)}`);
 
 	return {
 		intraUID: user.intraUID!,

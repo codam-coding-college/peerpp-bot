@@ -23,8 +23,8 @@ export namespace Intra {
 	}
 
 	/**
-	 * Retreive all the evaluation that are 
-	 * @returns 
+	 * Retreive all the evaluation that are booked by the bot itself.
+	 * @returns The booked evaluations by this bot.
 	 */
 	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
 		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/scale_teams`, {
@@ -36,7 +36,7 @@ export namespace Intra {
 		for await (const response of pages) {			
 			if (!response.ok) {
 				Logger.err(`Failed to get evaluation locks with status ${response.status}`);
-				throw Error("Failed to get evaluation locks");
+				throw new Error("Failed to get evaluation locks");
 			}
 			
 			// Check if json is empty
@@ -97,7 +97,7 @@ export namespace Intra {
 		for await (const response of pages) {
 			if (!response.ok) {
 				Logger.err(`Failed to get evaluation with status ${response.status} for team id ${teamID}`);
-				throw Error("Failed to get evaluation");
+				throw new Error("Failed to get evaluation");
 			}
 			evaluations.push(await response.json());
 		}

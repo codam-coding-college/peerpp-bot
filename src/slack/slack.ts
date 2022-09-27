@@ -5,12 +5,18 @@ import { Intra } from "../intra/intra";
 import * as onMessage from "./messageParsers";
 import { User } from "../types";
 
+// App
+/* ************************************************************************** */
+
 export const app = new App({
 	token: env.SLACK_TOKEN,
-	socketMode: true,
 	appToken: env.SLACK_APP_TOKEN,
 	port: parseInt(process.env["PORT"] || "3000"),
+	socketMode: true,
 });
+
+// Bot utils
+/* ************************************************************************** */
 
 async function bookEvaluation(text: string, say: SayFn, corrector: User) {
 	const [_, slug, correctorLogin] = text.split(" ");
@@ -24,16 +30,12 @@ async function bookEvaluation(text: string, say: SayFn, corrector: User) {
 		return;
 	}
 	if (correctorLogin?.length && !(await Intra.isPeerPPAdmin(corrector))) {
-		await say(
-			`You are not a peer++ admin, you can't book an evaluation for someone else`
-		);
+		await say(`You're not staff, you can't book an evaluation for someone else`);
 		return;
 	}
-
 	if (correctorLogin) {
-		try {
-			corrector = await getFullUser({ intraLogin: correctorLogin });
-		} catch (err) {
+		try { corrector = await getFullUser({ intraLogin: correctorLogin }); } 
+		catch (err) {
 			await say(`Could not find user ${correctorLogin}`);
 			return;
 		}
@@ -41,27 +43,36 @@ async function bookEvaluation(text: string, say: SayFn, corrector: User) {
 	await onMessage.bookEvaluation(say, corrector, slug!);
 }
 
+// Bot handlers
+/* ************************************************************************** */
+
+// When receiving any message
 app.message(/.*/i, async ({ message, say }) => {
+	// If not direct message
 	if (message.channel[0] !== "D")
-		// if not direct message
 		return;
+
 	//@ts-ignore
 	let text: string = message.text;
-	if (!text) return;
-	text = text.trim().toLowerCase();
+	if (!text) 
+		return;
+
 	//@ts-ignore
 	const slackUID = message!.user;
+	text = text.trim().toLowerCase();
 
+	// TODO: Avoid this for later, unecessary API usage.
 	let user: User;
-	try {
-		user = await getFullUser({ slackUID });
-	} catch (err) {
+	try { user = await getFullUser({ slackUID }); } 
+	catch (err) {
 		await say(`Could not match your Slack ID to a Intra user`);
 		return;
 	}
 
-	if (text.match(/^help/)) await onMessage.help(say);
-	else if (text.match(/^list-projects/)) await onMessage.listProjectIds(say);
+	if (text.match(/^help/))
+		await onMessage.help(say);
+	else if (text.match(/^list-projects/))
+		await onMessage.listProjectIds(say);
 	else if (text.match(/^list-evaluations/))
 		await onMessage.listEvaluations(say);
 	else if (text.match(/^book-evaluation/))
@@ -69,13 +80,5 @@ app.message(/.*/i, async ({ message, say }) => {
 	else if (text.match(/^whoami/))
 		await say(`\`\`\`${JSON.stringify(user, null, 4)}\`\`\``);
 	else
-		await say(`command \`${text}\` not recognized, see help for more info`);
+		await say(`Command \`${text}\` not recognized, see help for more info`);
 });
-
-export async function sendPrivateMessge(user: User, text: string) {
-	const convo = await app.client.conversations.open({ users: user.slackUID });
-	if (!convo.ok || !convo?.channel?.id)
-		throw `clould not open conversation with user ${user} | ${convo}`;
-
-	await app.client.chat.postMessage({ channel: convo.channel.id, text });
-}
