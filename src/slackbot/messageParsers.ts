@@ -1,12 +1,12 @@
-import Logger from "../log";
-import { env } from "../env";
-import { app } from "./slack";
-import { User } from "../types";
+import { env } from "../utils/env";
 import { SayFn } from "@slack/bolt";
-import { Intra } from "../intra/intra";
-import { getFullUser } from "../getUser";
 import prettyMilliseconds from "pretty-ms";
+import { Intra } from "../utils/intra/intra";
 import { ChatPostMessageArguments } from "@slack/web-api";
+import Logger from "../utils/log";
+import { User } from "../utils/types";
+import { getFullUser } from "../utils/getUser";
+import { slackApp } from "./slack";
 
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ async function sendYouWillBeEvaluatedMsg(corrected: User, corrector: User, proje
 		text: `You will be evaluated by ${corrector.intraLogin} on your \`${projectSlug}\`\nContact them to set a date for the evaluation`,
 	};
 
-	const response = await app.client.chat.postMessage(opt);
+	const response = await slackApp.client.chat.postMessage(opt);
 	if (!response.ok) throw new Error(`Failed to send message: ${response.error}`);
 }
 

@@ -1,7 +1,9 @@
-import Fast42 from "@codam/fast42";
 import { env } from "../env";
 import Logger from "../log";
+import Fast42 from "@codam/fast42";
 import { IncompleteUser, IntraResponse, User } from "../types";
+
+/* ************************************************************************** */
 
 /**
  * Intra api utils

@@ -1,10 +1,9 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { env } from "../env";
+import { env } from "../utils/env";
+import Logger from "../utils/log";
+import { IntraResponse } from "../utils/types";
 import { requiresEvaluation } from "./evalRequirements";
-import { IntraResponse } from "../types";
-import Logger from "../log";
-import { Intra } from "../intra/intra";
 
 // Helper functions
 /* ************************************************************************** */

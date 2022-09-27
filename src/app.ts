@@ -1,10 +1,10 @@
-import Fast42 from "@codam/fast42";
 import util from "util";
-import { env } from "./env";
-import { Intra } from "./intra/intra";
-import Logger from "./log";
-import { app as slackApp } from "./slack/slack";
+import Logger from "./utils/log";
+import { env } from "./utils/env";
+import Fast42 from "@codam/fast42";
+import { Intra } from "./utils/intra/intra";
 import { app as webhookApp } from "./webhook/webhook";
+import { slackApp } from "./slackbot/slack";
 
 /* ************************************************************************** */
 
@@ -19,11 +19,15 @@ util.inspect.defaultOptions.depth = null;
     Intra.api = await new Fast42([{
         client_id: env.INTRA_UID,
         client_secret: env.INTRA_SECRET
-    }]).init()
+    }]).init();
 
 	Logger.log("Connected to Intra V2");
 
-	await slackApp.start();
-	await webhookApp.listen(8080);
-    Logger.log("Express backend running");
+    await webhookApp.listen(8080);
+	await slackApp.start().catch((error) => {
+        Logger.err("Slack bot failed to start.");
+        return;
+    });
+
+    Logger.log("Running ...");
 })();

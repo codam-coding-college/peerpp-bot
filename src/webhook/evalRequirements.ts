@@ -1,9 +1,8 @@
-import { getFullUser } from "../getUser";
-import { Intra } from "../intra/intra";
-import { IntraResponse } from "../types";
-import { User } from "../types";
-import { env } from "../env";
-import Logger from "../log";
+import Logger from "../utils/log";
+import { env } from "../utils/env";
+import { Intra } from "../utils/intra/intra";
+import { getFullUser } from "../utils/getUser";
+import { IntraResponse, User } from "../utils/types";
 
 // Helper functions
 /* ************************************************************************** */

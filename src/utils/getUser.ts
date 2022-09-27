@@ -1,9 +1,9 @@
-import { app } from "./slack/slack";
-import { UsersInfoResponse } from "@slack/web-api";
+import Logger from "./log";
+import { env } from "./env";
 import { Intra } from "./intra/intra";
 import { IncompleteUser, User } from "./types";
-import { env } from "./env";
-import Logger from "./log";
+import { UsersInfoResponse } from "@slack/web-api";
+import { slackApp } from "../slackbot/slack";
 
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 		// Do we have the UID?
 		if (user.slackUID != undefined) {
 
-			await app.client.users.info({
+			await slackApp.client.users.info({
 				user: user.slackUID!,
 			}).catch((reason: any) => {
 				Logger.err(`Unable to find slack account: "${user.slackUID}:"`);
@@ -114,7 +114,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 		}
 		// Fetch via email
 		else if (user.email != undefined) {
-			await app.client.users.lookupByEmail({
+			await slackApp.client.users.lookupByEmail({
 				email: user.email!,
 			}).catch((reason) => {
 				Logger.err(`Unable to find slack account with email: "${user.email}:" Possible mismatch?`);

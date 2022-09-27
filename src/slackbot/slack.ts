@@ -1,14 +1,14 @@
 import { App, SayFn } from "@slack/bolt";
-import { env } from "../env";
-import { getFullUser } from "../getUser";
-import { Intra } from "../intra/intra";
+import { env } from "../utils/env";
+import { getFullUser } from "../utils/getUser";
+import { Intra } from "../utils/intra/intra";
+import { User } from "../utils/types";
 import * as onMessage from "./messageParsers";
-import { User } from "../types";
 
 // App
 /* ************************************************************************** */
 
-export const app = new App({
+export const slackApp = new App({
 	token: env.SLACK_TOKEN,
 	appToken: env.SLACK_APP_TOKEN,
 	port: parseInt(process.env["PORT"] || "3000"),
@@ -47,15 +47,14 @@ async function bookEvaluation(text: string, say: SayFn, corrector: User) {
 /* ************************************************************************** */
 
 // When receiving any message
-app.message(/.*/i, async ({ message, say }) => {
+slackApp.message(/.*/i, async ({ message, say }) => {
 	// If not direct message
 	if (message.channel[0] !== "D")
 		return;
 
 	//@ts-ignore
 	let text: string = message.text;
-	if (!text) 
-		return;
+	if (!text) return;
 
 	//@ts-ignore
 	const slackUID = message!.user;
