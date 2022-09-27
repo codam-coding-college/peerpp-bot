@@ -39,6 +39,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // ScaleTeam - Create
 app.post("/webhook", async (req: Request, res: Response) => {
+
+	// TODO: Check if there are enough Peer++ evaluators to begin with.
+
 	const filter = filterHook(req);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);

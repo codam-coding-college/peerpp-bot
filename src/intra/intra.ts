@@ -92,25 +92,25 @@ export namespace Intra {
 			"filter[team_id]": teamID.toString(),
 		});
 
-		await Promise.all(pages)
-		const evaluations: IntraResponse.Evaluation[] = []
-		for await (const response of pages) {
-			if (!response.ok) {
-				Logger.err(`Failed to get evaluation with status ${response.status} for team id ${teamID}`);
-				throw new Error("Failed to get evaluation");
-			}
-			evaluations.push(await response.json());
+		await Promise.all(pages).catch((reason) => {
+			throw new Error(`Failed to get evaluations: ${reason}`);
+		})
+	
+		// Merge all the pages
+		let evaluations: IntraResponse.Evaluation[] = []
+		for await (const page of pages) {
+			const evals = await page.json() as IntraResponse.Evaluation[];
+			evaluations.push(...evals);
 		}
-
 		return evaluations;
 	}
 
 	/**
-	 *
-	 * @param scaleID
-	 * @param teamID
-	 * @param correctorID
-	 * @param date
+	 * Book an evaluation
+	 * @param scaleID The scale/eval sheet to use.
+	 * @param teamID The team id.
+	 * @param correctorID The user id of the corrector.
+	 * @param date The date on which to book it for.
 	 */
 	export async function bookEval(scaleID: number, teamID: number, correctorID: number, date: Date) {
 		const body = {
@@ -131,11 +131,11 @@ export namespace Intra {
 	}
 
 	/**
-	 * Books 
-	 * @param scaleID
-	 * @param teamID
+	 * Books a placeholder evaluation that will later delete itself.
+	 * @param scaleID The evaluation sheet id.
+	 * @param teamID The team to book the eval for.
 	 */
-	export async function bookPlaceholderEval(scaleID: number, teamID: number): Promise<void> {
+	export async function bookPlaceholderEval(scaleID: number, teamID: number) {
 		const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 		await bookEval(scaleID, teamID, env.PEERPP_BOT_UID, nextWeek);
 	}
