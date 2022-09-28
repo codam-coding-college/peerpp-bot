@@ -48,6 +48,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 		throw new Error(`Unable to fetch full user, missing required ID fields`);
 
 	// TODO: Split into two functions.
+	// TODO: Use interfaces for a more convenience.
 	// Fetch intra data if we have at least the login or UID.
 	if (isIntraDataMissing(user)) {
 		Logger.log("Fetching intra user data")

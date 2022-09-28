@@ -12,7 +12,8 @@ export namespace Intra {
 	// Intra V2 endpoint
 	export let api: Fast42;
 
-	// Evaluation object
+	// Simplified evaluation object (TODO: Nuke this abomination or smth), really not needed ...
+	// But parts of the codebase use this so maybe later.
 	export interface ScaleTeam {
 		id: number; // the id of the evaluation itself
 		scaleID: number; // the id of the type of evaluation (v1 or v2 or whatever)
@@ -26,6 +27,8 @@ export namespace Intra {
 
 	/**
 	 * Retreive all the evaluation that are booked by the bot itself.
+	 * 
+	 * @note Technically evaluations where the bot is to be evaluated count as well. But that won't happen (I think).
 	 * @returns The booked evaluations by this bot.
 	 */
 	 export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
@@ -37,20 +40,33 @@ export namespace Intra {
 			throw new Error(`Failed to get evaluations: ${reason}`);
 		})
 	
-		const teams: ScaleTeam[] = []
+		const teams: Intra.ScaleTeam[] = []
 		for await (const page of pages) {
 			if (!page.ok) {
 				Logger.err(`Failed to get evaluation locks with status ${page.status}`);
 				throw new Error("Failed to get evaluation locks");
 			}
 
-			const scaleTeams = await page.json() as ScaleTeam[];
+			const scaleTeams = await page.json() as IntraResponse.Evaluation[];
 			if (scaleTeams.length == 0) {
 				Logger.log("No locks!");
 				continue;
 			}
-
-			teams.push(...scaleTeams);
+			
+			// Convert Evaluation to a simplified ScaleTeam
+			for (const scaleTeam of scaleTeams) {
+				const lock: ScaleTeam = {
+					id: scaleTeam.id,
+					scaleID: scaleTeam.scale_id,
+					teamID: scaleTeam.team.id,
+					teamName: scaleTeam.team.name,
+					projectID: scaleTeam.team.project_id,
+					projectSlug: env.projects.find(p => p.id === scaleTeam.team.project_id)!.slug,
+					createdAt: new Date(scaleTeam.created_at),
+					correcteds: scaleTeam.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
+				}	
+				teams.push(lock);
+			}
 		}
 		return teams;
 	}
