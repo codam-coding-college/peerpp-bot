@@ -66,9 +66,9 @@ app.post("/create", async (req: Request, res: Response) => {
 
 // ScaleTeam - Delete
 app.post("/delete", async (req: Request, res: Response) => {
-	Logger.log("Evaluation destroyed");
+	Logger.log("Evaluation destroyed hook");
 
-	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
+	const filter = filterHook(req, env.WEBHOOK_DELETE_SECRET);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);
 	return res.status(204).send("Peer++ received");
@@ -76,9 +76,9 @@ app.post("/delete", async (req: Request, res: Response) => {
 
 // ScaleTeam - Update
 app.post("/update", async (req: Request, res: Response) => {
-	Logger.log("Evaluation updated");
+	Logger.log("Evaluation updated hook");
 
-	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
+	const filter = filterHook(req, env.WEBHOOK_UPDATE_SECRET);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);
 	return res.status(204).send("Peer++ received");
