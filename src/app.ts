@@ -28,7 +28,9 @@ async function checkLocks() {
 		return;
 
 	for (const lock of locks) {
-		if (lock.createdAt.getTime() >= new Date().getTime()) {
+		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + 7));
+
+		if (Date.now() >= unlockDate.getTime()) {
 			await Intra.api.delete(`/scale_teams/${lock.id}`)
 			.catch((error) => {
 				Logger.err(`Failed to delete lock: ${error}`)
@@ -54,8 +56,7 @@ async function checkLocks() {
 	
 	// Check everyday for our reserved locks if any of them are older than a week.
     const lockJob = new CronJob("*/15 * * * *", checkLocks);
-	if (!lockJob.running)
-        lockJob.start();
+    lockJob.start();
 
     await webhookApp.listen(8080);
 	await slackApp.start().catch((error) => {

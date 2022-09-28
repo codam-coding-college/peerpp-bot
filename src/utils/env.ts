@@ -20,7 +20,9 @@ const file = dotenv.parse(fs.readFileSync(".env"));
 
 interface Env {
 	SLACK_TOKEN: string;
-	WEBHOOK_SECRET: string;
+	WEBHOOK_CREATE_SECRET: string;
+	WEBHOOK_DELETE_SECRET: string;
+	WEBHOOK_UPDATE_SECRET: string;
 	PEERPP_BOT_UID: number;
 	PEERPP_GROUP_ID: number;
 	PEERPP_SLACKBOT_ID: string;
@@ -36,7 +38,9 @@ interface Env {
 
 export const env: Env = {
 	SLACK_TOKEN: file["SLACK_TOKEN"]!,
-	WEBHOOK_SECRET: file["WEBHOOK_SECRET"]!,
+	WEBHOOK_CREATE_SECRET: file["WEBHOOK_CREATE_SECRET"]!,
+	WEBHOOK_DELETE_SECRET: file["WEBHOOK_DELETE_SECRET"]!,
+	WEBHOOK_UPDATE_SECRET: file["WEBHOOK_UPDATE_SECRET"]!,
 	PEERPP_BOT_UID: parseInt(file["PEERPP_BOT_UID"]!),
 	PEERPP_GROUP_ID: parseInt(file["PEERPP_GROUP_ID"]!),
 	PEERPP_SLACKBOT_ID: file["PEERPP_SLACKBOT_ID"]!,

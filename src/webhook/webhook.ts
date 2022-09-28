@@ -8,14 +8,14 @@ import { requiresEvaluation } from "./evalRequirements";
 // Helper functions
 /* ************************************************************************** */
 
-function filterHook(req: Request): { code: number; msg: string } | null {
+function filterHook(req: Request, secret: string): { code: number, msg: string } | null {
 	if (!req.is("application/json"))
 		return { code: 400, msg: "Content-Type is not application/json" };
 	if (!req.headers["x-delivery"])
 		return { code: 400, msg: "X-Delivery header missing" };
 	if (!req.headers["x-secret"])
 		return { code: 400, msg: "X-Secret header missing" };
-	if (req.headers["x-secret"] !== env.WEBHOOK_SECRET)
+	if (req.headers["x-secret"] !== secret)
 		return { code: 412, msg: "X-Secret header incorrect" };
 	return null;
 }
@@ -41,7 +41,7 @@ app.post("/create", async (req: Request, res: Response) => {
 
 	// TODO: Check if there are enough Peer++ evaluators to begin with.
 
-	const filter = filterHook(req);
+	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);
 
@@ -62,4 +62,24 @@ app.post("/create", async (req: Request, res: Response) => {
 		Logger.err(`Something went wrong: ${err}`);
 		return res.status(500).send(err);
 	}
+});
+
+// ScaleTeam - Delete
+app.post("/delete", async (req: Request, res: Response) => {
+	Logger.log("Evaluation destroyed");
+
+	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
+	if (filter) 
+		return res.status(filter.code).send(filter.msg);
+	return res.status(204).send("Peer++ received");
+});
+
+// ScaleTeam - Update
+app.post("/update", async (req: Request, res: Response) => {
+	Logger.log("Evaluation updated");
+
+	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
+	if (filter) 
+		return res.status(filter.code).send(filter.msg);
+	return res.status(204).send("Peer++ received");
 });
