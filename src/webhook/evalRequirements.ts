@@ -72,6 +72,11 @@ async function getUser(hook: IntraResponse.Webhook.Root): Promise<User | null> {
  * @returns True if required else false.
  */
 export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Promise<boolean> {
+	// Ignore missing evaluations as they already failed the project.
+	if (hook.user == null) {
+		await Logger.logHook("ignored", hook, `Missing evaluator, possibly missing evaluation`);
+		return false;
+	}
 	// Ignore hooks coming from the peer++ bot itself.
 	if (hook.user.id === env.PEERPP_BOT_UID) {
 		await Logger.logHook("ignored", hook, `Evaluator is Peer++ bot`);
@@ -80,11 +85,6 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 	// Make sure the project is in the list.
 	if (!env.projects.find((p) => p.id === hook.project.id)) {
 		await Logger.logHook("ignored", hook, `project id ${hook.project.id} is not in the list of projects`);
-		return false;
-	}
-	// Ignore missing evaluations as they already failed the project.
-	if (hook.user == null) {
-		await Logger.logHook("ignored", hook, `Missing evaluator, possibly missing evaluation`);
 		return false;
 	}
 
@@ -104,6 +104,9 @@ export async function requiresEvaluation(hook: IntraResponse.Webhook.Root): Prom
 	const nEvalsRequired = hook.scale.correction_number;
 	if (nEvalsRequired - 1 != evals.length) {
 		await Logger.logHook("ignored", hook, `team ${hook.team.name} did ${evals.length}, of the required ${nEvalsRequired} evals`);
+
+		for (const evalu of evals)
+			Logger.log(`Evaluated by: ${evalu.corrector.login}`);
 		return false;
 	}
 

@@ -28,40 +28,29 @@ export namespace Intra {
 	 * Retreive all the evaluation that are booked by the bot itself.
 	 * @returns The booked evaluations by this bot.
 	 */
-	export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
+	 export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
 		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/scale_teams`, {
 			"filter[future]": "true",
 		});
 
-		await Promise.all(pages)
+		await Promise.all(pages).catch((reason) => {
+			throw new Error(`Failed to get evaluations: ${reason}`);
+		})
+	
 		const teams: ScaleTeam[] = []
-		for await (const response of pages) {			
-			if (!response.ok) {
-				Logger.err(`Failed to get evaluation locks with status ${response.status}`);
+		for await (const page of pages) {
+			if (!page.ok) {
+				Logger.err(`Failed to get evaluation locks with status ${page.status}`);
 				throw new Error("Failed to get evaluation locks");
 			}
-			
-			// Check if json is empty
-			const json = await response.json();
-			if (json.length == 0) {
+
+			const scaleTeams = await page.json() as ScaleTeam[];
+			if (scaleTeams.length == 0) {
 				Logger.log("No locks!");
 				continue;
 			}
 
-			const scaleTeam: ScaleTeam = {
-				id: json["id"],
-				scaleID: json["scale_id"],
-				teamID: json["team"]["id"],
-				teamName: json["team"]["name"],
-				projectID: json["team"]["project_id"] as number,
-				projectSlug: env.projects.find((p) => p.id === json["team"]!["project_id"])!.slug,
-				createdAt: new Date(json["created_at"]),
-				correcteds: json.correcteds.map((c) => ({
-					intraLogin: c.login,
-					intraUID: c.id,
-				})),
-			}
-			teams.push(scaleTeam)
+			teams.push(...scaleTeams);
 		}
 		return teams;
 	}
