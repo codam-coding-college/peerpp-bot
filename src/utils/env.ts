@@ -1,19 +1,17 @@
-import dotenv from "dotenv";
 import fs from "fs";
-import { sys } from "typescript";
+import dotenv from "dotenv";
 import Logger from "./log";
 
 /* ************************************************************************** */
 
 if (!fs.existsSync(".env")) {
 	Logger.err("Missing '.env' file.")
-	sys.exit(1);
+	process.exit(1);
 }
 if (!fs.existsSync("project_slugs.json")) {
 	Logger.err("Missing 'project_slugs.json' file.")
-	sys.exit(1);
+	process.exit(1);
 }
-
 const file = dotenv.parse(fs.readFileSync(".env"));
 
 /* ************************************************************************** */

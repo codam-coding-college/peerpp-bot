@@ -4,6 +4,8 @@ import { env } from "../utils/env";
 import Logger from "../utils/log";
 import { IntraResponse } from "../utils/types";
 import { requiresEvaluation } from "./evalRequirements";
+import { expiredLocks } from "../app"
+import { Intra } from "../utils/intra/intra";
 
 // Helper functions
 /* ************************************************************************** */
@@ -74,6 +76,14 @@ app.post("/delete", async (req: Request, res: Response) => {
 	const hook: IntraResponse.Webhook.Root = req.body;
 	Logger.log(`Evaluation destroyed hook: ${hook.team.name}`);
 
+	// TODO: Isn't this in the body already, as the id's ?
+	// If the evaluation deleted was not an expired one, book it back.
+	const locks = await Intra.getEvaluationLocks();
+	expiredLocks.forEach((value) => {
+		if (locks.find((lock) => value.id === lock.id) == undefined)
+			Intra.bookPlaceholderEval(value.teamID, value.scaleID);
+	});
+	
 	return res.status(204).send("Peer++ received");
 });
 

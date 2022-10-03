@@ -6,12 +6,23 @@ import { Intra } from "./utils/intra/intra";
 import { app as webhookApp } from "./webhook/webhook";
 import { slackApp } from "./slackbot/slack";
 import { CronJob } from 'cron';
-import { IntraResponse } from "./utils/types";
+import fs from "fs";
 
 /* ************************************************************************** */
 
 // Set depth of object expansion in terminal to unlimited
 util.inspect.defaultOptions.depth = null;
+
+// Expired locks that should not be rebooked by the bot.
+
+/**
+ * Expired locks that should not be rebooked by the bot.
+ * Expired locks will be discarded after 1 week.
+ * 
+ * TODO: Due to time constraints for now this will remain ugly.
+ * Later on we might wanna switch to an actual sql database.
+ */
+export let expiredLocks: Intra.ScaleTeam[] = [];
 
 /* ************************************************************************** */
 
@@ -39,6 +50,9 @@ async function checkLocks() {
 				Logger.err(`Failed to delete lock: ${error}`)
 				return;	
 			});
+
+			expiredLocks.push(lock);
+			fs.writeFileSync("locks.json", JSON.stringify(expiredLocks));
 			
 			// TODO: Add this deleted team to a database so that we can keep track of which once to NOT lock again!
 			Logger.log(`Lock has expired. Deleting lock. ID: ${lock.id} Project: ${lock.projectSlug} Team: ${lock.teamName}`);
@@ -50,7 +64,13 @@ async function checkLocks() {
 /* ************************************************************************** */
 
 // Check for our reserved locks if any of them are older than a week.
-const cronJob = new CronJob("*/15 * * * *", checkLocks);
+const lockJob = new CronJob("*/15 * * * *", checkLocks);
+
+// Every week we delete the expired locks.
+const clearJob = new CronJob("0 0 * * 0", () => {
+	expiredLocks = [];
+	fs.unlinkSync("locks.json");
+});
 
 (async () => {
 	Logger.log("Launching Peer++");
@@ -61,7 +81,8 @@ const cronJob = new CronJob("*/15 * * * *", checkLocks);
     }]).init();
 	
 	Logger.log("Connected to Intra V2");
-	cronJob.start();
+	lockJob.start();
+	clearJob.start();
 	checkLocks();
 
     await webhookApp.listen(8080);
