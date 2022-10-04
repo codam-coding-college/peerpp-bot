@@ -5,6 +5,7 @@ import Logger from "../utils/log";
 import { IntraResponse } from "../utils/types";
 import { requiresEvaluation } from "./evalRequirements";
 import { Intra } from "../utils/intra/intra";
+import { db } from "../app";
 
 // Helper functions
 /* ************************************************************************** */
@@ -82,7 +83,12 @@ app.post("/delete", async (req: Request, res: Response) => {
 		return res.status(204).send("Peer++ received");
 	}
 	
-	// TODO: Query the DB if the deleted
+	// Was this evaluation marked as expired ?
+	db.get(`SELECT * FROM expiredLocks WHERE scaleteamID == ${hook.id}`, (err, row) => {
+		Logger.logHook("ignored", hook, "Cancelled evaluation was an expired one");
+		return res.status(204).send("Peer++ received");
+	});
+
 	
 	Logger.logHook("ignored", hook, "Some silly student tried to cancel the bot");
 	try { Intra.bookPlaceholderEval(hook.scale.id, hook.team.id); }

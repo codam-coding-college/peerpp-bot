@@ -36,7 +36,7 @@ async function checkLocks() {
 	// Find expired locks
 	let n: number = 0;
 	for (const lock of locks) {
-		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + env.expireDays)); // TODO: Make this a config instead.
+		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + env.expireDays));
 
 		// Is the lock expired ?
 		if (Date.now() >= unlockDate.getTime()) {
@@ -58,7 +58,7 @@ async function checkLocks() {
 
 /* ************************************************************************** */
 
-// Check for our reserved locks if any of them are older than a week.
+// Check for our reserved locks if any of them are expired. TODO: Figure out the frequency of this.
 const lockJob = new CronJob("*/15 * * * *", checkLocks);
 
 // Query the database for week old locks, and remove them. 0 0 * * 0

@@ -4,6 +4,11 @@ CREATE TABLE IF NOT EXISTS expiredLocks(
   created_at INTEGER DEFAULT (datetime('now', 'localtime'))
 );
 
--- TODO: Keep track of locked evaluations here maybe too ? For now intra suffers as usual.
+CREATE TABLE IF NOT EXISTS currentLocks(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scaleteamID INTEGER NOT NULL,
+  created_at INTEGER DEFAULT (datetime('now', 'localtime'))
+);
+
 -- INSERT INTO blob(scaleteam) VALUES(3);
 -- SELECT * FROM blob
