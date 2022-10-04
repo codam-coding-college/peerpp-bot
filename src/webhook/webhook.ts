@@ -68,7 +68,7 @@ app.post("/create", async (req: Request, res: Response) => {
 
 // ScaleTeam - Delete
 app.post("/delete", async (req: Request, res: Response) => {
-	
+
 	const filter = filterHook(req, env.WEBHOOK_DELETE_SECRET);
 	if (filter) 
 		return res.status(filter.code).send(filter.msg);
@@ -85,8 +85,14 @@ app.post("/delete", async (req: Request, res: Response) => {
 	
 	// Was this evaluation marked as expired ?
 	db.get(`SELECT * FROM expiredLocks WHERE scaleteamID == ${hook.id}`, (err, row) => {
-		Logger.logHook("ignored", hook, "Cancelled evaluation was an expired one");
-		return res.status(204).send("Peer++ received");
+		if (err != null) {
+			Logger.logHook("error", hook, `Failed to check if lock is db : ${err}`)
+			return res.status(500).send("Failed to check for lock in db.");
+		}
+		if (row != undefined) {
+			Logger.logHook("ignored", hook, "Cancelled evaluation was an expired one");
+			return res.status(204).send("Peer++ received");
+		}
 	});
 
 	
