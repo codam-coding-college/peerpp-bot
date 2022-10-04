@@ -81,6 +81,8 @@ export namespace Intra {
 			groups_user: { group_id: groupID, user_id: login },
 		}).catch((reason: any) => {
 			Logger.err(`Failed to add to group ${reason}`);
+		}).then((response) => {
+			Logger.log("Added to group!");
 		});
 	}
 

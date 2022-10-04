@@ -76,14 +76,26 @@ app.post("/delete", async (req: Request, res: Response) => {
 	const hook: IntraResponse.Webhook.Root = req.body;
 	Logger.log(`Evaluation destroyed hook: ${hook.team.name}`);
 
-	// TODO: Isn't this in the body already, as the id's ?
-	// If the evaluation deleted was not an expired one, book it back.
-	const locks = await Intra.getEvaluationLocks();
-	expiredLocks.forEach((value) => {
-		if (locks.find((lock) => value.id === lock.id) == undefined)
-			Intra.bookPlaceholderEval(value.teamID, value.scaleID);
-	});
+	// TODO: Check that if an evaluation is cancelled that it does not leave a slot open.
+	if (hook.user.id != env.PEERPP_BOT_UID) {
+		Logger.logHook("ignored", hook, "Cancelled evaluation was not regarding the bot");
+		return res.status(204).send("Peer++ received");
+	}
+
+	// Check if bot deleted an expired lock, ignore.
+	for (const expiredLock of expiredLocks) {
+		if (expiredLock.id == hook.id) {
+			Logger.logHook("ignored", hook, "Deleted evaluation was an expired lock");
+			return res.status(204).send("Peer++ received");
+		}
+	}
 	
+	Logger.logHook("ignored", hook, "Some silly student tried to cancel the bot");
+	try { Intra.bookPlaceholderEval(hook.scale.id, hook.team.id); }
+	catch (error) {
+		Logger.logHook("error", hook, `Failed to rebook evaluation! : ${error}`)
+		return res.status(500).send("Failed to rebook!");
+	}
 	return res.status(204).send("Peer++ received");
 });
 
