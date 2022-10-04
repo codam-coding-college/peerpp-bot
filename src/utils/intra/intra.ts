@@ -48,10 +48,8 @@ export namespace Intra {
 			}
 
 			const scaleTeams = await page.json() as IntraResponse.Evaluation[];
-			if (scaleTeams.length == 0) {
-				Logger.log("No locks!");
+			if (scaleTeams.length == 0)
 				continue;
-			}
 			
 			// Convert Evaluation to a simplified ScaleTeam
 			for (const scaleTeam of scaleTeams) {

@@ -1,28 +1,20 @@
 import util from "util";
+import { CronJob } from 'cron';
 import Logger from "./utils/log";
 import { env } from "./utils/env";
 import Fast42 from "@codam/fast42";
+import { Database } from 'sqlite3';
 import { Intra } from "./utils/intra/intra";
 import { app as webhookApp } from "./webhook/webhook";
 import { slackApp } from "./slackbot/slack";
-import { CronJob } from 'cron';
-import fs from "fs";
 
 /* ************************************************************************** */
 
 // Set depth of object expansion in terminal to unlimited
 util.inspect.defaultOptions.depth = null;
 
-// Expired locks that should not be rebooked by the bot.
-
-/**
- * Expired locks that should not be rebooked by the bot.
- * Expired locks will be discarded after 1 week.
- * 
- * TODO: Due to time constraints for now this will remain ugly.
- * Later on we might wanna switch to an actual sql database.
- */
-export let expiredLocks: Intra.ScaleTeam[] = [];
+// Database for the bot, also hi pde-bakk!
+export const db = new Database('peerdb.sqlite');
 
 /* ************************************************************************** */
 
@@ -30,35 +22,38 @@ export let expiredLocks: Intra.ScaleTeam[] = [];
  * Delete scale teams that are older than a week.
  */
 async function checkLocks() {
-
 	Logger.log("Checking for expired locks ...");
 
 	let locks: Intra.ScaleTeam[] = [] 
 	try { locks = await Intra.getEvaluationLocks();	} 
-	catch (error) {
-		Logger.err(`Failed to fetch locks: ${error}`)
-	}
-	if (locks.length == 0)
+	catch (error) { return Logger.err(`Failed to fetch locks: ${error}`) }
+
+	if (locks.length == 0) {
+		Logger.log("No locks to delete")
 		return;
+	}
 
+	// Find expired locks
+	let n: number = 0;
 	for (const lock of locks) {
-		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + 7));
+		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + env.expireDays)); // TODO: Make this a config instead.
 
+		// Is the lock expired ?
 		if (Date.now() >= unlockDate.getTime()) {
-			await Intra.api.delete(`/scale_teams/${lock.id}`)
-			.catch((error) => {
-				Logger.err(`Failed to delete lock: ${error}`)
-				return;	
+			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((error) => {
+				return Logger.err(`Failed to delete lock: ${error}`)
 			});
 
-			expiredLocks.push(lock);
-			fs.writeFileSync("locks.json", JSON.stringify(expiredLocks));
-			
-			// TODO: Add this deleted team to a database so that we can keep track of which once to NOT lock again!
-			Logger.log(`Lock has expired. Deleting lock. ID: ${lock.id} Project: ${lock.projectSlug} Team: ${lock.teamName}`);
+			n++;
+			Logger.log(`Deleting expired lock: ScaleTeamID: ${lock.id} Project: ${lock.projectSlug} Team: ${lock.teamName}`);
+			db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
+				if (err != null)
+					Logger.err(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
+			});
 		}
-		else Logger.log(`Lock has not yet expired -> ${lock.id}: ${lock.projectSlug}:${lock.projectID} for ${lock.teamName}:${lock.teamID}`);
 	}
+
+	Logger.log(`Deleted: ${n} locks`);
 }
 
 /* ************************************************************************** */
@@ -66,30 +61,28 @@ async function checkLocks() {
 // Check for our reserved locks if any of them are older than a week.
 const lockJob = new CronJob("*/15 * * * *", checkLocks);
 
-// Every week we delete the expired locks.
+// Query the database for week old locks, and remove them. 0 0 * * 0
 const clearJob = new CronJob("0 0 * * 0", () => {
-	expiredLocks = [];
-	fs.unlinkSync("locks.json");
+	db.run(`DELETE FROM expiredLocks WHERE datetime(created_at) < datetime('now', '-${env.expireDays} days')`, (err) => {
+		if (err != null) Logger.err(`Failed to delete old locks: ${err.message}`);
+	})
 });
 
 (async () => {
 	Logger.log("Launching Peer++");
-    
     Intra.api = await new Fast42([{
         client_id: env.INTRA_UID,
         client_secret: env.INTRA_SECRET
     }]).init();
-	
 	Logger.log("Connected to Intra V2");
+
+	checkLocks();
 	lockJob.start();
 	clearJob.start();
-	checkLocks();
 
     await webhookApp.listen(8080);
 	await slackApp.start().catch((error) => {
         Logger.err(`Slack bot failed to start: ${error}`);
         return;
     });
-
-    Logger.log("Running ...");
 })();

@@ -22,6 +22,12 @@ export interface User {
 	campusID: number;
 }
 
+export interface expiredLock {
+	id: number
+	scaleteamID: number;
+	created_at: Date;
+}
+
 /* ************************************************************************** */
 
 export namespace IntraResponse {

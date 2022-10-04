@@ -4,7 +4,6 @@ import { env } from "../utils/env";
 import Logger from "../utils/log";
 import { IntraResponse } from "../utils/types";
 import { requiresEvaluation } from "./evalRequirements";
-import { expiredLocks } from "../app"
 import { Intra } from "../utils/intra/intra";
 
 // Helper functions
@@ -76,19 +75,14 @@ app.post("/delete", async (req: Request, res: Response) => {
 	const hook: IntraResponse.Webhook.Root = req.body;
 	Logger.log(`Evaluation destroyed hook: ${hook.team.name}`);
 
-	// TODO: Check that if an evaluation is cancelled that it does not leave a slot open.
+	// TODO: Delete the leftover slot
+
 	if (hook.user.id != env.PEERPP_BOT_UID) {
 		Logger.logHook("ignored", hook, "Cancelled evaluation was not regarding the bot");
 		return res.status(204).send("Peer++ received");
 	}
-
-	// Check if bot deleted an expired lock, ignore.
-	for (const expiredLock of expiredLocks) {
-		if (expiredLock.id == hook.id) {
-			Logger.logHook("ignored", hook, "Deleted evaluation was an expired lock");
-			return res.status(204).send("Peer++ received");
-		}
-	}
+	
+	// TODO: Query the DB if the deleted
 	
 	Logger.logHook("ignored", hook, "Some silly student tried to cancel the bot");
 	try { Intra.bookPlaceholderEval(hook.scale.id, hook.team.id); }
