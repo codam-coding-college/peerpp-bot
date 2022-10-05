@@ -30,6 +30,7 @@ async function checkLocks() {
 	try { locks = await Intra.getEvaluationLocks();	} 
 	catch (error) { return Logger.err(`${error}`) }
 
+	Logger.log(`Current num of locks: ${locks.length}`);
 	if (locks.length == 0) {
 		Logger.log("No locks to delete")
 		return;
