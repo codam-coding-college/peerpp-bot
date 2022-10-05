@@ -26,6 +26,30 @@ export namespace Intra {
 	}
 
 	/**
+	 * Removes any available evaluation slots.
+	 */
+	export async function clearAllSlots() {
+		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/slots`);
+		await Promise.all(pages).catch((reason) => {
+			throw new Error(`Failed to get evaluation slots: ${reason}`);
+		})
+
+		for await (const page of pages) {
+			if (!page.ok)
+				throw new Error(`Failed to get evaluation slots with status ${page.status}`);
+
+			const slots = await page.json() as IntraResponse.Slot[];
+			for (const slot of slots) {
+				await Intra.api.delete(`/slots/${slot.id}`).catch((err) => {
+					throw new Error(`Failed to delete slot ${slot.id} : ${err}}`);
+				});
+			}
+		}
+
+		Logger.log("Destroyed all evaluation slots!");
+	}
+
+	/**
 	 * Retreive all the evaluation that are booked by the bot itself.
 	 * 
 	 * @note Technically evaluations where the bot is to be evaluated count as well. But that won't happen (I think).
@@ -79,17 +103,17 @@ export namespace Intra {
 			groups_user: { group_id: groupID, user_id: login },
 		}).catch((reason: any) => {
 			Logger.err(`Failed to add to group ${reason}`);
-		}).then((response) => {
+		}).then(() => {
 			Logger.log("Added to group!");
 		});
 	}
 
 	/**
-	 * 
-	 * @param projectID
-	 * @param scaleID
-	 * @param teamID
-	 * @returns
+	 * Get the current evaluations for the given project.
+	 * @param projectID The project id.
+	 * @param scaleID The scale/evaluation sheet id.
+	 * @param teamID The teamid.
+	 * @returns All the current booked evaluations of that given project.
 	 */
 	export async function getEvaluations(projectID: number, scaleID: number, teamID: number
 	): Promise<IntraResponse.Evaluation[]> {
@@ -131,8 +155,7 @@ export namespace Intra {
 			],
 		};
 
-		await api.post("/scale_teams/multiple_create", body)
-		.catch((reason: any) => {
+		await api.post("/scale_teams/multiple_create", body).catch((reason: any) => {
 			Logger.err(`Failed to book evaluation ${reason}`);
 		});
 	}
@@ -143,18 +166,16 @@ export namespace Intra {
 	 * @param teamID The team to book the eval for.
 	 */
 	export async function bookPlaceholderEval(scaleID: number, teamID: number) {
-		const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+		const nextWeek = new Date(Date.now() + env.expireDays * 24 * 60 * 60 * 1000);
 		await bookEval(scaleID, teamID, env.PEERPP_BOT_UID, nextWeek);
 	}
 
 	/**
-	 *
-	 * @param user
-	 * @returns
+	 * Check that the given user is a staff member of the watched campus.
+	 * @param user The user to check.
+	 * @returns True if the user is an admin else false.
 	 */
 	export async function isPeerPPAdmin(user: User): Promise<boolean> {
-		// TODO: Change this to later just check if user is a staff member.
-		const admins = ["joppe", "jkoers", "fbes", "freek", "lde-la-h", "leon"];
-		return admins.includes(user.intraLogin) || user.staff;
+		return env.WATCHED_CAMPUSES.includes(user.campusID) && user.staff;
 	}
 }

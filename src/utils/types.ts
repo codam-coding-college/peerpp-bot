@@ -32,6 +32,15 @@ export interface expiredLock {
 
 export namespace IntraResponse {
 
+	// An evaluation slot.
+    export interface Slot {
+        scale_team?: any;
+        begin_at: Date;
+        user: User;
+        id: number;
+        end_at: Date;
+    }
+
     export interface ScaleFlag {
         id: number;
         name: string;

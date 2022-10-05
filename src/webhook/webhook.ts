@@ -35,10 +35,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 	next();
 });
 
-// Post
+// ScaleTeam - Create
 /* ************************************************************************** */
 
-// ScaleTeam - Create
 app.post("/create", async (req: Request, res: Response) => {
 
 	// TODO: Check if there are enough Peer++ evaluators to begin with.
@@ -67,45 +66,52 @@ app.post("/create", async (req: Request, res: Response) => {
 });
 
 // ScaleTeam - Delete
-app.post("/delete", async (req: Request, res: Response) => {
+/* ************************************************************************** */
 
+app.post("/delete", async (req: Request, res: Response) => {
 	const filter = filterHook(req, env.WEBHOOK_DELETE_SECRET);
-	if (filter) 
-		return res.status(filter.code).send(filter.msg);
+	if (filter) {
+		res.status(filter.code).send(filter.msg);
+		return;
+	}
 	
 	const hook: IntraResponse.Webhook.Root = req.body;
 	Logger.log(`Evaluation destroyed hook: ${hook.team.name}`);
 
-	// TODO: Delete the leftover slot
-
 	if (hook.user.id != env.PEERPP_BOT_UID) {
 		Logger.logHook("ignored", hook, "Cancelled evaluation was not regarding the bot");
-		return res.status(204).send("Peer++ received");
+		res.status(204).send("Peer++ received");
+		return;
 	}
-	
+
 	// Was this evaluation marked as expired ?
 	db.get(`SELECT * FROM expiredLocks WHERE scaleteamID == ${hook.id}`, (err, row) => {
 		if (err != null) {
-			Logger.logHook("error", hook, `Failed to check if lock is db : ${err}`)
-			return res.status(500).send("Failed to check for lock in db.");
+			Logger.err(`Failed to check if lock is in the db : ${err}`)
+			res.status(500).send("Failed to check for lock in  db.");
 		}
-		if (row != undefined) {
+		else if (row != undefined) {
 			Logger.logHook("ignored", hook, "Cancelled evaluation was an expired one");
-			return res.status(204).send("Peer++ received");
+			res.status(204).send("Peer++ received");
+		}
+		else { // Rebook the evaluation!
+			Logger.logHook("ignored", hook, "Some silly student tried to cancel the bot");			
+			try {
+				// Because the cancellation leaves the slot behind ...
+				// Intra.clearAllSlots();
+				Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+			}
+			catch (error) {
+				Logger.logHook("error", hook, `Failed to rebook an evaluation! : ${error}`)
+				res.status(500).send("Failed to rebook!");
+			}
 		}
 	});
-
-	
-	Logger.logHook("ignored", hook, "Some silly student tried to cancel the bot");
-	try { Intra.bookPlaceholderEval(hook.scale.id, hook.team.id); }
-	catch (error) {
-		Logger.logHook("error", hook, `Failed to rebook evaluation! : ${error}`)
-		return res.status(500).send("Failed to rebook!");
-	}
-	return res.status(204).send("Peer++ received");
 });
 
 // ScaleTeam - Update
+/* ************************************************************************** */
+
 app.post("/update", async (req: Request, res: Response) => {
 
 	const filter = filterHook(req, env.WEBHOOK_UPDATE_SECRET);

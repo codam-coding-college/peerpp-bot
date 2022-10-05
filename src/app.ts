@@ -5,8 +5,10 @@ import { env } from "./utils/env";
 import Fast42 from "@codam/fast42";
 import { Database } from 'sqlite3';
 import { Intra } from "./utils/intra/intra";
-import { app as webhookApp } from "./webhook/webhook";
 import { slackApp } from "./slackbot/slack";
+import { app as webhookApp } from "./webhook/webhook";
+
+// TODO: Go over the entire application and review error messages.
 
 /* ************************************************************************** */
 
@@ -26,7 +28,7 @@ async function checkLocks() {
 
 	let locks: Intra.ScaleTeam[] = [] 
 	try { locks = await Intra.getEvaluationLocks();	} 
-	catch (error) { return Logger.err(`Failed to fetch locks: ${error}`) }
+	catch (error) { return Logger.err(`${error}`) }
 
 	if (locks.length == 0) {
 		Logger.log("No locks to delete")
@@ -40,16 +42,21 @@ async function checkLocks() {
 
 		// Is the lock expired ?
 		if (Date.now() >= unlockDate.getTime()) {
-			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((error) => {
-				return Logger.err(`Failed to delete lock: ${error}`)
-			});
-
-			n++;
 			Logger.log(`Deleting expired lock: ScaleTeamID: ${lock.id} Project: ${lock.projectSlug} Team: ${lock.teamName}`);
+			
 			db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
 				if (err != null)
 					Logger.err(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
 			});
+
+			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((error) => {
+				return Logger.err(`Failed to delete lock: ${error}`)
+			});
+
+			// Intra.clearAllSlots().catch((error) => {
+			// 	return Logger.err(`${error}`)
+			// });
+			n++;
 		}
 	}
 
@@ -61,12 +68,16 @@ async function checkLocks() {
 // Check for our reserved locks if any of them are expired. TODO: Figure out the frequency of this.
 const lockJob = new CronJob("*/15 * * * *", checkLocks);
 
+// db.run(`INSERT INTO expiredLocks(scaleteamID, created_at) VALUES(123, datetime('now', '-${env.expireDays} days'))`);
 // Query the database for week old locks, and remove them. 0 0 * * 0
 const clearJob = new CronJob("0 0 * * 0", () => {
+	Logger.log("Deleting expired locks from database");
 	db.run(`DELETE FROM expiredLocks WHERE datetime(created_at) < datetime('now', '-${env.expireDays} days')`, (err) => {
 		if (err != null) Logger.err(`Failed to delete old locks: ${err.message}`);
-	})
+	});
 });
+
+/* ************************************************************************** */
 
 (async () => {
 	Logger.log("Launching Peer++");
@@ -75,6 +86,9 @@ const clearJob = new CronJob("0 0 * * 0", () => {
         client_secret: env.INTRA_SECRET
     }]).init();
 	Logger.log("Connected to Intra V2");
+
+	// const slots = await Intra.api.get("/users/111044/slots");
+	// console.log(JSON.stringify(await slots.json()));
 
 	checkLocks();
 	lockJob.start();
