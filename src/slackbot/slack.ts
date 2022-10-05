@@ -1,4 +1,4 @@
-import { App, SayFn } from "@slack/bolt";
+import { App, LogLevel, SayFn } from "@slack/bolt";
 import { env } from "../utils/env";
 import { getFullUser } from "../utils/getUser";
 import { Intra } from "../utils/intra/intra";
@@ -13,6 +13,7 @@ export const slackApp = new App({
 	appToken: env.SLACK_APP_TOKEN,
 	port: parseInt(process.env["PORT"] || "3000"),
 	socketMode: true,
+	logLevel: LogLevel.ERROR
 });
 
 // Bot utils
