@@ -7,6 +7,7 @@ import Logger from "../utils/log";
 import { User } from "../utils/types";
 import { getFullUser } from "../utils/getUser";
 import { slackApp } from "./slack";
+import { db } from "../app";
 
 /* ************************************************************************** */
 
@@ -140,15 +141,27 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 	
 	const lock: Intra.ScaleTeam = highestPriorityScaleTeam(locks);
 	await say(`Found a team to be evaluated, booking evaluation...`);
-
-	// TODO: Uncomment for later, also make sure the requests actually succeed!
+	
 	// NOTE: Intra requires a eval to be minimum of 15 minutes in the future
 	const startEval = new Date(Date.now() + 20 * 60 * 1000);
-	// await Intra.bookEval( lock.scaleID, lock.teamID, corrector.intraUID, startEval);
+	await Intra.bookEval( lock.scaleID, lock.teamID, corrector.intraUID, startEval);
 
 	await Logger.log(`Booked evaluation corrector: ${corrector.intraLogin}, correcteds ${lock.correcteds} on ${projectSlug}`);
 
-	// await Intra.api.delete(`/scale_teams/${lock.id}`);
+	try {
+		db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
+			if (err != null) throw new Error(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
+		});
+	} catch (error) {
+		Logger.err(error);
+		await say("Oopsie! The bot messed up here, tried to insert lock into db , please inform staff!")
+	}
+
+	await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
+		Logger.err(`Failed to delete lock: ${reason}`);
+		await say("Oopsie! The bot messed up here, tried to delete lock, please inform staff!")
+	});
+
 	await Logger.log(`Deleted evaluation lock ${JSON.stringify(lock)}`);
 
 	let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
