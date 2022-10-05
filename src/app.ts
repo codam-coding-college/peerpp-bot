@@ -82,14 +82,12 @@ const clearJob = new CronJob("0 0 * * 0", () => {
 (async () => {
 	Logger.log("Launching Peer++");
 	
-    await new Fast42([{
+    Intra.api = await new Fast42([{
         client_id: env.INTRA_UID,
         client_secret: env.INTRA_SECRET
     }]).init().catch((reason) => {
 		Logger.err(`Failed to connect: ${reason}`)
 		process.exit(1);
-	}).then((value) => { 
-		Intra.api = value 
 	});
 
 	Logger.log("Connected to Intra V2");

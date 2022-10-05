@@ -141,12 +141,12 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 	
 	const lock: Intra.ScaleTeam = highestPriorityScaleTeam(locks);
 	await say(`Found a team to be evaluated, booking evaluation...`);
-	
+
 	// NOTE: Intra requires a eval to be minimum of 15 minutes in the future
 	const startEval = new Date(Date.now() + 20 * 60 * 1000);
 	await Intra.bookEval( lock.scaleID, lock.teamID, corrector.intraUID, startEval);
 
-	await Logger.log(`Booked evaluation corrector: ${corrector.intraLogin}, correcteds ${lock.correcteds} on ${projectSlug}`);
+	await Logger.log(`Booked evaluation corrector: ${corrector.intraLogin}, correcteds ${lock.correcteds[0]?.intraLogin} on ${projectSlug}`);
 
 	try {
 		db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
