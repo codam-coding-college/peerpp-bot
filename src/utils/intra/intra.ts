@@ -1,34 +1,39 @@
-import { env } from "../env";
 import Logger from "../log";
+import { env } from "../env";
 import Fast42 from "@codam/fast42";
-import { IncompleteUser, IntraResponse, User } from "../types";
+import { IncompleteUser, IntraResponse } from "../types";
 
 /* ************************************************************************** */
 
-/**
- * Intra api utils
- */
+/** Intra api utils */
 export namespace Intra {
-	// Intra V2 endpoint
+	/** Intra V2 endpoint */
 	export let api: Fast42;
 
-	// Simplified evaluation object (TODO: Nuke this abomination or smth), really not needed ...
-	// But parts of the codebase use this so maybe later.
+	/** Simplified evaluation object. */
 	export interface ScaleTeam {
-		id: number; // the id of the evaluation itself
-		scaleID: number; // the id of the type of evaluation (v1 or v2 or whatever)
-		teamID: number; // the id of the team created by the matching of corrector and corrected
+		/** The ScaleTeamID itself. */
+		id: number;
+		/** The ID of the evaluation sheet to be used. */
+		scaleID: number;
+		/** The ID of the team by the matching of corrector and corrected. */
+		teamID: number;
+		/** The name of the team. */
 		teamName: string;
-		projectID: number; // eg: 1314  - the id of the project to be evaluated
-		projectSlug: string; // eg: libft - the slug of the project id
+		/** The id of the project. E.g: 1314 */
+		projectID: number;
+		/** The slugname of the project. E.g: libft */
+		projectSlug: string;
+		/** The creation date of the evaluation. */
 		createdAt: Date;
+		/** The users that are part of the team to be corrected. */
 		correcteds: IncompleteUser[];
 	}
 
 	/**
 	 * Removes any available evaluation slots.
 	 */
-	export async function clearAllSlots() {
+	export async function destroyAllSlots() {
 		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/slots`);
 		await Promise.all(pages).catch((reason) => {
 			throw new Error(`Failed to get evaluation slots: ${reason}`);
@@ -47,6 +52,18 @@ export namespace Intra {
 		}
 
 		Logger.log("Destroyed all evaluation slots!");
+	}
+
+	/** Destroy all the locked evaluations. */
+	export async function destroyAllLocks() {
+		const locks = await Intra.getEvaluationLocks();
+
+		for (const lock of locks) {
+			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((reason) => {
+				Logger.err(`Failed to delete lock: ${reason}`);
+			});
+		}
+		Logger.log("Destroyed all evaluation locks!");
 	}
 
 	/**
@@ -166,14 +183,5 @@ export namespace Intra {
 	export async function bookPlaceholderEval(scaleID: number, teamID: number) {
 		const nextWeek = new Date(Date.now() + env.expireDays * 24 * 60 * 60 * 1000);
 		await bookEval(scaleID, teamID, env.PEERPP_BOT_UID, nextWeek);
-	}
-
-	/**
-	 * Check that the given user is a staff member of the watched campus.
-	 * @param user The user to check.
-	 * @returns True if the user is an admin else false.
-	 */
-	export async function isPeerPPAdmin(user: User): Promise<boolean> {
-		return env.WATCHED_CAMPUSES.includes(user.campusID) && user.staff;
 	}
 }

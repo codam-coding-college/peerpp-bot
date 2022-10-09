@@ -13,13 +13,12 @@ import { db } from "../app";
 
 export async function help(say: SayFn) {
 	const text = `\`\`\`
-help                                              show this help
-list-projects                                     list all projects which a peer++ evaluator can evaluate
-list-evaluations                                  list all evaluations that were locked by the peer++ bot
-book-evaluation [PROJECT_SLUG] [CORRECTOR_LOGIN]  book an evaluation for a project
-                                                      [PROJECT_SLUG]:    (optional) the project slug of the project you want to evaluate
-                                                      [CORRECTOR_LOGIN]: (optional, restricted) book an evaluation for someone else
-whoami                                            show who this bot thinks you are
+help                                              Show this help
+list-projects                                     List all projects which a peer++ evaluator can evaluate
+list-evaluations                                  List all evaluations that were locked by the peer++ bot
+book-evaluation [PROJECT_SLUG] [CORRECTOR_LOGIN]  Book an evaluation for a project
+                                                  [PROJECT_SLUG]:    (optional) the project slug of the project you want to evaluate
+                                                  [CORRECTOR_LOGIN]: (optional, restricted) book an evaluation for someone else
 \`\`\``;
 	await say(text);
 }
@@ -130,10 +129,13 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 	await say(`Requested peer++ eval by ${corrector.intraLogin} for \`${projectSlug}\`...`);
 
 	// Find booked evaluations of the given project
-	const locks = (await Intra.getEvaluationLocks()).filter(
-		(lock: Intra.ScaleTeam) => lock.projectSlug === projectSlug
-	);
-
+	let locks: Intra.ScaleTeam[] = [];
+	try { locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) =>  lock.projectSlug === projectSlug); } 
+	catch (error) {
+		Logger.err(error);
+		await say("Oopsie! The bot messed up here, tried to fetch locks, please inform staff!");
+		return;
+	}
 	if (locks.length == 0) {
 		await say(`No-one needs to be evaluated on \`${projectSlug}\``);
 		return;
@@ -144,8 +146,7 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 
 	// NOTE: Intra requires a eval to be minimum of 15 minutes in the future
 	const startEval = new Date(Date.now() + 20 * 60 * 1000);
-	await Intra.bookEval( lock.scaleID, lock.teamID, corrector.intraUID, startEval);
-
+	await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval);
 	await Logger.log(`Booked evaluation corrector: ${corrector.intraLogin}, correcteds ${lock.correcteds[0]?.intraLogin} on ${projectSlug}`);
 
 	try {
@@ -154,7 +155,7 @@ export async function bookEvaluation(say: SayFn, corrector: User, projectSlug: s
 		});
 	} catch (error) {
 		Logger.err(error);
-		await say("Oopsie! The bot messed up here, tried to insert lock into db , please inform staff!")
+		await say("Oopsie! The bot messed up here, tried to insert lock into db, please inform staff!")
 	}
 
 	await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
