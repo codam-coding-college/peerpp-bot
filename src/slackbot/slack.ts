@@ -45,7 +45,7 @@ async function bookEvaluation(text: string, say: SayFn, slackUID: any) {
 	}
 
 	let corrector: User;
-	try { corrector = await getFullUser({ slackUID }); } 
+	try { corrector = await getFullUser({ slackUID: slackUID }); } 
 	catch (err) {
 		Logger.log(err);
 		await say(`Could not match your Slack ID to a Intra user`);

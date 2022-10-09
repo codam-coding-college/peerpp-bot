@@ -172,7 +172,9 @@ export namespace Intra {
 
 		await api.post("/scale_teams/multiple_create", body).catch((reason: any) => {
 			Logger.err(`Failed to book evaluation ${reason}`);
+			return false;
 		});
+		return true;
 	}
 
 	/**
