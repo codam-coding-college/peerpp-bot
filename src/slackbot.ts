@@ -33,7 +33,7 @@ export const slackApp = new App({
 /*============================================================================*/
 
 /** Utility functions for the slack bot */
-namespace slackBot {
+namespace SlackBot {
 
 	//==// Logic functions //==//
 
@@ -261,12 +261,12 @@ slackApp.message(/.*/i, async ({ message, say }) => {
 	const text: string = message.text;
 
 	if (text.match(/^help/))
-		await slackBot.displayHelp(say);
+		await SlackBot.displayHelp(say);
 	else if (text.match(/^list-projects/))
-		await slackBot.displayProjects(say);
+		await SlackBot.displayProjects(say);
 	else if (text.match(/^list-evaluations/))
-		await slackBot.displayEvaluations(say);
+		await SlackBot.displayEvaluations(say);
 	else if (text.match(/^book-evaluation/))
-		await slackBot.bookEvaluation(text, say, {slackUID: slackUID});
+		await SlackBot.bookEvaluation(text, say, {slackUID: slackUID});
 	await say(`Command \`${text}\` not recognized, see help for more info`);
 });
