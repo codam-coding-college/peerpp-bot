@@ -90,6 +90,17 @@ namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	const swapScaleTeams = async (say: SayFn, corrector: User, lock: Intra.ScaleTeam) => {
+		try {
+			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
+				if (err != null) 
+					throw new Error(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
+			});
+		} catch (error) {
+			Logger.err(error);
+			say("Failed to book the evaluation. Please inform staff!");
+		}
+
+		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 		await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
 			say("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
@@ -101,16 +112,6 @@ namespace SlackBot {
 		if (!await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)) {
 			say("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to book evaluation for scaleTeam: ${lock.id}`);
-		}
-
-		try {
-			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
-				if (err != null) 
-					throw new Error(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
-			});
-		} catch (error) {
-			Logger.err(error);
-			say("Failed to book the evaluation. Please inform staff!");
 		}
 
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
