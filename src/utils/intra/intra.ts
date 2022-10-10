@@ -45,9 +45,14 @@ export namespace Intra {
 
 			const slots = await page.json() as IntraResponse.Slot[];
 			for (const slot of slots) {
-				await Intra.api.delete(`/slots/${slot.id}`).catch((err) => {
-					throw new Error(`Failed to delete slot ${slot.id} : ${err}}`);
-				});
+				Logger.log(`Destroying slot: ${slot.id}`);
+
+				// Slots with no scaleteam have not yet started.
+				if (slot.scale_team == null) {
+					await Intra.api.delete(`/slots/${slot.id}`).catch((err) => {
+						throw new Error(`Failed to delete slot ${slot.id} : ${err}}`);
+					});
+				}
 			}
 		}
 

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   webhook_new.ts                                     :+:    :+:            */
+/*   webhook.ts                                         :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: W2Wizard <w2.wizzard@gmail.com>              +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/10/09 22:40:02 by W2Wizard      #+#    #+#                 */
-/*   Updated: 2022/10/09 22:40:02 by W2Wizard      ########   odam.nl         */
+/*   Updated: 2022/10/10 12:50:00 by lde-la-h      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
 	const hook: IntraResponse.Webhook.Root = req.body;
-	const filter = filterHook(req, env.WEBHOOK_CREATE_SECRET);
+	const filter = filterHook(req, env.WEBHOOK_DELETE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return;
