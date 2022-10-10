@@ -11,35 +11,36 @@ export namespace Webhook {
 	//===// Utilities //===//
 
 	/**
-	 * Is the corrector of 
-	 * @param hook 
-	 * @returns True if an evaluation is required, false otherwise.
+	 * Checks wether any of the previous evaluators are of high enough level.
+	 * @param hook The webhook response carrying the ScaleTeam.
+	 * @returns True if the previous evaluators are of high enough level else false.
 	 */
 	const checkEvaluators = async (hook: IntraResponse.Webhook.Root, evals: IntraResponse.Evaluation[]) => {
 		try {
-			const corrector: User | null = await getFullUser({
-				intraUID: hook.user.id, 
-				intraLogin: hook.user.login
+			// Fetch team leader to compare to other evaluators.
+			const user = hook.team.users.find((user) => user.leader === true);
+			if (user === undefined)
+				throw new Error(`No team leader for ${hook.team.id}`);
+
+			const leader: User = await getFullUser({
+				intraLogin: user.login,
+				intraUID: user.id
 			});
 			
-			// Check if evaluation is from watched campus
-			if (!env.WATCHED_CAMPUSES.includes(corrector.campusID)) {
-				Logger.log("Ignored: Evaluation is not from watched campus");
-				return true;
+			// Compare to previous evaluators.
+			for (const evaluation of evals) {
+				const corrector: User = await getFullUser({
+					intraLogin: evaluation.corrector.login, 
+					intraUID: evaluation.corrector.id
+				});
+
+				if (leader.level + 2 < corrector.level)
+					return false;
 			}
-
-			// Check previous evaluators and their levels.
-			for (const evaluation of evals)
-				for (const user of evaluation.correcteds) {
-					const student = await getFullUser({intraLogin: user.login, intraUID: user.id});
-					if (student.level + 2 < corrector.level) 
-						return true;
-				}
-
-			return false;
+			return true;
 		} catch (error) {
 			Logger.err(error);
-			return false;
+			return true;
 		}
 	}
 
