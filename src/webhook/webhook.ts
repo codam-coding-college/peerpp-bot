@@ -13,11 +13,14 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { db } from "../app";
+import { slackApp } from "../slackbot";
 import { env } from "../utils/env";
 import { Intra } from "../utils/intra/intra";
 import Logger from "../utils/log";
 import { IntraResponse } from "../utils/types";
 import { Webhook } from "./evalRequirements";
+import { ChatPostMessageArguments } from "@slack/web-api";
+import { getFullUser } from "../utils/getUser";
 
 /*============================================================================*/
 
@@ -37,6 +40,24 @@ const filterHook = (req: Request, secret: string) => {
 	if (req.headers["x-secret"] !== secret)
 		return { code: 412, msg: "X-Secret header incorrect" };
 	return null;
+}
+
+/**
+ * Notifies the given team users that have been selected for a peer++ evaluation.
+ * @param users The users to notify that they have been selected.
+ * @param projectName The project that was selected.
+ */
+const sendNotification = async (users: IntraResponse.TeamUser[], projectName: string) => {
+	for (const user of users) {
+		const opt: ChatPostMessageArguments = {
+			channel: (await getFullUser({intraUID: user.id, intraLogin: user.login})).slackUID,
+			text: `Congratulations! Your \`${projectName}\` has been selected for a Peer++ evaluation!`,
+		};
+
+		const response = await slackApp.client.chat.postMessage(opt);
+		if (!response.ok)
+			throw new Error(`Failed to send message: ${response.error}`);
+	}
 }
 
 /*============================================================================*/
@@ -75,12 +96,13 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 			}
 			else if (await Webhook.requiresEvaluation(hook)) {
 				Logger.log("Booking a Peer++ evaluation!");
-				// await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
+
+				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+				await sendNotification(hook.team.users, hook.project.name);
+
 				res.status(201).send(`Peer++ placeholder evaluation created`);
 			}
-			else {
-				res.status(204).send("Peer++ evaluation not required");
-			}
+			else res.status(204).send("Peer++ evaluation not required");
 		});	
 	} catch (error) {
 		Logger.err(error);
