@@ -1,15 +1,4 @@
 /* ************************************************************************** */
-/*                                                                            */
-/*                                                        ::::::::            */
-/*   slackbot.ts                                        :+:    :+:            */
-/*                                                     +:+                    */
-/*   By: W2Wizard <w2.wizzard@gmail.com>              +#+                     */
-/*                                                   +#+                      */
-/*   Created: 2022/10/09 17:14:54 by W2Wizard      #+#    #+#                 */
-/*   Updated: 2022/10/09 17:14:54 by W2Wizard      ########   odam.nl         */
-/*                                                                            */
-/* ************************************************************************** */
-
 import { db } from "./app";
 import Logger from "./utils/log";
 import { env } from "./utils/env";
@@ -268,5 +257,6 @@ slackApp.message(/.*/i, async ({ message, say }) => {
 		await SlackBot.displayEvaluations(say);
 	else if (text.match(/^book-evaluation/))
 		await SlackBot.bookEvaluation(text, say, {slackUID: slackUID});
-	await say(`Command \`${text}\` not recognized, see help for more info`);
+	else
+		await say(`Command \`${text}\` not recognized, see help for more info`);
 });
