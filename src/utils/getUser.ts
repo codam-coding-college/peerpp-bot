@@ -3,7 +3,7 @@ import { env } from "./env";
 import { Intra } from "./intra/intra";
 import { IncompleteUser, User } from "./types";
 import { UsersInfoResponse } from "@slack/web-api";
-import { slackApp } from "../slackbot/slack";
+import { slackApp } from "../slackbot";
 
 /* ************************************************************************** */
 

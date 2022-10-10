@@ -5,7 +5,7 @@ import { env } from "./utils/env";
 import Fast42 from "@codam/fast42";
 import { Database } from 'sqlite3';
 import { Intra } from "./utils/intra/intra";
-import { slackApp } from "./slackbot/slack";
+import { slackApp } from "./slackbot";
 import { webhookApp } from "./webhook/webhook";
 
 // TODO: Go over the entire application and review error messages.
