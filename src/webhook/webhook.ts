@@ -35,17 +35,27 @@ const filterHook = (req: Request, secret: string) => {
  * @param users The users to notify that they have been selected.
  * @param projectName The project that was selected.
  */
-const sendNotification = async (users: IntraResponse.TeamUser[], projectName: string) => {
-	for (const user of users) {
-		const opt: ChatPostMessageArguments = {
-			channel: (await getFullUser({intraUID: user.id, intraLogin: user.login})).slackUID,
-			text: `Congratulations! Your \`${projectName}\` has been selected for a Peer++ evaluation!`,
-		};
-
-		const response = await slackApp.client.chat.postMessage(opt);
+const sendNotification = async (hook: IntraResponse.Webhook.Root) => {
+	try {
+		const response = await Intra.api.get(`/teams/${hook.team.id}`);
 		if (!response.ok)
-			throw new Error(`Failed to send message: ${response.error}`);
-	}
+			throw new Error(`Failed to notify users: ${response.statusText}`);
+
+		const Team = await response.json();
+		for (const teamUser of Team.users) {
+			const user = await getFullUser({intraLogin: teamUser.login, intraUID: teamUser.id});
+
+			const opt: ChatPostMessageArguments = {
+				channel: user.slackUID,
+				text: `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:`,
+			};
+
+			const response = await slackApp.client.chat.postMessage(opt);
+			if (!response.ok)
+				throw new Error(`Failed to send message: ${response.error}`);
+			Logger.log(`Notified user: ${user.intraLogin}`);
+		}
+	} catch (error) { Logger.err(error); }
 }
 
 /*============================================================================*/
@@ -86,7 +96,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 				Logger.log("Booking a Peer++ evaluation!");
 
 				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-				await sendNotification(hook.team.users, hook.project.name);
+				await sendNotification(hook);
 
 				res.status(201).send(`Peer++ placeholder evaluation created`);
 			}
