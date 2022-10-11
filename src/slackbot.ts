@@ -218,8 +218,10 @@ namespace SlackBot {
 
 		// Is user in the peer++ group.
 		try {
-			if (!await Intra.hasGroup(corrector, env.PEERPP_GROUP_ID))
+			if (!await Intra.hasGroup(corrector, env.PEERPP_GROUP_ID)) {
 				say("Sorry, you're not a Peer++ evalutor. Please apply!");
+				return;
+			}
 		} catch (error) {
 			Logger.err(error);
 			say("Sorry, failed to fetch your groups. Please inform staff!");
