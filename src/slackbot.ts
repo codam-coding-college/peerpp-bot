@@ -91,25 +91,28 @@ namespace SlackBot {
 	 */
 	const swapScaleTeams = async (say: SayFn, corrector: User, lock: Intra.ScaleTeam) => {
 		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
-		await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
-			say("Failed to book the evaluation. Please inform staff!");
-			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
-		});
-
-		const startEval = new Date(Date.now() + 20 * 60 * 1000); // TODO: Can we do exactly 15 Minutes?
-		if (!await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)) {
-			say("Failed to book the evaluation. Please inform staff!");
-			return await Logger.err(`Failed to book evaluation for scaleTeam: ${lock.id}`);
-		}
-
 		try {
-			db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
+			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
 				if (err != null) 
 					throw new Error(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
 			});
 		} catch (error) {
 			Logger.err(error);
 			say("Failed to book the evaluation. Please inform staff!");
+		}
+
+		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
+		await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
+			say("Failed to book the evaluation. Please inform staff!");
+			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
+		});
+
+		// TODO: Delete the leftover slot, check if that is necessary.
+
+		const startEval = new Date(Date.now() + 20 * 60 * 1000); // TODO: Can we do exactly 15 Minutes?
+		if (!await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)) {
+			say("Failed to book the evaluation. Please inform staff!");
+			return await Logger.err(`Failed to book evaluation for scaleTeam: ${lock.id}`);
 		}
 
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
@@ -253,7 +256,7 @@ slackApp.message(/.*/i, async ({ message, say }) => {
 	/** @see https://bit.ly/3s0q0ip */
 	if (message.channel[0] !== "D")
 		return;
-	
+
 	//@ts-ignore
 	const slackUID: string = message.user;
 	//@ts-ignore

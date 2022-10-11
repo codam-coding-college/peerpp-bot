@@ -44,8 +44,8 @@ async function checkLocks() {
 		// Is the lock expired ?
 		if (Date.now() >= unlockDate.getTime()) {
 			Logger.log(`Deleting expired lock: ScaleTeamID: ${lock.id} Project: ${lock.projectSlug} Team: ${lock.teamName}`);
-			
-			db.run(`INSERT INTO expiredLocks(scaleteamID) VALUES(${lock.id})`, (err) => {
+
+			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
 				if (err != null)
 					Logger.err(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
 			});
@@ -53,10 +53,6 @@ async function checkLocks() {
 			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((error) => {
 				return Logger.err(`Failed to delete lock: ${error}`)
 			});
-
-			// Intra.clearAllSlots().catch((error) => {
-			// 	return Logger.err(`${error}`)
-			// });
 			n++;
 		}
 	}
@@ -69,11 +65,10 @@ async function checkLocks() {
 // Check for our reserved locks if any of them are expired. TODO: Figure out the frequency of this.
 const lockJob = new CronJob("*/15 * * * *", checkLocks);
 
-// db.run(`INSERT INTO expiredLocks(scaleteamID, created_at) VALUES(123, datetime('now', '-${env.expireDays} days'))`);
 // Query the database for week old locks, and remove them. 0 0 * * 0
 const clearJob = new CronJob("0 0 * * 0", () => {
 	Logger.log("Deleting expired locks from database");
-	db.run(`DELETE FROM expiredLocks WHERE datetime(created_at) < datetime('now', '-${env.expireDays} days')`, (err) => {
+	db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${env.expireDays} days')`, (err) => {
 		if (err != null) Logger.err(`Failed to delete old locks: ${err.message}`);
 	});
 });

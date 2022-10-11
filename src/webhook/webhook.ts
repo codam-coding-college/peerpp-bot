@@ -6,18 +6,21 @@
 /*   By: W2Wizard <w2.wizzard@gmail.com>              +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/10/09 22:40:02 by W2Wizard      #+#    #+#                 */
-/*   Updated: 2022/10/11 11:02:51 by lde-la-h      ########   odam.nl         */
+/*   Updated: 2022/10/11 11:17:29 by lde-la-h      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { db } from "../app";
+import { slackApp } from "../slackbot";
 import { env } from "../utils/env";
 import { Intra } from "../utils/intra/intra";
 import Logger from "../utils/log";
 import { IntraResponse } from "../utils/types";
 import { Webhook } from "./evalRequirements";
+import { ChatPostMessageArguments } from "@slack/web-api";
+import { getFullUser } from "../utils/getUser";
 
 /*============================================================================*/
 
@@ -37,6 +40,24 @@ const filterHook = (req: Request, secret: string) => {
 	if (req.headers["x-secret"] !== secret)
 		return { code: 412, msg: "X-Secret header incorrect" };
 	return null;
+}
+
+/**
+ * Notifies the given team users that have been selected for a peer++ evaluation.
+ * @param users The users to notify that they have been selected.
+ * @param projectName The project that was selected.
+ */
+const sendNotification = async (users: IntraResponse.TeamUser[], projectName: string) => {
+	for (const user of users) {
+		const opt: ChatPostMessageArguments = {
+			channel: (await getFullUser({intraUID: user.id, intraLogin: user.login})).slackUID,
+			text: `Congratulations! Your \`${projectName}\` has been selected for a Peer++ evaluation!`,
+		};
+
+		const response = await slackApp.client.chat.postMessage(opt);
+		if (!response.ok)
+			throw new Error(`Failed to send message: ${response.error}`);
+	}
 }
 
 /*============================================================================*/
@@ -62,19 +83,29 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 		return;
 	}
 
-	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.slug}`);
+	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
 
 	try {
-		if (await Webhook.requiresEvaluation(hook)) {
-			Logger.log("Booking a Peer++ evaluation!");
+		// Was the created evaluation from a Team that was marked as expired
+		db.get(`SELECT * FROM expiredTeam WHERE teamID == ${hook.team.id}`, async (err, row) => {
+			if (err != null)
+				throw new Error(`Failed to check if team is in the db : ${err}`);
+			else if (row != undefined) {
+				Logger.log("Ignore: Created evaluation was from an expired team");
+				res.status(204).send();
+			}
+			else if (await Webhook.requiresEvaluation(hook)) {
+				Logger.log("Booking a Peer++ evaluation!");
 
-			//await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
-			res.status(201).send(`Peer++ placeholder evaluation created`);
-			return;
-		}
-		res.status(204).send("Peer++ evaluation not required");
+				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+				await sendNotification(hook.team.users, hook.project.name);
+
+				res.status(201).send(`Peer++ placeholder evaluation created`);
+			}
+			else res.status(204).send("Peer++ evaluation not required");
+		});	
 	} catch (error) {
-		Logger.err(`Something went wrong: ${error}`);
+		Logger.err(error);
 		res.status(500).send(error);
 	}
 });
@@ -90,17 +121,17 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 		return;
 	}
 
-	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.slug}`);
+	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name}`);
 
-	// Ignore the bot itself.
+	// Ignore if the corrector was not the bot
 	if (hook.user && hook.user.id != env.PEERPP_BOT_UID) {
 		Logger.log("Can be ignored, evaluation was not in regards to the bot.")
 		res.status(204).send();
 		return;
 	}
 	
-	// Check if it was expired, and rebook if it wasn't
-	db.get(`SELECT * FROM expiredLocks WHERE scaleteamID == ${hook.id}`, async (err, row) => {
+	// Check if the team was marked with an expired lock.
+	db.get(`SELECT * FROM expiredTeam WHERE teamID == ${hook.team.id}`, async (err, row) => {
 		if (err != null) {
 			Logger.err(`Failed to check if lock is in the db : ${err}`);
 			res.status(500).send();
