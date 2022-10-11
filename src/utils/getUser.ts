@@ -51,8 +51,6 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 	// TODO: Use interfaces for a more convenience.
 	// Fetch intra data if we have at least the login or UID.
 	if (isIntraDataMissing(user)) {
-		Logger.log("Fetching intra user data")
-
 		const isUIDValid = user.intraUID != undefined;
 		const id = (isUIDValid ? user.intraUID : user.intraLogin)!;
 
@@ -92,13 +90,10 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 			if (campusUser.is_primary) 
 				user.campusID = campusUser.campus_id;
 		}
-		Logger.log(`Fetched user: "${user.intraLogin}"`);
 		return getFullUser(user);
 	}
 	// Fetch slack or email using either.
 	else if (isSlackDataMissing(user)) {
-		Logger.log("Fetching slack user data")
-
 		// Do we have the UID?
 		if (user.slackUID != undefined) {
 
@@ -131,7 +126,7 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 	// Make sure we have all the data, also
 	if (Object.values(user).find((value) => value == undefined))
 		throw new Error(`Failed to fetch full data: ${JSON.stringify(user)}`);
-
+	Logger.log(`Fetched user: "${user.intraLogin}"`);
 	return {
 		intraUID: user.intraUID!,
 		intraLogin: user.intraLogin!,

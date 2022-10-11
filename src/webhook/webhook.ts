@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        ::::::::            */
-/*   webhook.ts                                         :+:    :+:            */
-/*                                                     +:+                    */
-/*   By: W2Wizard <w2.wizzard@gmail.com>              +#+                     */
-/*                                                   +#+                      */
-/*   Created: 2022/10/09 22:40:02 by W2Wizard      #+#    #+#                 */
-/*   Updated: 2022/10/11 11:17:29 by lde-la-h      ########   odam.nl         */
-/*                                                                            */
-/* ************************************************************************** */
-
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { db } from "../app";

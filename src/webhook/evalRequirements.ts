@@ -17,23 +17,24 @@ export namespace Webhook {
 	 */
 	const checkEvaluators = async (hook: IntraResponse.Webhook.Root, evals: IntraResponse.Evaluation[]) => {
 		try {
-			// Fetch team leader to compare to other evaluators.
-			const user = hook.team.users.find((user) => user.leader === true);
-			if (user === undefined)
-				throw new Error(`No team leader for ${hook.team.id}`);
-
+			// TODO: Some safety here maybe?
 			const leader: User = await getFullUser({
-				intraLogin: user.login,
-				intraUID: user.id
+				intraLogin: evals[0]?.correcteds[0]?.login,
+				intraUID: evals[0]?.correcteds[0]?.id
 			});
 			
 			// Compare to previous evaluators.
 			for (const evaluation of evals) {
+				// Filter the bot first, slack will otherwise FAIL to fetch details.
+				if (evaluation.corrector.id == env.PEERPP_BOT_UID) {
+					Logger.log("Ignored: Bot already present for evaluations");
+					return false;
+				}
+
 				const corrector: User = await getFullUser({
 					intraLogin: evaluation.corrector.login, 
 					intraUID: evaluation.corrector.id
 				});
-
 				if (leader.level + 2 < corrector.level)
 					return false;
 			}
