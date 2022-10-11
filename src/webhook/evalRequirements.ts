@@ -64,7 +64,7 @@ export namespace Webhook {
 			return false;
 		}
 		if (!env.projects.find((p) => p.id === hook.project.id)) {
-			Logger.log("Ignored: ProjectID ${hook.project.id} is not in the list of projects");
+			Logger.log(`Ignored: ProjectID ${hook.project.id} is not in the list of projects`);
 			return false;
 		}
 

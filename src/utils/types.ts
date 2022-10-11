@@ -32,6 +32,15 @@ export interface expiredLock {
 
 export namespace IntraResponse {
 
+	// A group like C.A.T.
+    export interface Group {
+        id: number;
+        user_id: number;
+        group_id: number;
+        created_at: Date;
+        updated_at: Date;
+    }
+
 	// An evaluation slot.
     export interface Slot {
         scale_team?: any;

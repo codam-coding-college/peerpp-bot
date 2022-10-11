@@ -6,7 +6,7 @@
 /*   By: W2Wizard <w2.wizzard@gmail.com>              +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/10/09 22:40:02 by W2Wizard      #+#    #+#                 */
-/*   Updated: 2022/10/10 12:52:03 by lde-la-h      ########   odam.nl         */
+/*   Updated: 2022/10/11 11:02:51 by lde-la-h      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 		if (await Webhook.requiresEvaluation(hook)) {
 			Logger.log("Booking a Peer++ evaluation!");
 
-			await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
+			//await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id)
 			res.status(201).send(`Peer++ placeholder evaluation created`);
 			return;
 		}
@@ -116,6 +116,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 				Logger.err(`Failed to rebook an evaluation : ${error}`);
 				res.status(500).send();
 			}
+			res.status(204).send();
 		}
 	});
 });

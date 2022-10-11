@@ -1,7 +1,7 @@
 import Logger from "../log";
 import { env } from "../env";
 import Fast42 from "@codam/fast42";
-import { IncompleteUser, IntraResponse } from "../types";
+import { IncompleteUser, IntraResponse, User } from "../types";
 
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ export namespace Intra {
 		const locks = await Intra.getEvaluationLocks();
 
 		for (const lock of locks) {
+			Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((reason) => {
 				Logger.err(`Failed to delete lock: ${reason}`);
 			});
@@ -80,6 +81,7 @@ export namespace Intra {
 	 export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
 		const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/scale_teams`, {
 			"filter[future]": "true",
+			"filter[campus_id]": `${env.WATCHED_CAMPUSES[0]}` // TODO: Multiple campuses ?
 		});
 
 		await Promise.all(pages).catch((reason) => {
@@ -126,6 +128,21 @@ export namespace Intra {
 		}).then(() => {
 			Logger.log("Added to group!");
 		});
+	}
+
+	/**
+	 * Adds the given user to a group.
+	 * @param groupID The group id.
+	 * @param login The user login.
+	 */
+	 export async function hasGroup(user: User, groupID: number): Promise<boolean> {
+		// NOTE (W2): I hope no one has more than 30 groups...
+		const response = await api.get(`/users/${user.intraUID}/groups_users`);
+		if (!response.ok)
+			throw new Error(`Failed to fetch user groups: ${response.statusText}`);
+
+		const groups = await response.json() as IntraResponse.Group[];
+		return groups.find((value) => value.group_id === groupID) != undefined;
 	}
 
 	/**

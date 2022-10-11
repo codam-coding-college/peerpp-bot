@@ -90,6 +90,7 @@ namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	const swapScaleTeams = async (say: SayFn, corrector: User, lock: Intra.ScaleTeam) => {
+		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 		await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
 			say("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
@@ -184,7 +185,7 @@ namespace SlackBot {
 				{ verbose: true, unitCount: 1 }
 			);
 
-			text += `\`${project} | ${projects[project]!.teamCount} teams | ${timeLocked} locked\n\``;
+			text += `\`${project} | ${projects[project]!.teamCount} teams | ${timeLocked} locked\`\n`;
 		}
 
 		say(text);
@@ -211,10 +212,19 @@ namespace SlackBot {
 			say("Could not match your Slack ID to a Intra user");
 			return await Logger.err(error);
 		}
+
+		// Is user in the peer++ group.
+		try {
+			if (!await Intra.hasGroup(corrector, env.PEERPP_GROUP_ID))
+				say("Sorry, you're not a Peer++ evalutor. Please apply!");
+		} catch (error) {
+			Logger.err(error);
+			say("Sorry, failed to fetch your groups. Please inform staff!");
+			return;
+		}
 		say(`Requested peer++ eval by ${corrector.intraLogin} for \`${slug}\`...`);
 
 		// Swap the scaleteams
-
 		let locks: Intra.ScaleTeam[] = [];
 		try { locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) =>  lock.projectSlug === slug); } 
 		catch (error) {
