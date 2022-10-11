@@ -50,6 +50,7 @@ async function checkLocks() {
 					Logger.err(`DB failed to insert scaleteamid ${lock.id} to expiredLocks : ${err.message}`);
 			});
 
+			Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((error) => {
 				return Logger.err(`Failed to delete lock: ${error}`)
 			});
