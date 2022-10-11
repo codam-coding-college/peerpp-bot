@@ -90,7 +90,6 @@ namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	const swapScaleTeams = async (say: SayFn, corrector: User, lock: Intra.ScaleTeam) => {
-		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 		try {
 			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
 				if (err != null) 

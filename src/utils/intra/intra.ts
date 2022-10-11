@@ -141,8 +141,8 @@ export namespace Intra {
 		if (!response.ok)
 			throw new Error(`Failed to fetch user groups: ${response.statusText}`);
 
-		const groups = await response.json() as IntraResponse.Group[];
-		return groups.find((value) => value.group_id === groupID) != undefined;
+		const groups = await response.json();
+		return groups.find((value: any) => value.group.id === groupID) != undefined;
 	}
 
 	/**
