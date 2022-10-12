@@ -108,7 +108,8 @@ namespace SlackBot {
 
 		// TODO: Delete the leftover slot, check if that is necessary.
 
-		const startEval = new Date(Date.now() + 20 * 60 * 1000); // TODO: Can we do exactly 15 Minutes?
+		// Instantly start the evaluation as to not let them cancel it.
+		const startEval = new Date(Date.now() + 15 * 60 * 1000);
 		if (!await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)) {
 			say("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to book evaluation for scaleTeam: ${lock.id}`);
@@ -117,7 +118,7 @@ namespace SlackBot {
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
 		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
 		for (const user of correcteds) 
-			text += `@${user.intraLogin} `;
+			text += `${user.intraLogin} `;
 		text += `at ${startEval}, they will be sent a message on Slack letting them know you've booked an eval, and asking them to contact you`;
 		say(text);
 	
