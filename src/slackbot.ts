@@ -101,7 +101,7 @@ namespace SlackBot {
 		}
 
 		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
-		await Intra.api.delete(`/scale_teams/${lock.id}`).catch(async (reason) => {
+		await Intra.api.delete(`/scale_teams/${lock.id}`, {}).catch(async (reason) => {
 			say("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
 		});

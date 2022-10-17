@@ -128,8 +128,6 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 		return;
 	}
 
-	// TODO: If the evaluation was expired, ignore.
-	
 	// Check if the team was marked with an expired lock.
 	db.get(`SELECT * FROM expiredTeam WHERE teamID == ${hook.team.id}`, async (err, row) => {
 		if (err != null) {
@@ -146,6 +144,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 			} catch (error) {
 				Logger.err(`Failed to rebook an evaluation : ${error}`);
 				res.status(500).send();
+				return;
 			}
 			res.status(204).send();
 		}

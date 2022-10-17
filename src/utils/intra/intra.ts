@@ -49,7 +49,7 @@ export namespace Intra {
 
 				// Slots with no scaleteam have not yet started.
 				if (slot.scale_team == null) {
-					await Intra.api.delete(`/slots/${slot.id}`).catch((err) => {
+					await Intra.api.delete(`/slots/${slot.id}`, {}).catch((err) => {
 						throw new Error(`Failed to delete slot ${slot.id} : ${err}}`);
 					});
 				}
@@ -65,7 +65,7 @@ export namespace Intra {
 
 		for (const lock of locks) {
 			Logger.log(`Deleting ScaleTeam: ${lock.id}`);
-			await Intra.api.delete(`/scale_teams/${lock.id}`).catch((reason) => {
+			await Intra.api.delete(`/scale_teams/${lock.id}`, {}).catch((reason) => {
 				Logger.err(`Failed to delete lock: ${reason}`);
 			});
 		}

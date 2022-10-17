@@ -49,14 +49,6 @@ port 8080 is listening for webhooks on a express server
 port 3000 is used to receives slack messages on the slack bolt api
 ```
 
-## Docker (production)
-```
-docker build -t peerpp-bot .
-docker stop peerpp-bot || true
-docker rm peerpp-bot || true
-docker run -d --restart unless-stopped -p 8080:8080 -p 3000:3000 --name peerpp-bot peerpp-bot
-```
-
 ## Local development
 - Install Nodejs 18.x
 - Install dependencies\
