@@ -216,24 +216,29 @@ namespace SlackBot {
 			return await Logger.err(error);
 		}
 
-		// Is user in the peer++ group.
+		// Is user in the peer++ group or that they did the project.
 		try {
 			if (!await Intra.hasGroup(corrector, env.PEERPP_GROUP_ID)) {
-				say("Sorry, you're not a Peer++ evalutor. Please apply!");
+				say("Sorry, you're not a Peer++ evalutor. Please apply! :panic:");
+				return;
+			}
+			if (!await Intra.didProject(corrector, slug)) {
+				say("Sorry, you have to yet make this project :sus:");
 				return;
 			}
 		} catch (error) {
 			Logger.err(error);
-			say("Sorry, failed to fetch your groups. Please inform staff!");
+			say("Sorry, something went very wrong. Please inform staff! :panic:");
 			return;
 		}
+
 		say(`Requested peer++ eval by ${corrector.intraLogin} for \`${slug}\`...`);
 
 		// Swap the scaleteams
 		let locks: Intra.ScaleTeam[] = [];
 		try { locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) =>  lock.projectSlug === slug); } 
 		catch (error) {
-			say("Failed to fetch evaluation locks. Please inform staff!");
+			say("Failed to fetch evaluation locks. Please inform staff! :panic:");
 			return await Logger.err(error);
 		}
 		if (locks.length == 0) {

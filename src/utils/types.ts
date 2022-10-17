@@ -187,8 +187,52 @@ export namespace IntraResponse {
         feedbacks: Feedback[];
     }
 
+    export interface LightUser {
+        id: number;
+        login: string;
+        url: string;
+    }
+
+    export interface Project {
+        id: number;
+        name: string;
+        slug: string;
+        parent_id?: number;
+    }
+
+    export interface ProjectUser {
+        id: number;
+        occurrence: number;
+        final_mark?: any;
+        status: string;
+        "validated?"?: any;
+        current_team_id: number;
+        project: Project;
+        cursus_ids: number[];
+        user: LightUser;
+        teams: Team[];
+    }
+
 	// Stuff related to the webhook
 	export namespace Webhook {
+
+        export interface Team {
+            id: number;
+            project_id: number;
+            name: string;
+            created_at: string;
+            updated_at: string;
+            locked_at: string;
+            closed_at: string;
+            final_mark?: any;
+            repo_url: string;
+            repo_uuid: string;
+            deadline_at?: any;
+            terminating_at?: any;
+            project_session_id: number;
+            status: string;
+        }
+
 		export interface Project {
 			id: number;
 			name: string;

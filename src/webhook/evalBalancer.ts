@@ -2,6 +2,8 @@ import Logger from "../utils/log";
 import { Intra } from "../utils/intra/intra";
 import { IntraResponse } from "../utils/types";
 
+// This is temporarily here and will me migrated in its own application later
+
 /*============================================================================*/
 
 const CPPModules = [
@@ -39,8 +41,21 @@ export const balanceCPP = async (hook: IntraResponse.Webhook.Root) => {
     if (!poolResponse.ok)
 		return Logger.log(`Failed to remove point from pool: ${poolResponse.statusText}`);
 
+    const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
+    if (!teamResponse.ok)
+        return Logger.log(`Failed to add point to user: ${teamResponse.statusText}`);
+    const teamUsers = await teamResponse.json();
+
     // Give the user that point
-    const userResponse = await Intra.api.post(`/users/${92103}/correction_points/add`, {});
+    const userResponse = await Intra.api.post(`/users/${teamUsers[0].user.id}/correction_points/add`, {});
     if (!userResponse.ok)
         return Logger.log(`Failed to add point to user: ${userResponse.statusText}`);
+}
+
+/**
+ * 
+ * @param hook 
+ */
+export const balanceB2BR = (hook: IntraResponse.Webhook.Root) => {
+
 }
