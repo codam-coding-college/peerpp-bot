@@ -235,20 +235,21 @@ export namespace Intra {
     export const givePointToTeam = async (hook: IntraResponse.Webhook.Root) => {
         const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
         if (!teamResponse.ok)
-            return console.log(`Failed to add point to user: ${teamResponse.statusText}`);
-        const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
-
+            return console.log(`Failed to fetch team: ${teamResponse.statusText}`);
+        const teamUsers = await teamResponse.json();
+    
         // Remove from the pool.
         const pointRemResponse = await Intra.api.delete(`/pools/39/points/remove`, {"points": teamUsers.length});
         if (!pointRemResponse.ok)
-            return Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
-        
+           return Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
+    
         // Give them back.
         for (const teamUser of teamUsers) {
-            const pointAddResponse = await Intra.api.post(`/users/${teamUser.id}/correction_points/add`, {"amount": 1});
+            Logger.log(`Gave a point to: ${teamUser.user.login}`);
+            const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {"reason": "A return on their invesment"});
             if (!pointAddResponse.ok) {
-                Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
-                continue;
+               Logger.err(`Failed to add evalpoint: ${pointRemResponse.statusText}`);
+               continue;
             }
         }
     } 
