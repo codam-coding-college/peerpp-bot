@@ -239,7 +239,7 @@ export namespace Intra {
         const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
 
         // Remove from the pool.
-        const pointRemResponse = await Intra.api.delete(`/pools/39/points/removed`, {"points": teamUsers.length});
+        const pointRemResponse = await Intra.api.delete(`/pools/39/points/remove`, {"points": teamUsers.length});
         if (!pointRemResponse.ok)
             return Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
         
