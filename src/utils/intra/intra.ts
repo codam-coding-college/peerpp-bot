@@ -220,12 +220,38 @@ export namespace Intra {
             ],
         };
 
-        await api.post("/scale_teams/multiple_create", body).catch((reason: any) => {
-            Logger.err(`Failed to book evaluation ${reason}`);
+        const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
+        if (!scaleTeamResponse.ok) {
+            Logger.err(`Failed to book evaluation ${scaleTeamResponse.statusText}`);
             return false;
-        });
+        }
         return true;
     }
+
+    /**
+     * Returns a point to each one in the team.
+     * @param hook The webhook response carrying the ScaleTeam.
+     */
+    export const givePointToTeam = async (hook: IntraResponse.Webhook.Root) => {
+        const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
+        if (!teamResponse.ok)
+            return console.log(`Failed to add point to user: ${teamResponse.statusText}`);
+        const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
+
+        // Remove from the pool.
+        const pointRemResponse = await Intra.api.delete(`/pools/39/points/removed`, {"points": teamUsers.length});
+        if (!pointRemResponse.ok)
+            return Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
+        
+        // Give them back.
+        for (const teamUser of teamUsers) {
+            const pointAddResponse = await Intra.api.post(`/users/${teamUser.id}/correction_points/add`, {"amount": 1});
+            if (!pointAddResponse.ok) {
+                Logger.err(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
+                continue;
+            }
+        }
+    } 
 
     /**
      * Books a placeholder evaluation that will later delete itself.

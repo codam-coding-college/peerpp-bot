@@ -232,6 +232,7 @@ namespace SlackBot {
 			return;
 		}
 
+        Logger.log(`Eval booked: ${corrector.intraLogin} for ${slug}`);
 		say(`Requested peer++ eval by ${corrector.intraLogin} for \`${slug}\`...`);
 
 		// Swap the scaleteams

@@ -29,7 +29,7 @@ const file = dotenv.parse(fs.readFileSync(".env"));
         // Convert Evaluation to a simplified ScaleTeam
         const scaleTeams = await page.json()
         for (const scaleTeam of scaleTeams) {
-            const deleteResponse = await api.delete(`/scal_teams/${scaleTeam.id}`, {});
+            const deleteResponse = await api.delete(`/scale_teams/${scaleTeam.id}`, {});
             if (!deleteResponse.ok)
                 return console.error(`Intra decided to fail: ${deleteResponse.statusText}`);
             console.log(`Deleted lock: ${scaleTeam.id} : ${scaleTeam.team.name}`);

@@ -96,6 +96,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 				Logger.log("Booking a Peer++ evaluation!");
 
 				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+                await Intra.givePointToTeam(hook);
 				await sendNotification(hook);
 
 				res.status(201).send(`Peer++ placeholder evaluation created`);
