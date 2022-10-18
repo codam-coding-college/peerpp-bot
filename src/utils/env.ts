@@ -32,7 +32,7 @@ interface Env {
 	expireDays: number;
 	projects: { id: number; slug: string }[];
 	CURSUS_ID: number;
-	WATCHED_CAMPUSES: number[];
+	WATCHED_CAMPUS: number;
 }
 
 export const env: Env = {
@@ -46,8 +46,8 @@ export const env: Env = {
 	SLACK_APP_TOKEN: file["SLACK_APP_TOKEN"]!,
 	INTRA_UID: file["INTRA_UID"]!,
 	INTRA_SECRET: file["INTRA_SECRET"]!,
-	expireDays: 4,
+	expireDays: 1,
 	projects: JSON.parse(fs.readFileSync("project_slugs.json").toString()),
 	CURSUS_ID: 21,
-	WATCHED_CAMPUSES: [14],
+	WATCHED_CAMPUS: 14,
 };

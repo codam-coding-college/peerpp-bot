@@ -107,13 +107,13 @@ export namespace Intra {
      export async function getEvaluationLocks(): Promise<ScaleTeam[]> {
         const pages = await api.getAllPages(`/users/${env.PEERPP_BOT_UID}/scale_teams`, {
             "filter[future]": "true",
-            "filter[campus_id]": `${env.WATCHED_CAMPUSES[0]}` // TODO: Multiple campuses ?
+            "filter[campus_id]": `${env.WATCHED_CAMPUS}`
         });
 
         await Promise.all(pages).catch((reason) => {
             throw new Error(`Failed to get evaluations: ${reason}`);
-        })
-    
+        });
+
         const teams: Intra.ScaleTeam[] = []
         for await (const page of pages) {
             if (!page.ok) {
@@ -121,17 +121,19 @@ export namespace Intra {
                 throw new Error("Failed to get evaluation locks");
             }
 
-            const scaleTeams = await page.json() as IntraResponse.Evaluation[];
-            
             // Convert Evaluation to a simplified ScaleTeam
+            const scaleTeams = await page.json() as IntraResponse.Evaluation[];
             for (const scaleTeam of scaleTeams) {
+                // TODO: Project might have been listed but is now removed from that list.
+                const project = env.projects.find(p => p.id === scaleTeam.team.project_id);
+
                 const lock: ScaleTeam = {
                     id: scaleTeam.id,
                     scaleID: scaleTeam.scale_id,
                     teamID: scaleTeam.team.id,
                     teamName: scaleTeam.team.name,
                     projectID: scaleTeam.team.project_id,
-                    projectSlug: env.projects.find(p => p.id === scaleTeam.team.project_id)!.slug,
+                    projectSlug: project!.slug,
                     createdAt: new Date(scaleTeam.created_at),
                     correcteds: scaleTeam.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
                 }	
