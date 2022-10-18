@@ -175,20 +175,7 @@ export const balanceB2BR = async (hook: IntraResponse.Webhook.Root) => {
         return console.log(`Failed to add points to pool: ${poolResponse.statusText}`);
 
     // Convert any extra points given to corrector to dollars, Inception of Things e.g: Gives 2 points.
-    const amountToDeduct = hook.user.correction_point - 5;
-    if (amountToDeduct > 0) {
-        const userResponse = await Intra.api.delete(`/users/${hook.user.id}/correction_points/remove`, {
-            "reason": "Correction point cap at 5 points.",
-            "amount": amountToDeduct
-        });
-        if (!userResponse.ok)
-            return console.log(`Failed to remove points from user: ${userResponse.statusText}`);
-
-        const poolResponse = await Intra.api.post(`/pools/39/points/add`, { "points": amountToDeduct });
-        if (!poolResponse.ok)
-            return console.log(`Failed to add points to pool: ${poolResponse.statusText}`);
-        await rewardDollars(hook.user.id, 10, "Converting excess evaluation point(s) to dollars")
-    }
+    trimExcessPoints(hook.user.id, hook.user.correction_point, 10);
 }
 
 /**
