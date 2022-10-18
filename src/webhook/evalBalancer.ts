@@ -39,8 +39,9 @@ const trimExcessPoints = async (userID: number, correctionPoints: number, dollar
         const poolResponse = await Intra.api.post(`/pools/39/points/add`, { "points": amountToDeduct });
         if (!poolResponse.ok)
             return console.log(`Failed to add points to pool: ${poolResponse.statusText}`);
-        await rewardDollars(userID, correctionPoints * dollarPerPoint, "Converting excess evaluation point(s) to dollars")
+        return await rewardDollars(userID, correctionPoints * dollarPerPoint, "Converting excess evaluation point(s) to dollars")
     }
+    console.log("No points to trim for user.")
 }
 
 /**
