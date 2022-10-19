@@ -47,7 +47,7 @@ const sendNotification = async (hook: IntraResponse.Webhook.Root) => {
 
 			const opt: ChatPostMessageArguments = {
 				channel: user.slackUID,
-				text: `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:`,
+				text: `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`,
 			};
 
 			const response = await slackApp.client.chat.postMessage(opt);

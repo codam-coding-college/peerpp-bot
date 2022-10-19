@@ -75,7 +75,7 @@ namespace SlackBot {
 	const sendConfirmation = async (corrected: User, corrector: User, projectSlug: string) => {
 		const opt: ChatPostMessageArguments = {
 			channel: corrected.slackUID,
-			text: `You will be evaluated by ${corrector.intraLogin} on your \`${projectSlug}\`\nContact them to set a date for the evaluation`,
+			text: `You will be evaluated by ${corrector.intraLogin} on your \`${projectSlug}\`\nContact them to set a date for the evaluation.\n`,
 		};
 
 		const response = await slackApp.client.chat.postMessage(opt);
@@ -167,19 +167,17 @@ namespace SlackBot {
 
 	/**
 	 * Books an evaluation for the given slack user.
-	 * @param text The user message.
+	 * @param slug The user message, aka the project they requested.
 	 * @param say The messaging function.
 	 * @param corrector The user who wants to book the evaluation.
 	 */
-	export const bookEvaluation = async (text: string, res: RespondFn, user: IncompleteUser) => {
-		const [_, slug] = text.split(" ");
-
+	export const bookEvaluation = async (slug: string, res: RespondFn, user: IncompleteUser) => {
 		if (!slug) {
-            res("Project not found. Use /projects to find all available projects.");
+            res(`Project \`${slug}\` not recognized, see /projects for more info`);
             return;
         }
 		if (!env.projects.find((p) => p.slug === slug)) {
-			res(`Project \`${slug}\` not recognized, see help for more info`);
+			res(`Project \`${slug}\` not recognized, see /projects for more info`);
 			return;
 		}
 
