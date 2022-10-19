@@ -202,6 +202,23 @@ export namespace Intra {
     }
 
     /**
+     * Check wether or not the evaluation was a pass or not
+     * @param hook The webhook response. 
+     */
+    export async function isEvaluationAPass(hook: IntraResponse.Webhook.Root) {
+        const projectResponse = await Intra.api.get(`/projects/1314`, {
+            "filter[campus_id]": "14"
+        });
+        if (!projectResponse.ok)
+            throw new Error(`Failed to fetch project data: ${projectResponse.statusText}`);
+
+        // Find our campus session, thanks 42 for the convenience...
+        const projectData = await projectResponse.json();
+        const projectSession = (projectData.project_sessions as any[]).find((session) => { session.campus_id == env.WATCHED_CAMPUS});
+        return hook.final_mark! >= projectSession.minimum_mark;
+    }
+
+    /**
      * Book an evaluation
      * @param scaleID The scale/eval sheet to use.
      * @param teamID The team id.

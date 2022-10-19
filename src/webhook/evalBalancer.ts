@@ -24,7 +24,7 @@ const CPPModules = [
 /**
  * NOTE (W2): Yes this is a duplicate but this is for later when it gets migrated.
  * Givess a point to each one in the team, the point being also taken from the pool.
- * @param hook The webhook response carrying the ScaleTeam.
+ * @param teamID The team to gift the points to.
  */
 const givePointToTeam = async (teamID: number) => {
     const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`)
@@ -42,18 +42,17 @@ const givePointToTeam = async (teamID: number) => {
         console.error(`Gave a point to: ${teamUser.user.login}`);
         const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {"reason": "A return on their invesment"});
         if (!pointAddResponse.ok) {
-           console.error(`Failed to add evalpoint: ${pointRemResponse.statusText}`);
+           console.error(`Failed to add evalpoint: ${pointAddResponse.statusText}`);
            continue;
         }
     }
 }
 
 /**
- * 
+ * Trims excess points from the given user, converts the excess to alterian dollars.
  * @param userID The user ID.
  * @param correctionPoints The user's amount of evaluation points.
  * @param dollarPerPoint How much each point should give in alterian dollars
- * @returns 
  */
 const trimExcessPoints = async (userID: number, correctionPoints: number, dollarPerPoint: number) => {
     const amountToDeduct = correctionPoints - 5;
@@ -132,25 +131,9 @@ export const balanceB2BR = async (hook: IntraResponse.Webhook.Root) => {
         return console.log(`Evaluation not yet completed`);
     if (hook.project.id === 1994) // B2BR ID
         return console.log(`Requires no balance, not B2BR`);
-	if (hook.scale.correction_number != 3) // NOTE (W2): We should fetch the amount of corrections of this project here too.
-		return console.log(`No balance yet needed, did not yet do 3 evaluations`);
 
-    // Fetch team
-    const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
-    if (!teamResponse.ok)
-        return console.log(`Failed to add point to user: ${teamResponse.statusText}`);
-    const teamUsers = await teamResponse.json();
-
-    // Remove that extra point, again this is a single project
-    const userResponse = await Intra.api.delete(`/users/${teamUsers[0].user.id}/correction_points/remove`, {
-        "reason": "B2BR correction, needed to balance out the pool inflation."
-    });
-    if (!userResponse.ok)
-        return console.log(`Failed to remove point from user: ${userResponse.statusText}`);
-    await rewardDollars(hook.user.id, 10, "Converting excess evaluation point(s) to dollars")
-
-    // Add one point to the pool.
-    const poolResponse = await Intra.api.post(`/pools/39/points/add`, { "points": 1 });
+    // Deduct due to 1 extra point
+    const poolResponse = await Intra.api.post(`/pools/39/points/remove`, { "points": 1 });
     if (!poolResponse.ok)
 		return console.log(`Failed to add point from to: ${poolResponse.statusText}`);
 }
@@ -158,16 +141,13 @@ export const balanceB2BR = async (hook: IntraResponse.Webhook.Root) => {
 /*============================================================================*/
 
 /**
- * Fires for: ScaleTeam - Update webhook
+ * Fires for: ScaleTeam - Create
  * 
  * Group evaluations deduct a point from each member, the one point of leader goes to evaluator.
  * However the remaining users point just gets nuked to oblivion.
  * 
  * Instead we add those extra points back to the pool.
- * If evaluator gets any additional points (like 2 for example), that point gets removed and converted.
- * 
- * So if evaluator gets 2 points, they only get 1 and the extra point is added back to the pool with them
- * being converted back to dollars.
+ * If evaluator gets any additional points (like 2 for example), those points get removed and converted.
  * 
  * @param hook The Webhook response.
  */
@@ -190,12 +170,12 @@ export const balanceB2BR = async (hook: IntraResponse.Webhook.Root) => {
     if (!poolResponse.ok)
         return console.log(`Failed to add points to pool: ${poolResponse.statusText}`);
 
-    // Convert any extra points given to corrector to dollars, Inception of Things e.g: Gives 2 points.
+    // Trim the evaluators eval points if they went over.
     trimExcessPoints(hook.user.id, hook.user.correction_point, 10);
 }
 
 /**
- * Fires for: ???
+ * Fires for: Whenever
  * 
  * Converts a given users excess 
  * 

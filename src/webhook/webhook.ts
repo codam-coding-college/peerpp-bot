@@ -9,6 +9,7 @@ import { IntraResponse } from "../utils/types";
 import { Webhook } from "./evalRequirements";
 import { ChatPostMessageArguments } from "@slack/web-api";
 import { getFullUser } from "../utils/getUser";
+import PointBalancer from "./evalBalancer";
 
 /*============================================================================*/
 
@@ -35,7 +36,7 @@ const filterHook = (req: Request, secret: string) => {
  * @param users The users to notify that they have been selected.
  * @param projectName The project that was selected.
  */
-const sendNotification = async (hook: IntraResponse.Webhook.Root) => {
+const sendNotification = async (hook: IntraResponse.Webhook.Root, text: string) => {
 	try {
 		const response = await Intra.api.get(`/teams/${hook.team.id}`);
 		if (!response.ok)
@@ -47,7 +48,7 @@ const sendNotification = async (hook: IntraResponse.Webhook.Root) => {
 
 			const opt: ChatPostMessageArguments = {
 				channel: user.slackUID,
-				text: `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`,
+				text: text,
 			};
 
 			const response = await slackApp.client.chat.postMessage(opt);
@@ -97,7 +98,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
                 await Intra.givePointToTeam(hook);
-				await sendNotification(hook);
+				await sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
 
 				res.status(201).send(`Peer++ placeholder evaluation created`);
 			}
@@ -141,7 +142,9 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 		}
 		else {
 			Logger.log("Some silly student tried to cancel the bot");
-			try { await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);	
+			try { 
+                await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+                await sendNotification(hook, "Nice try cancelling the bot's lock :no:");
 			} catch (error) {
 				Logger.err(`Failed to rebook an evaluation : ${error}`);
 				res.status(500).send();
@@ -150,4 +153,65 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 			res.status(204).send();
 		}
 	});
+});
+
+/*============================================================================*/
+
+// TODO: Make this shorter.
+// Runs whenever a ScaleTeam / Evaluation is changed in some way.
+webhookApp.post("/update", async (req: Request, res: Response) => {
+	const hook: IntraResponse.Webhook.Root = req.body;
+	const filter = filterHook(req, env.WEBHOOK_UPDATE_SECRET);
+	if (filter) {
+		res.status(filter.code).send(filter.msg);
+		return;
+	}
+	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
+
+    if (hook.filled_at == null) {
+        Logger.log("Ignored: Evaluation update is not regarding a finished evaluation");
+		res.status(204).send();
+        return;
+    }
+    
+	// If expired, ignore.
+    let ignore: boolean = false;
+	db.get(`SELECT * FROM expiredTeam WHERE teamID == ${hook.team.id}`, async (err, row) => {
+		if (err != null) {
+			Logger.err(`Failed to check if lock is in the db : ${err}`);
+			res.status(500).send();
+            ignore = true;
+		}
+		else if (row != undefined) {
+			Logger.log("Updated evaluation was an expired one");
+			res.status(204).send();
+            ignore = true;
+		}
+	});
+    if (ignore) return;
+
+    Logger.log("Checking if lock needs to be removed...")
+
+    // Check if the given team has a lock.
+	let hasALock: boolean = false; 
+	try { hasALock = (await Intra.getEvaluationLocks()).find((lock) => lock.teamID === hook.team.id) != undefined;	} 
+	catch (error) { Logger.err(`${error}`) }
+    if (hasALock && !await Intra.isEvaluationAPass(hook)) {
+        Logger.log("Ignored: Remove lock, evaluation is a pass.");
+        db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${hook.team.id}, ${hook.id})`, (err) => {
+            if (err != null) {
+                Logger.err(`DB failed to insert scaleteamid ${hook.id} to expiredLocks : ${err.message}`);
+			    res.status(500).send();
+                return;
+            }
+        });
+
+        Logger.log(`Deleting ScaleTeam: ${hook.id}`);
+        await Intra.api.delete(`/scale_teams/${hook.id}`, {}).catch((error) => {
+            Logger.err(`Failed to delete lock: ${error}`);
+			res.status(500).send();
+            return
+        });
+    }
+    res.status(204).send();
 });
