@@ -5,7 +5,7 @@ import { env } from "./utils/env";
 import prettyMilliseconds from "pretty-ms";
 import { Intra } from "./utils/intra/intra";
 import { getFullUser } from "./utils/getUser";
-import { App, LogLevel, SayFn } from "@slack/bolt";
+import { App, LogLevel,RespondFn } from "@slack/bolt";
 import { IncompleteUser, User } from "./utils/types";
 import { ChatPostMessageArguments } from "@slack/web-api";
 
@@ -85,11 +85,11 @@ namespace SlackBot {
 
 	/**
 	 * Swaps the lock with a proper evaluation of the corrector.
-	 * @param say The messaging function.
+	 * @param res The messaging function.
 	 * @param corrector The user doing the correction.
 	 * @param lock The reserved evaluation by the bot.
 	 */
-	const swapScaleTeams = async (say: SayFn, corrector: User, lock: Intra.ScaleTeam) => {
+	const swapScaleTeams = async (res: RespondFn, corrector: User, lock: Intra.ScaleTeam) => {
 		try {
 			db.run(`INSERT INTO expiredTeam(teamID, scaleteamID) VALUES(${lock.teamID}, ${lock.id})`, (err) => {
 				if (err != null) 
@@ -97,12 +97,12 @@ namespace SlackBot {
 			});
 		} catch (error) {
 			Logger.err(error);
-			say("Failed to book the evaluation. Please inform staff!");
+			res("Failed to book the evaluation. Please inform staff!");
 		}
 
 		Logger.log(`Deleting ScaleTeam: ${lock.id}`);
 		await Intra.api.delete(`/scale_teams/${lock.id}`, {}).catch(async (reason) => {
-			say("Failed to book the evaluation. Please inform staff!");
+			res("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to delete lock for scaleTeam: ${lock.id} : ${reason}`);
 		});
 
@@ -111,7 +111,7 @@ namespace SlackBot {
 		// Instantly start the evaluation as to not let them cancel it.
 		const startEval = new Date(Date.now() + 15 * 60 * 1000);
 		if (!await Intra.bookEval(lock.scaleID, lock.teamID, corrector.intraUID, startEval)) {
-			say("Failed to book the evaluation. Please inform staff!");
+			res("Failed to book the evaluation. Please inform staff!");
 			return await Logger.err(`Failed to book evaluation for scaleTeam: ${lock.id}`);
 		}
 
@@ -120,7 +120,7 @@ namespace SlackBot {
 		for (const user of correcteds) 
 			text += `${user.intraLogin} `;
 		text += `at ${startEval}, they will be sent a message on Slack letting them know you've booked an eval, and asking them to contact you`;
-		say(text);
+		res(text);
 	
 		for (const user of correcteds)
 			await sendConfirmation(user, corrector, lock.projectSlug);
@@ -130,56 +130,27 @@ namespace SlackBot {
 	//==// Display functions //==//
 
 	/**
-	 * Displays the help text for all the available commands.
-	 * @note Temporary as these will later be replaced with commands.
-	 * @param say The messaging function.
-	 */
-	export const displayHelp = async (say: SayFn) => {
-		const text = `\`\`\`
-		help                           Show this help.
-		list-projects                  List all projects which a peer++ evaluator can evaluate.
-		list-evaluations               List all evaluations that were locked by the peer++ bot.
-		book-evaluation <PROJECT_SLUG> Book an evaluation for a project.
-		\`\`\``;
-	
-		say(text);
-	}
-
-	/**
-	 * Displays the available projects to be evaluated by the bot.
-	 * @param say The messaging function.
-	 */
-	export const displayProjects = async (say: SayFn) => {
-		let text = `Possible projects to evaluate:\n`;
-
-		for (const project of env.projects)
-			text += `- \`${project.slug}\`\n`;
-		say(text);
-	}
-
-	/**
 	 * Displays all currently available projects to 
-	 * @param say The messaging function.
+	 * @param res The messaging function.
 	 */
-	export const displayEvaluations = async (say: SayFn) => {
-		say("Please wait, fetching available evaluations...");
+	export const displayEvaluations = async (res: RespondFn) => {
+		res("Please wait, fetching available evaluations...");
 
 		let locks: Intra.ScaleTeam[] = [];
 		try { 
 			locks = await Intra.getEvaluationLocks(); 
 			if (locks.length == 0) {
-				say("Currently, no-one needs to be evaluated.")
+				res("Currently, no-one needs to be evaluated.")
 				return;
 			}
 			locks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 		}
 		catch (error) {
 			await Logger.err(`Failed to fetch evaluation locks: ${error}`);
-			say(`Sorry, something went wrong: ${error}`)
+			res(`Sorry, something went wrong: ${error}`)
 			return;
 		}
 
-		// Display all projects in aggregate form.
 		const projects = aggregateProjects(locks);
 		
 		let text: string = "Available evaluations, highest priorty first:\n"
@@ -191,7 +162,7 @@ namespace SlackBot {
 			text += `\`${project} | ${projects[project]!.teamCount} teams | ${timeLocked} locked\`\n`;
 		}
 
-		say(text);
+		res(text);
 	}
 
 	/**
@@ -200,84 +171,80 @@ namespace SlackBot {
 	 * @param say The messaging function.
 	 * @param corrector The user who wants to book the evaluation.
 	 */
-	export const bookEvaluation = async (text: string, say: SayFn, user: IncompleteUser) => {
+	export const bookEvaluation = async (text: string, res: RespondFn, user: IncompleteUser) => {
 		const [_, slug] = text.split(" ");
 
-		if (!slug) return displayProjects(say);
+		if (!slug) {
+            res("Project not found. Use /projects to find all available projects.");
+            return;
+        }
 		if (!env.projects.find((p) => p.slug === slug)) {
-			say(`Project \`${slug}\` not recognized, see help for more info`);
+			res(`Project \`${slug}\` not recognized, see help for more info`);
 			return;
 		}
 
 		let corrector: User;
 		try { corrector = await getFullUser(user); } 
 		catch (error) {
-			say("Could not match your Slack ID to a Intra user");
+			res("Could not match your Slack ID to a Intra user");
 			return await Logger.err(error);
 		}
 
 		// Is user in the peer++ group or that they did the project.
 		try {
 			if (!await Intra.hasGroup(corrector, env.PEERPP_GROUP_ID)) {
-				say("Sorry, you're not a Peer++ evalutor. Please apply! :panic:");
+				res("Sorry, you're not a Peer++ evalutor. Please apply! :panic:");
 				return;
 			}
 			if (!await Intra.didProject(corrector, slug)) {
-				say("Sorry, you have to yet make this project :sus:");
+				res("Sorry, you have to yet make this project :sus:");
 				return;
 			}
 		} catch (error) {
 			Logger.err(error);
-			say("Sorry, something went very wrong. Please inform staff! :panic:");
+			res("Sorry, something went very wrong. Please inform staff! :panic:");
 			return;
 		}
 
         Logger.log(`Eval booked: ${corrector.intraLogin} for ${slug}`);
-		say(`Requested peer++ eval by ${corrector.intraLogin} for \`${slug}\`...`);
+		res(`Requested peer++ eval by ${corrector.intraLogin} for \`${slug}\`...`);
 
 		// Swap the scaleteams
 		let locks: Intra.ScaleTeam[] = [];
 		try { locks = (await Intra.getEvaluationLocks()).filter((lock: Intra.ScaleTeam) =>  lock.projectSlug === slug); } 
 		catch (error) {
-			say("Failed to fetch evaluation locks. Please inform staff! :panic:");
+			res("Failed to fetch evaluation locks. Please inform staff! :panic:");
 			return await Logger.err(error);
 		}
 		if (locks.length == 0) {
-			say(`No-one needs to be evaluated on \`${slug}\``);
+			res(`No-one needs to be evaluated on \`${slug}\``);
 			return;
 		}
 
-		say(`Found a team to be evaluated, booking evaluation...`);
-		await swapScaleTeams(say, corrector, getHighestPriorityTeam(locks))
+		res(`Found a team to be evaluated, booking evaluation...`);
+		await swapScaleTeams(res, corrector, getHighestPriorityTeam(locks))
 	}
 }
 
 /*============================================================================*/
 
-// TODO: Implement slash commands
-// slackApp.command("/listprojects", async ({ say }) => {
-// 	await say("You got me!");
-// });
+/** Display all the projects available for evaluations. */
+slackApp.command("/projects", async (ctx) => {
+    let text = `Possible projects to evaluate:\n`;
 
-/** Listen to any slack message. */
-slackApp.message(/.*/i, async ({ message, say }) => {
-	/** @see https://bit.ly/3s0q0ip */
-	if (message.channel[0] !== "D")
-		return;
+    for (const project of env.projects)
+        text += `- \`${project.slug}\`\n`;
+    await ctx.ack(text);
+});
 
-	//@ts-ignore
-	const slackUID: string = message.user;
-	//@ts-ignore
-	const text: string = message.text;
+/** List all available evaluations. */
+slackApp.command("/evaluations", async (ctx) => {
+    await SlackBot.displayEvaluations(ctx.respond);
+    ctx.ack();
+});
 
-	if (text.match(/^help/))
-		await SlackBot.displayHelp(say);
-	else if (text.match(/^list-projects/))
-		await SlackBot.displayProjects(say);
-	else if (text.match(/^list-evaluations/))
-		await SlackBot.displayEvaluations(say);
-	else if (text.match(/^book-evaluation/))
-		await SlackBot.bookEvaluation(text, say, {slackUID: slackUID});
-	else
-		await say(`Command \`${text}\` not recognized, see help for more info`);
+/** Book an evaluation for the given project.*/
+slackApp.command("/book", async (ctx) => {
+    await SlackBot.bookEvaluation(ctx.body.text, ctx.respond, {slackUID: ctx.body.user_id});
+    ctx.ack();
 });

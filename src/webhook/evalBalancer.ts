@@ -3,6 +3,8 @@ import { IntraResponse } from "../utils/types";
 
 // This is temporarily here and will me migrated in its own application later
 
+namespace PointBalancer {
+
 /*============================================================================*/
 
 const CPPModules = [
@@ -18,6 +20,33 @@ const CPPModules = [
 ]
 
 /*============================================================================*/
+
+/**
+ * NOTE (W2): Yes this is a duplicate but this is for later when it gets migrated.
+ * Givess a point to each one in the team, the point being also taken from the pool.
+ * @param hook The webhook response carrying the ScaleTeam.
+ */
+const givePointToTeam = async (teamID: number) => {
+    const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`)
+    if (!teamResponse.ok)
+        return console.log(`Failed to fetch team: ${teamResponse.statusText}`);
+    const teamUsers = await teamResponse.json();
+
+    // Remove from the pool.
+    const pointRemResponse = await Intra.api.delete(`/pools/39/points/remove`, {"points": teamUsers.length});
+    if (!pointRemResponse.ok)
+       return console.error(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
+
+    // Give them back.
+    for (const teamUser of teamUsers) {
+        console.error(`Gave a point to: ${teamUser.user.login}`);
+        const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {"reason": "A return on their invesment"});
+        if (!pointAddResponse.ok) {
+           console.error(`Failed to add evalpoint: ${pointRemResponse.statusText}`);
+           continue;
+        }
+    }
+}
 
 /**
  * 
@@ -84,21 +113,7 @@ export const balanceCPP = async (hook: IntraResponse.Webhook.Root) => {
         return console.log(`No balance yet needed, only did 1 evaluation`);
 
     // Deduct point from pool.
-    const poolResponse = await Intra.api.delete(`/pools/39/points/remove`, { "points": 1 });
-    if (!poolResponse.ok)
-		return console.log(`Failed to remove point from pool: ${poolResponse.statusText}`);
-
-    // NOTE (W2): Thank intra scaleteam for not including evaluator ID, very much appreciated :)
-    const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
-    if (!teamResponse.ok)
-        return console.log(`Failed to add point to user: ${teamResponse.statusText}`);
-    const teamUsers = await teamResponse.json();
-
-    // Give the user that point, in-case of CPP there will only be one user in the team.
-    const userResponse = await Intra.api.post(`/users/${teamUsers[0].user.id}/correction_points/add`, {});
-    if (!userResponse.ok)
-        return console.log(`Failed to add point to user: ${userResponse.statusText}`);
-    console.log(`Balanced evaluation points for CPP Module: ${hook.team.name}`);
+    await givePointToTeam(hook.team.id);
 }
 
 /*============================================================================*/
@@ -194,3 +209,7 @@ export const basicBalance = async (user: string | number) => {
 
     await trimExcessPoints(userData.id, userData.correction_point, 10);
 }
+
+}
+
+export default PointBalancer;
