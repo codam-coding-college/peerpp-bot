@@ -196,7 +196,7 @@ export namespace Intra {
         let evaluations: IntraResponse.Evaluation[] = []
         for await (const page of pages) {
             const evals = await page.json() as IntraResponse.Evaluation[];
-            evaluations.push(...evals);
+            evaluations.push(...evals.filter((value) => {value.truant != null}));
         }
         return evaluations;
     }
