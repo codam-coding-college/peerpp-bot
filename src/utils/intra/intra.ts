@@ -206,7 +206,7 @@ export namespace Intra {
      * @param hook The webhook response. 
      */
     export async function isEvaluationAPass(hook: IntraResponse.Webhook.Root) {
-        const projectResponse = await Intra.api.get(`/projects/1314`, {
+        const projectResponse = await Intra.api.get(`/projects/${hook.project.id}`, {
             "filter[campus_id]": "14"
         });
         if (!projectResponse.ok)
