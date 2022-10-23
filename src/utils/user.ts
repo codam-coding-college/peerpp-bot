@@ -6,6 +6,7 @@
 import Intra from "./intra";
 import Logger from "./logger";
 import { Config } from "../config";
+import { slackApp } from "../bots/slackbot";
 import { UsersInfoResponse } from "@slack/web-api";
 
 /*============================================================================*/
