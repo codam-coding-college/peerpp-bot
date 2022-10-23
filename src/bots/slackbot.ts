@@ -141,11 +141,10 @@ export namespace SlackBot {
 	}
 
 	/**
-	 * 
-	 * @param projectName 
-	 * @param respond 
-	 * @param user 
-	 * @returns 
+	 * Book an evaluation by swapping out the scale teams of the bot with the user.
+	 * @param projectName The project name.
+	 * @param respond The slack messaging function.
+	 * @param user The corrector.
 	 */
 	export async function bookEvaluation(projectName: string, respond: RespondFn, user: IncompleteUser) {
 		if (!projectName || !Config.projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase())) {
@@ -191,13 +190,14 @@ slackApp.command("/projects", async (ctx) => {
 /** List all available evaluations. */
 slackApp.command("/evaluations", async (ctx) => {
 	try { await SlackBot.displayEvaluations(ctx.respond); }
-	catch (error) { ctx.respond(`Sorry the bot failed: ${error} :panic:`); }
+	catch (error) { ctx.respond(`:panic: Sorry the bot failed: ${error}`); }
     await ctx.ack();
 });
 
 /** Book an evaluation for the given project.*/
 slackApp.command("/book", async (ctx) => {
-    await SlackBot.bookEvaluation(ctx.body.text, ctx.respond, {slackUID: ctx.body.user_id});
+	try { await SlackBot.bookEvaluation(ctx.body.text, ctx.respond, {slackUID: ctx.body.user_id}); }
+	catch (error) { ctx.respond(`:panic: Sorry the bot failed: ${error}`); }
     await ctx.ack();
 });
 
