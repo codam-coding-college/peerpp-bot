@@ -13,7 +13,6 @@ export enum LogType {
 	INFO,
 	ERROR,
 	WARNING,
-	HOOK
 }
 
 /** A console.log wrapper for IO operations on the terminal and output */

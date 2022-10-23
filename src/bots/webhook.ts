@@ -10,10 +10,10 @@ import { Config } from "../config";
 import Intra from "../utils/intra";
 import { SlackBot } from "./slackbot";
 import { getFullUser } from "../utils/user";
-import { IntraWebhook } from "../utils/types";
+import { IntraResponse, IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
-import { checkEvaluators } from "../checks/evaluators";
 import { Request, Response, NextFunction } from "express";
+import * as Checks from "../checks/index";
 
 /*============================================================================*/
 
@@ -65,9 +65,15 @@ export namespace Webhook {
 				Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
 				return false;
 			}
-	
+
+			// NOTE (W2): Completely fucked up and weird endpoint btw.
+			const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
+			if (!teamResponse.ok)
+				throw new Error(`Failed to get team_users: ${teamResponse.statusText}`);
+			const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
+
 			// Now do the regular checks.
-			if (!await checkEvaluators(hook, evaluations))
+			if (await Checks.Evaluators(hook, evaluations, teamUsers) || await Checks.Random())
 				return true;
 
 		} catch (error) { Logger.log(`Something went wrong: ${error}`); }

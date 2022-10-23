@@ -5,29 +5,42 @@
 
 // NOTE (W2): These responses have been trimmed to only have relevant fields.
 
-export namespace IntraWebhook {
-    export interface SimpleUser {
-        id: number;
-        login: string;
-        url: string;
-    }
+export namespace IntraResponse {
+	// User entry for a team.
+	export interface TeamUser {
+		id: number;
+		team_id: number;
+		user_id: number;
+		created_at: Date;
+		validated: boolean;
+		leader: boolean;
+		occurrence: number;
+	}
+}
 
-    export interface Team {
-        id: number;
-        project_id: number;
-        name: string;
-        created_at: string;
-        updated_at: string;
-        locked_at: string;
-        closed_at: string;
-        final_mark?: any;
-        repo_url: string;
-        repo_uuid: string;
-        deadline_at?: any;
-        terminating_at?: any;
-        project_session_id: number;
-        status: string;
-    }
+export namespace IntraWebhook {
+	export interface SimpleUser {
+		id: number;
+		login: string;
+		url: string;
+	}
+
+	export interface Team {
+		id: number;
+		project_id: number;
+		name: string;
+		created_at: string;
+		updated_at: string;
+		locked_at: string;
+		closed_at: string;
+		final_mark?: any;
+		repo_url: string;
+		repo_uuid: string;
+		deadline_at?: any;
+		terminating_at?: any;
+		project_session_id: number;
+		status: string;
+	}
 
 	export interface Project {
 		id: number;

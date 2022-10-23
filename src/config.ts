@@ -17,6 +17,7 @@ namespace Configuration {
 		groupID: number;
 		lockExpirationDays: number;
 		logOutput: string,
+		randomEvalChance: number;
 		projects: { id: number; name: string }[];
 	}
 }
