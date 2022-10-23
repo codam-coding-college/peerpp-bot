@@ -1,4 +1,10 @@
 {
+	"semi": true,
+	"singleQuote": false,
+	"bracketSameLine": true,
+	"arrowParens": "always",
 	"tabWidth": 4,
+	"printWidth": 100,
+	"singleAttributePerLine": false,
 	"useTabs": true
 }
