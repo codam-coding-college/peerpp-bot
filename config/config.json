@@ -4,7 +4,7 @@
 	"botID": 111044,
 	"groupID": 63,
 	"lockExpirationDays": 1,
-	"randomEvalChance": 25,
+	"randomEvalChance": 0,
 	"logOutput": "log.txt",
 	"projects": [
 		{ "id":1314, "name": "libft"		},

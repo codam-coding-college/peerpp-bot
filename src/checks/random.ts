@@ -14,5 +14,5 @@ import { Config } from "../config";
  * @return True if check passed, false otherwise.
  */
 export async function Random() {
-	return Math.random() >= (Config.randomEvalChance / 100);
+	return Math.random() < (Config.randomEvalChance / 100);
 }

@@ -59,25 +59,21 @@ export namespace Webhook {
 			return false;
 		}
 
-		try { // If not the last evaluation, then ignore.
-			const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
-			if (evaluations.length != hook.scale.correction_number - 1) {
-				Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
-				return false;
-			}
+		// If not the last evaluation, then ignore.
+		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
+		if (evaluations.length != hook.scale.correction_number - 1) {
+			Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
+			return false;
+		}
 
-			// NOTE (W2): Completely fucked up and weird endpoint btw.
-			const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
-			if (!teamResponse.ok)
-				throw new Error(`Failed to get team_users: ${teamResponse.statusText}`);
-			const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
+		// NOTE (W2): Completely fucked up and weird endpoint btw.
+		const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
+		if (!teamResponse.ok)
+			throw new Error(`Failed to get team_users: ${teamResponse.statusText}`);
+		const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
 
-			// Now do the regular checks.
-			if (await Checks.Evaluators(hook, evaluations, teamUsers) || await Checks.Random())
-				return true;
-
-		} catch (error) { Logger.log(`Something went wrong: ${error}`); }
-		return false;
+		// Now do the regular checks.
+		return (await Checks.Evaluators(hook, evaluations, teamUsers) || await Checks.Random());
 	}
 
 	/**
@@ -138,9 +134,8 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
                 await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
                 Logger.log("Booked a Peer++ evaluation, notified users!"); 
             }
-            else {
+            else
 			    Logger.log("Ignore: Peer++ evaluation not required");
-            }
         });
 	} catch (error) {
 		res.status(500).send();
