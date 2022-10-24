@@ -53,9 +53,8 @@ async function checkExpiredLocks() {
 /** Check which expired evaluations are more than a week old. */
 async function deleteExpiredLocks() {
 	Logger.log("Deleting expired locks from database...");
-
-	db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
-		if (err != null) Logger.log(`Failed to delete old locks: ${err.message}`, LogType.ERROR);
+	await DB.emptyOldLocks().catch((reason) => {
+		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING)
 	});
 }
 

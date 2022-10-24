@@ -54,7 +54,7 @@ export namespace Webhook {
 			Logger.log("Ignored: ScaleTeam evaluator is the bot itself");
 			return false;
 		}
-		if (!Config.projects.find((p) => p.id === hook.project.id)) {
+		if (!Config.projects.find(p => p.id === hook.project.id)) {
 			Logger.log(`Ignored: ProjectID ${hook.project.id} is not in the list of projects`);
 			return false;
 		}
@@ -131,7 +131,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
         .catch(reason => { throw new Error(reason); })
         .then(async (value) => {
             if (value)
-			    Logger.log("Ignore: Deleted evaluation was from an expired team");
+			    Logger.log("Ignore: Created evaluation was from an expired team");
             else if (await Webhook.requiresEvaluation(hook)) {
                 Logger.log("Booking a Peer++ evaluation!");
                 await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
@@ -139,7 +139,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
                 Logger.log("Booked a Peer++ evaluation, notified users!"); 
             }
             else {
-			    Logger.log("Peer++ evaluation not required");
+			    Logger.log("Ignore: Peer++ evaluation not required");
             }
         });
 	} catch (error) {
@@ -176,7 +176,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
                 Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
                 await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
                 await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
-                Logger.log("Re-created lock for trying to delete it.");  
+                Logger.log(`Reb-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);  
             }
         });
 	} catch (error) {
@@ -200,7 +200,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 	if (hook.user && hook.user.id != Config.botID) {
 		res.status(204).send();
-		return Logger.log("Ignored: Webhook does not concern bot.")
+		return Logger.log("Ignored: Webhook does not concern bot.");
 	}
 	if (hook.truant.id !== undefined) {
 		Logger.log("Lock expired, user manually set the bot as absent.")

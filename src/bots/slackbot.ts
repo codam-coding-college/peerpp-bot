@@ -87,26 +87,26 @@ export namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam)  {
-		DB.insert(lock.teamID);
+		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
 
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
 		const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
 		if (!scaleResponse.ok)
 			throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
 
-		const evalDate = new Date(Date.now() + (15 * 60 * 1000));
-		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evalDate);
+		const evaluationDate = new Date(Date.now() + (15 * 60 * 1000));
+		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
 		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
 
 		for (const user of correcteds)
 			text += `${user.intraLogin} `;
-		text += `at ${evalDate}, they will be notified on slack. Please contact each other.`;
+		text += `at ${evaluationDate}, they will be notified on slack. Please contact each other.`;
 		await respond(text);
 
 		for (const user of correcteds)
-			await SlackBot.sendMessage(user, "You will be evaluated by ${corrector.intraLogin} on your \`${projectSlug}\`\nContact them to set a date for the evaluation.\n");
+			await SlackBot.sendMessage(user, `You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to set a date for the evaluation.\n`);
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
 	}
 
@@ -148,24 +148,24 @@ export namespace SlackBot {
 	 */
 	export async function bookEvaluation(projectName: string, respond: RespondFn, user: IncompleteUser) {
 		if (!projectName || !Config.projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase())) {
-            await respond(`Project \`${projectName}\` not recognized, see /projects for more info`);
+            await respond(`Project \`${projectName}\` not recognized, invoke /projects for more info`);
             return;
         }
 
 		const corrector = await getFullUser(user);
 		if (!await Intra.hasGroup(corrector.intraUID, Config.groupID)) {
-			await respond("Sorry, you're not a Peer++ evalutor. Please apply! :panic:");
+			await respond("Sorry, you're not a Peer++ evalutor. Please apply! :doot:");
 			return;
 		}
 		if (!await Intra.validatedProject(corrector.intraUID, projectName)) {
-			await respond("Sorry, you have to yet make this project :sus:");
+			await respond("Sorry, you can't book a project you have not completed :sus:");
 			return;
 		}
 
-		Logger.log(`Eval booked: ${corrector.intraLogin} for ${projectName}`);
-		await respond(`Requested peer++ eval by ${corrector.intraLogin} for \`${projectName}\`...`);
+		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\``);
+		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\`...`);
 
-		const locks = (await Intra.getBotEvaluations()).filter(value =>  value.projectName == projectName);
+		const locks = (await Intra.getBotEvaluations()).filter(value => value.projectName == projectName);
 		if (locks.length == 0) {
 			await respond(`No-one needs to be evaluated on \`${projectName}\``);
 			return
@@ -190,14 +190,20 @@ slackApp.command("/projects", async (ctx) => {
 /** List all available evaluations. */
 slackApp.command("/evaluations", async (ctx) => {
 	try { await SlackBot.displayEvaluations(ctx.respond); }
-	catch (error) { ctx.respond(`:panic: Sorry the bot failed: ${error}`); }
+	catch (error) { 
+		Logger.log(`Failed to display evaluations: ${error}`);
+		ctx.respond(`:panic: Sorry the bot failed: ${error}`); 
+	}
     await ctx.ack();
 });
 
 /** Book an evaluation for the given project.*/
 slackApp.command("/book", async (ctx) => {
 	try { await SlackBot.bookEvaluation(ctx.body.text, ctx.respond, {slackUID: ctx.body.user_id}); }
-	catch (error) { ctx.respond(`:panic: Sorry the bot failed: ${error}`); }
+	catch (error) { 
+		Logger.log(`Failed to book an evaluation: ${error}`);
+		ctx.respond(`:panic: Sorry the bot failed: ${error}`);
+	}
     await ctx.ack();
 });
 
