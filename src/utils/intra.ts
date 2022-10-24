@@ -69,13 +69,14 @@ export namespace Intra {
 		const projectResponse = await Intra.api.get(`/projects/${projectID}`, {
 			"filter[campus_id]": `${Config.campusID}`,
 			"filter[cursus_id]": `${Config.cursusID}`
-        });
+		});
 		if (!projectResponse.ok)
 			throw new Error(`Failed to fetch project: ${projectResponse.statusText}`);
 
 		const projectData = await projectResponse.json();
-        const projectSession = (projectData.project_sessions as any[]).find(value => value.campus_id == Config.campusID);
-        return mark >= (projectSession.minimum_mark as number);
+		const projectSession = projectData.project_sessions as any[];
+		const minimum_mark = projectSession.find((value) => value.campus_id == Config.campusID);
+		return mark >= (minimum_mark as number);
 	}
 
 	/**
@@ -139,19 +140,19 @@ export namespace Intra {
 	 */
 	export async function getEvaluations(projectID: number, scaleID: number, teamID: number) {
 		const pages = await api.getAllPages(`/projects/${projectID}/scale_teams`, {
-            "filter[scale_id]": scaleID.toString(),
-            "filter[team_id]": teamID.toString(),
+			"filter[scale_id]": scaleID.toString(),
+			"filter[team_id]": teamID.toString(),
 			"filter[campus_id]": `${Config.campusID}`,
 			"filter[cursus_id]": `${Config.cursusID}`
-        });
+		});
 		await Promise.all(pages).catch((reason) => {
-            throw new Error(`Failed to get evaluations: ${reason}`);
-        })
+			throw new Error(`Failed to get evaluations: ${reason}`);
+		})
 
 		// Another API call to simply fetch the name of the project.
 		const projectResponse = await api.get(`/projects/${projectID}`);
 		if (!projectResponse.ok)
-            throw new Error(`Failed to get project: ${projectResponse.statusText}`);
+			throw new Error(`Failed to get project: ${projectResponse.statusText}`);
 		const project = await projectResponse.json();
 
 		const evals: Intra.ScaleTeam[] = []
@@ -167,7 +168,7 @@ export namespace Intra {
 					finalMark: evaluation.final_mark,
 					projectName: (project.name as string).toLowerCase(),
 					createdAt: new Date(evaluation.created_at),
-                    corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
+					corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
 					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
 				}
 				evals.push(tempLock);
@@ -176,39 +177,39 @@ export namespace Intra {
 		return evals;
 	}
 
-    /**
-     * Book an evaluation.
-     * @param scaleID The scale/eval sheet to use.
-     * @param teamID The team id.
-     * @param correctorID The user id of the corrector.
-     * @param date The date on which to book it for.
-     */
+	/**
+	 * Book an evaluation.
+	 * @param scaleID The scale/eval sheet to use.
+	 * @param teamID The team id.
+	 * @param correctorID The user id of the corrector.
+	 * @param date The date on which to book it for.
+	 */
 	export async function bookEvaluation(scaleID: number, teamID: number, correctorID: number, date: Date) {
-        const body = {
-            scale_teams: [
-                {
-                    begin_at: date.toISOString(),
-                    scale_id: scaleID.toString(),
-                    team_id: teamID.toString(),
-                    user_id: correctorID,
-                },
-            ],
-        };
+		const body = {
+			scale_teams: [
+				{
+					begin_at: date.toISOString(),
+					scale_id: scaleID.toString(),
+					team_id: teamID.toString(),
+					user_id: correctorID,
+				},
+			],
+		};
 
-        const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
-        if (!scaleTeamResponse.ok)
+		const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
+		if (!scaleTeamResponse.ok)
 			throw new Error(`Failed to book evaluation ${scaleTeamResponse.statusText}`);
-    }
+	}
 
-    /**
-     * Books a placeholder evaluation that will later delete itself.
-     * @param scaleID The evaluation sheet id.
-     * @param teamID The team to book the eval for.
-     */
+	/**
+	 * Books a placeholder evaluation that will later delete itself.
+	 * @param scaleID The evaluation sheet id.
+	 * @param teamID The team to book the eval for.
+	 */
 	export async function bookPlaceholderEval(scaleID: number, teamID: number) {
-        const expireDate = new Date(Date.now() + Config.lockExpirationDays * 24 * 60 * 60 * 1000);
-        await bookEvaluation(scaleID, teamID, Config.botID, expireDate);
-    }
+		const expireDate = new Date(Date.now() + Config.lockExpirationDays * 24 * 60 * 60 * 1000);
+		await bookEvaluation(scaleID, teamID, Config.botID, expireDate);
+	}
 }
 
 /*============================================================================*/

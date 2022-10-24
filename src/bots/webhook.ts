@@ -129,7 +129,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
         .catch(reason => { throw new Error(reason); })
         .then(async (value) => {
             if (value)
-			    Logger.log("Ignore: Created evaluation was from an expired team");
+                Logger.log("Ignored: Create is from an expired team.");
             else if (await Webhook.requiresEvaluation(hook)) {
                 Logger.log("Booking a Peer++ evaluation!");
                 await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
@@ -168,12 +168,12 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
         .catch(reason => { throw new Error(reason); })
         .then(async (value) => {
             if (value)
-			    Logger.log("Ignore: Deleted evaluation was from an expired team");
+                Logger.log("Ignored: Delete is from an expired team.");
             else {
                 Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
                 await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
                 await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
-                Logger.log(`Reb-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);  
+                Logger.log(`Re-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);  
             }
         });
 	} catch (error) {
@@ -196,6 +196,17 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 
+    let isExpired: boolean = false;
+    try { isExpired = await DB.exists(hook.team.id).catch((reason) => { throw new Error(reason); }) } 
+    catch (error) {
+        res.status(500).send();
+        return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+    }
+    if (isExpired) {
+        res.status(204).send();
+        return Logger.log("Ignored: Update is from an expired team.");
+    }
+
     // Bot was marked as absent.
 	if (hook.user && hook.user.id == Config.botID && hook.truant.id !== undefined) {
 		// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
@@ -210,17 +221,20 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	
 	try { // If an evaluation is finished, failed and it was locked then remove the lock.
 		const lock = (await Intra.getBotEvaluations()).find(lock => lock.teamID == hook.team.id);
-		if (lock != undefined && hook.final_mark && !await Intra.markIsPass(hook.project.id, hook.final_mark)) {
+
+		if (lock != undefined && hook.final_mark != null && !await Intra.markIsPass(hook.project.id, hook.final_mark)) {
             Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
 			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
 			const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
 			if (!scaleResponse.ok)
 				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
-
-            await Webhook.sendNotification(hook, `Your Peer++ evaluation has been removed. Good luck next time :)`)
+        	res.status(204).send();
+            return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`)
 		}
-	} catch (error) {
+        Logger.log("Ignored: Don't remove lock, user has not failed an evaluation or wasn't locked.");
+	} 
+    catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 	}
