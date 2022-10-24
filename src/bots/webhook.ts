@@ -196,32 +196,29 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 
-	if (hook.user && hook.user.id != Config.botID) {
-		res.status(204).send();
-		return Logger.log("Ignored: Webhook does not concern bot.");
-	}
-	if (hook.truant.id !== undefined) {
-		Logger.log("Lock expired, user manually set the bot as absent.")
-
+    // Bot was marked as absent.
+	if (hook.user && hook.user.id == Config.botID && hook.truant.id !== undefined) {
 		// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
 		try { await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); }) }
 		catch (error) {
 			res.status(500).send();
 			return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 		}
+	    res.status(204).send();
+		return Logger.log("Lock expired, user manually set the bot as absent.");
 	}
 	
 	try { // If an evaluation is finished, failed and it was locked then remove the lock.
 		const lock = (await Intra.getBotEvaluations()).find(lock => lock.teamID == hook.team.id);
 		if (lock != undefined && hook.final_mark && !await Intra.markIsPass(hook.project.id, hook.final_mark)) {
+            Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
 			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
-			
 			const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
 			if (!scaleResponse.ok)
 				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
 
-			// TODO: Notify user that lock has been removed.
+            await Webhook.sendNotification(hook, `Your Peer++ evaluation has been removed. Good luck next time :)`)
 		}
 	} catch (error) {
 		res.status(500).send();
