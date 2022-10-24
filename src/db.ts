@@ -25,15 +25,13 @@ namespace DB {
 	 * @param teamID The TeamID.
 	 */
 	export function exists(teamID: number) {
-		let exists: boolean = false;
-
-        // TODO: Does not work, cannot pass this to the callback
-		db.get(`SELECT * FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
-			if (err != null)
-				throw new Error(`Failed to check if ${teamID} exists: ${err}`);
-			exists = row != undefined;
+		return new Promise<boolean>((resolve, reject) => {
+			db.get(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
+				if (err != null)
+					reject(`Failed to check if ${teamID} exists: ${err}`);
+				resolve(row["amount"] > 0);
+			});
 		});
-		return exists;
 	} 
 }
 

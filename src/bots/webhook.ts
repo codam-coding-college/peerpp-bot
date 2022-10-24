@@ -127,19 +127,21 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
 
 	try {
-		// Expired?
-		if (DB.exists(hook.team.id)) {
-			Logger.log("Ignore: Created evaluation was from an expired team");
-		} 
-		else if (await Webhook.requiresEvaluation(hook)) {
-			Logger.log("Booking a Peer++ evaluation!");
-			await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-			await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
-			Logger.log("Booked a Peer++ evaluation, notified users!");
-		} 
-		else {
-			Logger.log("Peer++ evaluation not required");
-		}
+        await DB.exists(hook.team.id)
+        .catch(reason => { throw new Error(reason); })
+        .then(async (value) => {
+            if (value)
+			    Logger.log("Ignore: Deleted evaluation was from an expired team");
+            else if (await Webhook.requiresEvaluation(hook)) {
+                Logger.log("Booking a Peer++ evaluation!");
+                await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+                await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
+                Logger.log("Booked a Peer++ evaluation, notified users!"); 
+            }
+            else {
+			    Logger.log("Peer++ evaluation not required");
+            }
+        });
 	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
@@ -165,14 +167,18 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 	}
 
 	try {
-		if (DB.exists(hook.team.id))
-			Logger.log("Ignore: Deleted evaluation was from an expired team");
-		else {
-			Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
-			await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-			await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
-			Logger.log("Re-created lock for trying to delete it.");
-		}
+        await DB.exists(hook.team.id)
+        .catch(reason => { throw new Error(reason); })
+        .then(async (value) => {
+            if (value)
+			    Logger.log("Ignore: Deleted evaluation was from an expired team");
+            else {
+                Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
+                await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+                await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
+                Logger.log("Re-created lock for trying to delete it.");  
+            }
+        });
 	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
