@@ -33,16 +33,16 @@ export async function Evaluators(hook: IntraWebhook.Root, evaluations: Intra.Sca
 			Logger.log("Ignored: Bot already present for evaluation.");
 			return false;
 		}
-        if (evaluation.finalMark != null && !await Intra.markIsPass(hook.project.id, evaluation.finalMark)) {
+		if (evaluation.finalMark != null && !await Intra.markIsPass(hook.project.id, evaluation.finalMark)) {
 			Logger.log("Ignored: Previous evaluation was a fail.");
-            return false
-        }
+			return false
+		}
 
 		const corrector: User = await getFullUser(evaluation.corrector);
 		didProject = await Intra.validatedProject(corrector.intraUID, hook.project.name);
 		levels.push(corrector.level);
 	}
-	
+
 	if (Math.max(...levels) >= leader.level + 2 || didProject) {
 		Logger.log("Ignored: Team had a high level corrector or a corrector who did the project.")
 		return false;

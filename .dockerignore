@@ -3,6 +3,7 @@ build
 node_modules
 
 Dockerfile
+Makefile
 .prettierrc
 
 *.yml
