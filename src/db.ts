@@ -27,13 +27,14 @@ namespace DB {
 	export function exists(teamID: number) {
 		let exists: boolean = false;
 
-		db.get(`SELECT * FROM expiredTeam WHERE teamID == ${teamID}`, (err, row) => {
+        // TODO: Does not work, cannot pass this to the callback
+		db.get(`SELECT * FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
 			if (err != null)
 				throw new Error(`Failed to check if ${teamID} exists: ${err}`);
 			exists = row != undefined;
 		});
 		return exists;
-	}
+	} 
 }
 
 /*============================================================================*/

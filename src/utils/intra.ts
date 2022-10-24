@@ -110,8 +110,8 @@ export namespace Intra {
 			if (!page.ok)
 				throw new Error(`Failed to get evaluation locks: ${page.status}`);
 
-			const locks = await page.json();
-			for (const lock of locks) {
+			const locksData = await page.json();
+			for (const lock of locksData) {
 				const project = Config.projects.find(p => p.id === lock.team.project_id)!;
 				const tempLock: ScaleTeam = {
 					id: lock.id,
@@ -121,7 +121,7 @@ export namespace Intra {
 					projectID: project.id,
 					projectName: project.name.toLowerCase(),
 					createdAt: new Date(lock.created_at),
-					corrector: lock.corrector.map(c => ({ intraLogin: c.login, intraUID: c.id })),
+					corrector: { intraLogin: lock.corrector.login, intraUID: lock.corrector.id },
 					correcteds: lock.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
 				}
 				locks.push(tempLock);
@@ -167,7 +167,7 @@ export namespace Intra {
 					finalMark: evaluation.final_mark,
 					projectName: (project.name as string).toLowerCase(),
 					createdAt: new Date(evaluation.created_at),
-					corrector: evaluation.corrector.map(c => ({ intraLogin: c.login, intraUID: c.id })),
+                    corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
 					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
 				}
 				evals.push(tempLock);
