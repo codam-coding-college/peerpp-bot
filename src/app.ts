@@ -20,9 +20,9 @@ import Logger, { LogType } from "./utils/logger";
 /** Check which currently booked evaluations are expired. */
 async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
-	
-	let locks: Intra.ScaleTeam[] = [] 
-	try { locks = await Intra.getBotEvaluations();	} 
+
+	let locks: Intra.ScaleTeam[] = []
+	try { locks = await Intra.getBotEvaluations(); }
 	catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
@@ -34,7 +34,7 @@ async function checkExpiredLocks() {
 		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + Config.lockExpirationDays));
 		if (Date.now() >= unlockDate.getTime()) {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
-			
+
 			try {
 				DB.insert(lock.teamID);
 
@@ -42,7 +42,7 @@ async function checkExpiredLocks() {
 				if (!responseDelete.ok)
 					throw new Error(`Failed to delete lock: ${responseDelete.statusText}`);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
-			} 
+			}
 			catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
 			n++;
 		}
@@ -66,7 +66,7 @@ const emptyExpiredJob = new CronJob("0 0 * * 0", deleteExpiredLocks);
 export const db = new Database(Config.dbPath, (err) => {
 	if (err !== null) {
 		Logger.log(`Failed to create / open Database: ${err}`, LogType.ERROR);
-		process.exit(1);	
+		process.exit(1);
 	}
 });
 
@@ -76,16 +76,16 @@ export const db = new Database(Config.dbPath, (err) => {
 (async () => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
-	
-    Intra.api = await new Fast42([{
-        client_id: Env.INTRA_UID,
-        client_secret: Env.INTRA_SECRET
-    }]).init().catch((reason) => {
+
+	Intra.api = await new Fast42([{
+		client_id: Env.INTRA_UID,
+		client_secret: Env.INTRA_SECRET
+	}]).init().catch((reason) => {
 		Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
 		process.exit(1);
 	});
 	Logger.log("Connected to Intra V2");
-	
+
 	expirationJob.start();
 	emptyExpiredJob.start();
 

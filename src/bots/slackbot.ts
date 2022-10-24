@@ -148,9 +148,9 @@ export namespace SlackBot {
 	 */
 	export async function bookEvaluation(projectName: string, respond: RespondFn, user: IncompleteUser) {
 		if (!projectName || !Config.projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase())) {
-            await respond(`Project \`${projectName}\` not recognized, invoke /projects for more info`);
-            return;
-        }
+			await respond(`Project \`${projectName}\` not recognized, invoke /projects for more info`);
+			return;
+		}
 
 		const corrector = await getFullUser(user);
 		if (!await Intra.hasGroup(corrector.intraUID, Config.groupID)) {
@@ -180,11 +180,11 @@ export namespace SlackBot {
 
 /** Display all the projects available for evaluations. */
 slackApp.command("/projects", async (ctx) => {
-    let text = `Possible projects to evaluate:\n`;
+	let text = `Possible projects to evaluate:\n`;
 
-    for (const project of Config.projects)
-        text += `- \`${project.name}\`\n`;
-    await ctx.ack(text);
+	for (const project of Config.projects)
+		text += `- \`${project.name}\`\n`;
+	await ctx.ack(text);
 });
 
 /** List all available evaluations. */
@@ -194,7 +194,7 @@ slackApp.command("/evaluations", async (ctx) => {
 		Logger.log(`Failed to display evaluations: ${error}`);
 		ctx.respond(`:panic: Sorry the bot failed: ${error}`); 
 	}
-    await ctx.ack();
+	await ctx.ack();
 });
 
 /** Book an evaluation for the given project.*/
@@ -204,7 +204,7 @@ slackApp.command("/book", async (ctx) => {
 		Logger.log(`Failed to book an evaluation: ${error}`);
 		ctx.respond(`:panic: Sorry the bot failed: ${error}`);
 	}
-    await ctx.ack();
+	await ctx.ack();
 });
 
 /*============================================================================*/
