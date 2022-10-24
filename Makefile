@@ -7,10 +7,11 @@
 
 up:
 	@echo Docker: $@
-	@docker compose up --build --remove-orphans
+	@docker compose up -d --build --remove-orphans
 
 down:
 	@echo Docker: $@
-	@docker compose down -t 2
+	@docker compose down
 
-.PHONY: up down fdown clean
+.DEFAULT_GOAL := up
+.PHONY: up down

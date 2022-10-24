@@ -16,8 +16,9 @@ namespace Configuration {
 		botID: number;
 		groupID: number;
 		lockExpirationDays: number;
-		logOutput: string,
 		randomEvalChance: number;
+		logOutput: string,
+		dbPath: string,
 		projects: { id: number; name: string }[];
 	}
 }

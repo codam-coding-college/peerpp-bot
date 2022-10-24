@@ -5,7 +5,8 @@
 	"groupID": 63,
 	"lockExpirationDays": 1,
 	"randomEvalChance": 0,
-	"logOutput": "log.txt",
+	"logOutput": "log/log.txt",
+	"dbPath": "db/peerdb.sqlite",
 	"projects": [
 		{ "id":1314, "name": "libft"		},
 		{ "id":1994, "name": "born2beroot"	},
