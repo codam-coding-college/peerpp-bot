@@ -9,21 +9,28 @@
 
 ## What is the Peer++ system?
 The peer++ evaluation system ensures quality evaluations by matching students with high-level evaluators.
+
 Read more about it [here](https://codam.notion.site/Peer-Evaluations-810cdd6714074f1b881fc8d4e54e5e5f).
 
 ---
 
 ## Installation
-Copy `./env-example` to `.env` and fill in the secret data
+Convert `./config/env-example` to `.env` and fill in the secret data.
+
 By default port `8080` is used for the webhooks express server
 and port `3000` is used for the slack bot using the slack bolt api.
 
+The slackbot runs over Websockets instead of HTTP Requests.
+
 ## Local development
-- Install Nodejs 18.x
-- Install dependencies\
-`npm install`
-- Option 1: Start development\
-`npm run dev`
-- Option 2: Start production\
-`npm run build`\
-`npm run start`
+
+1. Install NodeJS 18.x or higher.
+2. Install dependencies: `npm install`
+3. Use `npm run dev` for development mode.
+
+## Production
+When using the container, configure the paths to your liking.
+
+1. Use `make up` to run in a docker container.
+2. Use `make down` to shut down the docker container.
+

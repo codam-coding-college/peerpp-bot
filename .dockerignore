@@ -1,0 +1,10 @@
+.git
+build
+node_modules
+
+Dockerfile
+.prettierrc
+
+*.yml
+*.txt
+*.sqlite
