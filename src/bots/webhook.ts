@@ -110,6 +110,8 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 /*============================================================================*/
 
+// TODO: Figure out how evaluation points should be handled.
+
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
@@ -193,6 +195,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	}
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
+
 	if (hook.user && hook.user.id != Config.botID) {
 		res.status(204).send();
 		return Logger.log("Ignored: Webhook does not concern bot.");
@@ -201,14 +204,28 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		Logger.log("Lock expired, user manually set the bot as absent.")
 
 		// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
-		try { DB.insert(hook.team.id); }
+		try { await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); }) }
 		catch (error) {
 			res.status(500).send();
 			return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 		}
 	}
+	
+	try { // If an evaluation is finished, failed and it was locked then remove the lock.
+		const lock = (await Intra.getBotEvaluations()).find(lock => lock.teamID == hook.team.id);
+		if (lock != undefined && hook.final_mark && !await Intra.markIsPass(hook.project.id, hook.final_mark)) {
 
-	// TODO: Check if the evaluation was a locked on, if eval is a fail, remove lock.
+			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
+			
+			const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
+			if (!scaleResponse.ok)
+				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
 
+			// TODO: Notify user that lock has been removed.
+		}
+	} catch (error) {
+		res.status(500).send();
+		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+	}
 	res.status(204).send();
 });

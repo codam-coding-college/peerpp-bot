@@ -61,9 +61,14 @@ async function deleteExpiredLocks() {
 /*============================================================================*/
 
 util.inspect.defaultOptions.depth = null;
-export const db = new Database('peerdb.sqlite');
 const expirationJob = new CronJob("*/15 * * * *", checkExpiredLocks);
 const emptyExpiredJob = new CronJob("0 0 * * 0", deleteExpiredLocks);
+export const db = new Database('peerdb.sqlite', (err) => {
+	if (err !== null) {
+		Logger.log(`Failed to create / open Database: ${err}`, LogType.ERROR);
+		process.exit(1);	
+	}
+});
 
 /*============================================================================*/
 
