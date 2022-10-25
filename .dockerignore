@@ -1,6 +1,7 @@
 .git
 build
 node_modules
+.vscode
 
 Dockerfile
 Makefile

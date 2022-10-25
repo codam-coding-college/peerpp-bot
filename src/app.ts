@@ -27,7 +27,7 @@ async function checkExpiredLocks() {
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
 	if (locks.length == 0)
-		return Logger.log("No lock to delete");
+		return Logger.log("No locks to delete");
 
 	let n: number = 0;
 	for (const lock of locks) {
@@ -86,6 +86,8 @@ export const db = new Database(Config.dbPath, (err) => {
 	});
 	Logger.log("Connected to Intra V2");
 
+	checkExpiredLocks();
+	deleteExpiredLocks();
 	expirationJob.start();
 	emptyExpiredJob.start();
 

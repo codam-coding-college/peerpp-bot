@@ -6,6 +6,7 @@
 import { IncompleteUser } from "./user";
 import Fast42 from "@codam/fast42";
 import { Config } from "../config";
+import { IntraResponse } from "./types";
 
 /*============================================================================*/
 
@@ -50,12 +51,13 @@ export namespace Intra {
 		});
 
 		for await (const page of pages) {
-			if (!page.ok)
-				throw new Error(`Failed to get projects: ${page.status}`);
-
+			if (!page.ok) throw new Error(`Failed to get projects: ${page.status}`);
 			const projectUsers = (await page.json()) as any[];
-			return (projectUsers.find(value => value.project.name.toLowerCase() === name.toLowerCase() && 
-					value["validated?"]) !== undefined);
+
+			for (const projectUser of projectUsers)
+				if (projectUser.project.name.toLowerCase() == name &&
+					projectUser["validated?"] != null && projectUser["validated?"] == true)
+					return true;
 		}
 		return false;
 	}
@@ -91,6 +93,17 @@ export namespace Intra {
 
 		const groups = await response.json() as any[];
 		return groups.find((value: any) => value.group.id === groupID) != undefined;
+	}
+
+	/**
+	 * Fetch all team users of the given team.
+	 * @param teamID The team id.
+	 */
+	export async function getTeamUsers(teamID: number) {
+		const response = await api.get(`/teams/${teamID}/teams_users`);
+		if (!response.ok)
+			throw new Error(`Failed to fetch team users: ${response.statusText}`);
+		return await response.json() as IntraResponse.TeamUser[];
 	}
 
 	/** 
@@ -159,7 +172,7 @@ export namespace Intra {
 		for await (const page of pages) {
 			const evaluations = await page.json() as any[];
 			for (const evaluation of evaluations) {
-				const tempLock: ScaleTeam = {
+				evals.push({
 					id: evaluation.id,
 					scaleID: scaleID,
 					teamID: teamID,
@@ -170,8 +183,56 @@ export namespace Intra {
 					createdAt: new Date(evaluation.created_at),
 					corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
 					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
-				}
-				evals.push(tempLock);
+				});
+			}
+		}
+		return evals;
+	}
+
+	/**
+	 * Returns all the evaluations as a corrector withing a given 
+	 * @param user The user to fetch the evaluations from.
+	 * @param numDays The day range, for instance 7 days in the past and future.
+	 * @param type The type of evaluations to get the user as, say as being corrected or as corrector.
+	 * @returns All the evaluations of the given period and type.
+	 */
+	export async function getRecentEvaluations(user: Login, numDays: number, type: "as_corrector" | "as_corrected") {
+		const past = new Date();
+		const future = new Date();
+		past.setDate(past.getDate() - numDays);
+		future.setDate(future.getDate() + numDays);
+
+		const pages = await Intra.api.getAllPages(`user/${user}/scale_teams/${type}`, {
+			"filter[campus_id]": `${Config.campusID}`,
+			"filter[cursus_id]": `${Config.cursusID}`,
+			"range[created_at]": `${past.toISOString()},${future.toISOString()}`
+		});
+		await Promise.all(pages).catch((reason) => {
+			throw new Error(`Failed to get evaluations: ${reason}`);
+		});
+
+		const evals: Intra.ScaleTeam[] = []
+		for await (const page of pages) {
+			const evaluations = await page.json() as any[];
+			for (const evaluation of evaluations) {
+
+				// NOTE (W2): Avoid another API call by just looking for projects you can book.
+				const project = Config.projects.find(p => p.id === evaluation.team.project_id);
+				if (project === undefined)
+					continue;
+
+				evals.push({
+					id: evaluation.id,
+					scaleID: evaluation.scale_id,
+					teamID: evaluation.team.id,
+					teamName: evaluation.team.name,
+					projectID: project.id,
+					finalMark: evaluation.final_mark,
+					projectName: (project.name as string).toLowerCase(),
+					createdAt: new Date(evaluation.created_at),
+					corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
+					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
+				});
 			}
 		}
 		return evals;

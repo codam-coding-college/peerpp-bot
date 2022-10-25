@@ -15,6 +15,8 @@ export namespace IntraResponse {
 		validated: boolean;
 		leader: boolean;
 		occurrence: number;
+		user: { login: string }
+		team: { project_id: number }
 	}
 }
 

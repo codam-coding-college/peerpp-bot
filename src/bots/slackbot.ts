@@ -9,7 +9,7 @@ import { Config } from "../config";
 import Intra from "../utils/intra";
 import Logger from "../utils/logger";
 import prettyMilliseconds from "pretty-ms";
-import { App, LogLevel,RespondFn } from "@slack/bolt";
+import { App, LogLevel, RespondFn } from "@slack/bolt";
 import { ChatPostMessageArguments } from "@slack/web-api";
 import { getFullUser, IncompleteUser, User } from "../utils/user";
 
@@ -36,15 +36,15 @@ export namespace SlackBot {
 	const getHighestPriorityTeam = (locks: Intra.ScaleTeam[]) => {
 		let shortestAgo = Date.now();
 		let best: Intra.ScaleTeam | null = null;
-	
+
 		for (const scaleTeam of locks) {
 			if (scaleTeam.createdAt.getTime() < shortestAgo) {
 				shortestAgo = scaleTeam.createdAt.getTime();
 				best = scaleTeam;
 			}
 		}
-	
-		return best as Intra.ScaleTeam; 
+
+		return best as Intra.ScaleTeam;
 	}
 
 	/**
@@ -53,12 +53,12 @@ export namespace SlackBot {
 	 * @param locks The reserved evaluations by the bot.
 	 */
 	const aggregateProjects = (locks: Intra.ScaleTeam[]) => {
-		const count: {[key: string]: { teamCount: number, createdAt: Date }} = {};
+		const count: { [key: string]: { teamCount: number, createdAt: Date } } = {};
 
 		for (const lock of locks) {
 			if (!count[lock.projectName])
 				count[lock.projectName] = { teamCount: 0, createdAt: new Date() };
-				
+
 			count[lock.projectName]!.teamCount++;
 
 			if (lock.createdAt.getTime() < count[lock.projectName]!.createdAt.getTime())
@@ -77,7 +77,7 @@ export namespace SlackBot {
 
 		const response = await slackApp.client.chat.postMessage(opt);
 		if (!response.ok)
-			throw new Error(`Failed to send message: ${response.error}`);	
+			throw new Error(`Failed to send message: ${response.error}`);
 	}
 
 	/**
@@ -86,7 +86,7 @@ export namespace SlackBot {
 	 * @param corrector The user doing the correction.
 	 * @param lock The reserved evaluation by the bot.
 	 */
-	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam)  {
+	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
 		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
 
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
@@ -110,7 +110,7 @@ export namespace SlackBot {
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
 	}
 
-	
+
 	//= Command functions =//
 
 	/**
@@ -119,7 +119,7 @@ export namespace SlackBot {
 	 */
 	export async function displayEvaluations(respond: RespondFn) {
 		await respond("Please wait, fetching available evaluations...");
-		
+
 		let locks: Intra.ScaleTeam[] = await Intra.getBotEvaluations();
 		if (locks.length == 0) {
 			respond("Currently, no-one needs to be evaluated :feelsbadman:");
@@ -188,23 +188,23 @@ slackApp.command("/projects", async (ctx) => {
 });
 
 /** List all available evaluations. */
-slackApp.command("/evaluations", async (ctx) => {
-	try { await SlackBot.displayEvaluations(ctx.respond); }
-	catch (error) { 
+slackApp.command("/evaluations", async ({ ack, respond }) => {
+	try { await SlackBot.displayEvaluations(respond); }
+	catch (error) {
 		Logger.log(`Failed to display evaluations: ${error}`);
-		ctx.respond(`:panic: Sorry the bot failed: ${error}`); 
+		await respond(`:panic: Sorry the bot failed: ${error}`);
 	}
-	await ctx.ack();
+	await ack();
 });
 
-/** Book an evaluation for the given project.*/
-slackApp.command("/book", async (ctx) => {
-	try { await SlackBot.bookEvaluation(ctx.body.text, ctx.respond, {slackUID: ctx.body.user_id}); }
-	catch (error) { 
+/** Book an evaluation for the given project. */
+slackApp.command("/book", async ({ ack, respond, body }) => {
+	try { await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id }); }
+	catch (error) {
 		Logger.log(`Failed to book an evaluation: ${error}`);
-		ctx.respond(`:panic: Sorry the bot failed: ${error}`);
+		await respond(`:panic: Sorry the bot failed: ${error}`);
 	}
-	await ctx.ack();
+	await ack();
 });
 
 /*============================================================================*/

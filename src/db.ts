@@ -28,7 +28,7 @@ namespace DB {
 	export function insert(teamID: number) {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
-				if (err != null) 
+				if (err != null)
 					return reject(`Failed to insert value ${teamID}: ${err}`);
 				return resolve();
 			});
@@ -47,7 +47,7 @@ namespace DB {
 				return resolve(row["amount"] > 0);
 			});
 		});
-	} 
+	}
 }
 
 /*============================================================================*/

@@ -67,12 +67,7 @@ export namespace Webhook {
 		}
 
 		// NOTE (W2): Completely fucked up and weird endpoint btw.
-		const teamResponse = await Intra.api.get(`/teams/${hook.team.id}/teams_users`)
-		if (!teamResponse.ok)
-			throw new Error(`Failed to get team_users: ${teamResponse.statusText}`);
-		const teamUsers = await teamResponse.json() as IntraResponse.TeamUser[];
-
-		// Now do the regular checks.
+		const teamUsers = await Intra.getTeamUsers(hook.team.id);
 		return (await Checks.Evaluators(hook, evaluations, teamUsers) || await Checks.Random());
 	}
 
@@ -117,7 +112,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
 	const filter = filterHook(req, Env.WEBHOOK_CREATE_SECRET);
 
-	if (filter) { 
+	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
 	}
@@ -126,19 +121,19 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 	try {
 		await DB.exists(hook.team.id)
-		.catch(reason => { throw new Error(reason); })
-		.then(async (value) => {
-			if (value)
-				Logger.log("Ignored: Create is from an expired team.");
-			else if (await Webhook.requiresEvaluation(hook)) {
-				Logger.log("Booking a Peer++ evaluation!");
-				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-				await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
-				Logger.log("Booked a Peer++ evaluation, notified users!"); 
-			}
-			else
-				Logger.log("Ignore: Peer++ evaluation not required");
-		});
+			.catch(reason => { throw new Error(reason); })
+			.then(async (value) => {
+				if (value)
+					Logger.log("Ignored: Create is from an expired team.");
+				else if (await Webhook.requiresEvaluation(hook)) {
+					Logger.log("Booking a Peer++ evaluation!");
+					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+					await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
+					Logger.log("Booked a Peer++ evaluation, notified users!");
+				}
+				else
+					Logger.log("Ignored: Peer++ evaluation not required");
+			});
 	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
@@ -152,7 +147,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 webhookApp.post("/delete", async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
 	const filter = filterHook(req, Env.WEBHOOK_DELETE_SECRET);
-	if (filter) { 
+	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
 	}
@@ -165,17 +160,17 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 
 	try {
 		await DB.exists(hook.team.id)
-		.catch(reason => { throw new Error(reason); })
-		.then(async (value) => {
-			if (value)
-				Logger.log("Ignored: Delete is from an expired team.");
-			else {
-				Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
-				await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-				await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
-				Logger.log(`Re-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);  
-			}
-		});
+			.catch(reason => { throw new Error(reason); })
+			.then(async (value) => {
+				if (value)
+					Logger.log("Ignored: Delete is from an expired team.");
+				else {
+					Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
+					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+					await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
+					Logger.log(`Re-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);
+				}
+			});
 	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
@@ -189,22 +184,21 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 webhookApp.post("/update", async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
 	const filter = filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
-	if (filter) { 
+	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
 	}
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 
-	let isExpired: boolean = false;
-	try { isExpired = await DB.exists(hook.team.id).catch((reason) => { throw new Error(reason); }) } 
-	catch (error) {
+	try {
+		if (await DB.exists(hook.team.id).catch((reason) => { throw new Error(reason); })) {
+			res.status(204).send();
+			return Logger.log("Ignored: Update is from an expired team.");
+		}
+	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
-	}
-	if (isExpired) {
-		res.status(204).send();
-		return Logger.log("Ignored: Update is from an expired team.");
 	}
 
 	// Bot was marked as absent.
@@ -218,7 +212,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		res.status(204).send();
 		return Logger.log("Lock expired, user manually set the bot as absent.");
 	}
-	
+
 	try { // If an evaluation is finished, failed and it was locked then remove the lock.
 		const lock = (await Intra.getBotEvaluations()).find(lock => lock.teamID == hook.team.id);
 
@@ -232,8 +226,8 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 			res.status(204).send();
 			return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`)
 		}
-		Logger.log("Ignored: Don't remove lock, user has not failed an evaluation or wasn't locked.");
-	} 
+		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
+	}
 	catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
