@@ -33,15 +33,13 @@ export async function Evaluators(hook: IntraWebhook.Root, evaluations: Intra.Sca
 			Logger.log("Ignored: Bot already present for evaluation.");
 			return false;
 		}
-
-		// TODO: Debug this
-		// if (evaluation.finalMark != null && !await Intra.markIsPass(hook.project.id, evaluation.finalMark)) {
-		// 	Logger.log("Ignored: Previous evaluation was a fail.");
-		// 	return false
-		// }
+		if (evaluation.finalMark != null && !await Intra.markIsPass(hook.project.id, evaluation.finalMark)) {
+			Logger.log("Ignored: Previous evaluation was a fail.");
+			return false
+		}
 
 		const corrector: User = await getFullUser(evaluation.corrector);
-		didProject = await Intra.validatedProject(corrector.intraUID, hook.project.name);
+		didProject = await Intra.validatedProject(corrector.intraUID, hook.project.name.toLowerCase());
 		levels.push(corrector.level);
 	}
 

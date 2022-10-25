@@ -10,7 +10,7 @@ import { Config } from "../config";
 import Intra from "../utils/intra";
 import { SlackBot } from "./slackbot";
 import { getFullUser } from "../utils/user";
-import { IntraResponse, IntraWebhook } from "../utils/types";
+import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/index";
