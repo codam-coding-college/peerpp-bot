@@ -127,6 +127,8 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 					Logger.log("Ignored: Create is from an expired team.");
 				else if (await Webhook.requiresEvaluation(hook)) {
 					Logger.log("Booking a Peer++ evaluation!");
+					// NOTE (W2): Because deleting a scale team does not give back the point later.
+					await Intra.givePointToTeam(hook.team.id);
 					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
 					await Webhook.sendNotification(hook, `Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`);
 					Logger.log("Booked a Peer++ evaluation, notified users!");

@@ -292,7 +292,7 @@ export namespace Intra {
 		for (const teamUser of teamUsers) {
 			Logger.log(`Gave a point to: ${teamUser.user.login}`);
 			const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {
-				"reason": "ScaleTeam deletion endpoint does not give back a point, much wow"
+				"reason": "Peer++ Evaluation lock refund"
 			});
 			if (!pointAddResponse.ok)
 				throw new Error(`Failed to give point: ${pointRemResponse.statusText}`);

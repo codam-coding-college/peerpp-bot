@@ -93,8 +93,6 @@ export namespace SlackBot {
 		const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
 		if (!scaleResponse.ok)
 			throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
-		// NOTE (W2): Because deleting a scale team does not give back the point
-		await Intra.givePointToTeam(lock.teamID);
 
 		const evaluationDate = new Date(Date.now() + (15 * 60 * 1000));
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
