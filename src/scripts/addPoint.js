@@ -11,7 +11,6 @@ const dotenv = require("dotenv");
 
 //===================================================//
 
-const poolID = 39;
 const args = process.argv.slice(2);
 const env = dotenv.parse(fs.readFileSync("./config/.env"));
 const config = JSON.parse(fs.readFileSync("./config/config.json").toString());
@@ -34,7 +33,7 @@ const config = JSON.parse(fs.readFileSync("./config/config.json").toString());
     const userData = await userResponse.json();
     console.log(`Found user: ${userData.login}`)
 
-    const pointRemResponse = await api.delete(`/pools/${poolID}/points/remove`, { "points": 1 });
+    const pointRemResponse = await api.delete(`/pools/${config.poolID}/points/remove`, { "points": 1 });
     if (!pointRemResponse.ok)
         return console.error(`Failed to remove evalpoint from pool: ${pointRemResponse.statusText}`);
 

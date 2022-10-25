@@ -7,6 +7,7 @@ import { IncompleteUser } from "./user";
 import Fast42 from "@codam/fast42";
 import { Config } from "../config";
 import { IntraResponse } from "./types";
+import Logger from "./logger";
 
 /*============================================================================*/
 
@@ -271,6 +272,33 @@ export namespace Intra {
 		const expireDate = new Date(Date.now() + Config.lockExpirationDays * 24 * 60 * 60 * 1000);
 		await bookEvaluation(scaleID, teamID, Config.botID, expireDate);
 	}
+
+	/**
+	 * Returns a point to each one in the team.
+	 * @param hook The webhook response carrying the ScaleTeam.
+	 */
+	export async function givePointToTeam(teamID: number) {
+		const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`)
+		if (!teamResponse.ok)
+			throw new Error(`Failed to fetch team: ${teamResponse.statusText}`);
+		const teamUsers = await teamResponse.json();
+
+		// Remove from the pool.
+		const pointRemResponse = await Intra.api.delete(`/pools/${Config.poolID}/points/remove`, { "points": teamUsers.length });
+		if (!pointRemResponse.ok)
+			throw new Error(`Failed to point from pool: ${pointRemResponse.statusText}`);
+
+		// Give them back.
+		for (const teamUser of teamUsers) {
+			Logger.log(`Gave a point to: ${teamUser.user.login}`);
+			const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {
+				"reason": "ScaleTeam deletion endpoint does not give back a point, much wow"
+			});
+			if (!pointAddResponse.ok)
+				throw new Error(`Failed to give point: ${pointRemResponse.statusText}`);
+		}
+	}
+
 }
 
 /*============================================================================*/

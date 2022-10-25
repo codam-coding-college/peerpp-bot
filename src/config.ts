@@ -15,6 +15,7 @@ namespace Configuration {
 		cursusID: number;
 		botID: number;
 		groupID: number;
+		poolID: number,
 		lockExpirationDays: number;
 		randomEvalChance: number;
 		logOutput: string,

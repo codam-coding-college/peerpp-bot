@@ -3,6 +3,7 @@
 	"cursusID": 21,
 	"botID": 111044,
 	"groupID": 63,
+	"poolID": 39,
 	"lockExpirationDays": 1,
 	"randomEvalChance": 0,
 	"logOutput": "log/log.txt",
