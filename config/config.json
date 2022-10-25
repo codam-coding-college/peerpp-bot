@@ -1,0 +1,30 @@
+{
+	"campusID": 14,
+	"cursusID": 21,
+	"botID": 111044,
+	"groupID": 63,
+	"lockExpirationDays": 1,
+	"randomEvalChance": 0,
+	"logOutput": "log/log.txt",
+	"dbPath": "db/peerdb.sqlite",
+	"projects": [
+		{ "id":1314, "name": "libft"		},
+		{ "id":1994, "name": "born2beroot"	},
+		{ "id":1316, "name": "ft_printf"	},
+		{ "id":1327, "name": "get_next_line"},
+		{ "id":1471, "name": "push_swap"	},
+		{ "id":2005, "name": "minitalk"		},
+		{ "id":2004, "name": "pipex"		},
+		{ "id":2009, "name": "so_long"		},
+		{ "id":2008, "name": "fdf"			},
+		{ "id":1476, "name": "fract-ol"		},
+		{ "id":1331, "name": "minishell"	},
+		{ "id":1334, "name": "philosophers"	},
+		{ "id":1315, "name": "minirt"		},
+		{ "id":1326, "name": "cub3d"		},
+		{ "id":1983, "name": "inception"	},
+		{ "id":1336, "name": "ft_irc"		},
+		{ "id":1332, "name": "webserv"		},
+		{ "id":1335, "name": "ft_containers"}
+	]
+}

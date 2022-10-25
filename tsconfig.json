@@ -5,13 +5,10 @@
 		"target": "esnext",
 		"module": "commonjs",
 		"allowJs": false,
-		// "checkJs": true,
 		"outDir": "./build/",
 		"rootDir": "./src/",
 		"removeComments": true,
 		"downlevelIteration": false,
-		// "strict": true,
-		// "noImplicitAny": true,
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
 		"strictBindCallApply": true,
@@ -26,7 +23,6 @@
 		"esModuleInterop": true,
 		"preserveSymlinks": true,
 		"skipLibCheck": true,
-		// "sourceMap": true, //debugger
 		"forceConsistentCasingInFileNames": true
 	},
 	"exclude": [

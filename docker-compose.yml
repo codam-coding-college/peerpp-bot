@@ -1,0 +1,19 @@
+# -----------------------------------------------------------------------------
+# Codam Coding College, Amsterdam @ 2022.
+# See README in the root project for more information.
+# -----------------------------------------------------------------------------
+
+# Configure these values according to the config.json file.
+
+version: "3"
+services:
+  peerbot:
+    container_name: "PeerBot"
+    build: ./
+    volumes:
+       - ./logs:/app/log
+       - ./db:/app/db
+    ports:
+      - "8080:8080"
+      - "3000:3000"
+    restart: unless-stopped
