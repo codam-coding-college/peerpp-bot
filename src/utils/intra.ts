@@ -77,9 +77,14 @@ export namespace Intra {
 			throw new Error(`Failed to fetch project: ${projectResponse.statusText}`);
 
 		const projectData = await projectResponse.json();
-		const projectSession = projectData.project_sessions as any[];
-		const minimum_mark = projectSession.find((value) => value.campus_id == Config.campusID);
-		return mark >= (minimum_mark as number);
+		const projectSessions = projectData.project_sessions as any[];
+		const session = projectSessions.find((value) => value.campus_id == Config.campusID);
+
+		// HACK: In some cases some campuses might NOT have a session ... (e.g: Campus 14 a.k.a Codam)
+		let minimumMark = projectID == 1314 ? 100 : 80; // Exluding libft, normally everything is 80 as a minimum.
+		if (session !== undefined)
+			minimumMark = session.minimum_mark;
+		return mark >= (minimumMark as number);
 	}
 
 	/**

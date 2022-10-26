@@ -122,7 +122,7 @@ export namespace SlackBot {
 
 		let locks: Intra.ScaleTeam[] = await Intra.getBotEvaluations();
 		if (locks.length == 0) {
-			respond("Currently, no-one needs to be evaluated :feelsbadman:");
+			await respond("Currently, no-one needs to be evaluated :feelsbadman:");
 			return;
 		}
 
