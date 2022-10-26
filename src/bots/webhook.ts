@@ -222,9 +222,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 			Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
 			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
-			const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-			if (!scaleResponse.ok)
-				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
+			await Intra.deleteEvaluation(lock);
 			res.status(204).send();
 			return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`)
 		}

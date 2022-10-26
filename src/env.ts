@@ -22,6 +22,8 @@ namespace Environment {
 		INTRA_UID: string;
 		INTRA_SECRET: string;
 
+		SENTRY_SECRET: string;
+
 		WEBHOOK_PORT: number;
 		SLACKBOT_PORT: number;
 	}
@@ -38,6 +40,8 @@ export const Env: Environment.Layout = {
 
 	INTRA_UID: Environment.file["INTRA_UID"]!,
 	INTRA_SECRET: Environment.file["INTRA_SECRET"]!,
+
+	SENTRY_SECRET: Environment.file["SENTRY_SECRET"]!,
 
 	WEBHOOK_PORT: parseInt(Environment.file["WEBHOOK_PORT"]!),
 	SLACKBOT_PORT: parseInt(Environment.file["SLACKBOT_PORT"]!)

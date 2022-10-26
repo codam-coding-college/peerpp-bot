@@ -90,9 +90,7 @@ export namespace SlackBot {
 		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
 
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
-		const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-		if (!scaleResponse.ok)
-			throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
+		await Intra.deleteEvaluation(lock);
 
 		const evaluationDate = new Date(Date.now() + (15 * 60 * 1000));
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
@@ -168,7 +166,7 @@ export namespace SlackBot {
 		const locks = (await Intra.getBotEvaluations()).filter(value => value.projectName == projectName);
 		if (locks.length == 0) {
 			await respond(`No-one needs to be evaluated on \`${projectName}\``);
-			return
+			return;
 		}
 
 		await respond(`Found a team to be evaluated, booking evaluation...`);

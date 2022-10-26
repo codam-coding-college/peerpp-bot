@@ -11,15 +11,16 @@ namespace Configuration {
 	export const file = fs.readFileSync("./config/config.json").toString();
 
 	export interface Layout {
+		sentryID: number;
 		campusID: number;
 		cursusID: number;
 		botID: number;
 		groupID: number;
-		poolID: number,
+		poolID: number;
 		lockExpirationDays: number;
 		randomEvalChance: number;
-		logOutput: string,
-		dbPath: string,
+		logOutput: string;
+		dbPath: string;
 		projects: { id: number; name: string }[];
 	}
 }
