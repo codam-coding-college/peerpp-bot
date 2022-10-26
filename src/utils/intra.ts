@@ -70,7 +70,6 @@ export namespace Intra {
 	 */
 	export async function markIsPass(projectID: number, mark: number) {
 		const projectResponse = await Intra.api.get(`/projects/${projectID}`, {
-			"filter[campus_id]": `${Config.campusID}`,
 			"filter[cursus_id]": `${Config.cursusID}`
 		});
 		if (!projectResponse.ok)
@@ -78,13 +77,16 @@ export namespace Intra {
 
 		const projectData = await projectResponse.json();
 		const projectSessions = projectData.project_sessions as any[];
+
+		let minimumMark: number = 80;
+		const defaultSession = projectSessions.find((value) => value.campus_id == null && value.cursus_id == null);
 		const session = projectSessions.find((value) => value.campus_id == Config.campusID);
 
-		// HACK: In some cases some campuses might NOT have a session ... (e.g: Campus 14 a.k.a Codam)
-		let minimumMark = projectID == 1314 ? 100 : 80; // Exluding libft, normally everything is 80 as a minimum.
 		if (session !== undefined)
-			minimumMark = session.minimum_mark;
-		return mark >= (minimumMark as number);
+			minimumMark = session.minimum_mark
+		else if (defaultSession !== undefined)
+			minimumMark = defaultSession.minimum_mark;
+		return mark >= minimumMark;
 	}
 
 	/**
