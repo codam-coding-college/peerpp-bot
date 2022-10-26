@@ -194,6 +194,11 @@ export namespace Intra {
 		for await (const page of pages) {
 			const evaluations = await page.json() as any[];
 			for (const evaluation of evaluations) {
+
+				// Skip absent users, those evaluations don't count
+				if (evaluation.truant.id !== undefined)
+					continue;
+
 				evals.push({
 					id: evaluation.id,
 					scaleID: scaleID,
