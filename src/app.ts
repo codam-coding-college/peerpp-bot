@@ -15,6 +15,8 @@ import { slackApp } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
 import RavenUtils from "./utils/raven";
+import Raven from "raven";
+
 
 /*============================================================================*/
 
@@ -75,6 +77,7 @@ export const db = new Database(Config.dbPath, (err) => {
 (async () => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
+	Raven.config(`https://${Env.SENTRY_SECRET}@sentry.codam.nl/${Config.sentryID}`).install();
 
 	Intra.api = await new Fast42([{
 		client_id: Env.INTRA_UID,
