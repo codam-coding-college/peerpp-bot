@@ -87,6 +87,12 @@ export namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
+		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
+		if (correcteds.includes(corrector)) {
+			await respond("You can't book yourself. Nice try :dongle:");
+			return;
+		}
+
 		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
 
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
@@ -95,7 +101,6 @@ export namespace SlackBot {
 		const evaluationDate = new Date(Date.now() + (15 * 60 * 1000));
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
-		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
 
 		for (const user of correcteds)
