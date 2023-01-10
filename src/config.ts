@@ -22,6 +22,7 @@ namespace Configuration {
 		logOutput: string;
 		dbPath: string;
 		projects: { id: number; name: string }[];
+		blocked: { studentA: string, studentB: string }[];
 	}
 }
 
