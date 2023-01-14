@@ -10,3 +10,5 @@ Makefile
 *.yml
 *.txt
 *.sqlite
+
+.DS_Store
