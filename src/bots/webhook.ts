@@ -65,7 +65,9 @@ export namespace Webhook {
 		// If not the last evaluation, then ignore.
 		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
 		if (evaluations.length != hook.scale.correction_number - 1) {
-			Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
+			Logger.log(
+				`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`
+			);
 			return false;
 		}
 
@@ -105,7 +107,6 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 	if (err.statusCode === 400 && "body" in err) {
 		res.status(400).send({ status: 400, message: err.message });
 	}
-	next();
 });
 
 /*============================================================================*/
@@ -238,7 +239,11 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		// If an evaluation is finished, failed and it was locked then remove the lock.
 		const lock = (await Intra.getBotEvaluations()).find((lock) => lock.teamID == hook.team.id);
 
-		if (lock != undefined && hook.final_mark != null && !(await Intra.markIsPass(hook.project.id, hook.final_mark))) {
+		if (
+			lock != undefined &&
+			hook.final_mark != null &&
+			!(await Intra.markIsPass(hook.project.id, hook.final_mark))
+		) {
 			Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
 			await DB.insert(hook.team.id).catch((reason) => {
@@ -249,7 +254,10 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
 			}
 			res.status(204).send();
-			return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`);
+			return await Webhook.sendNotification(
+				hook,
+				`Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`
+			);
 		}
 		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
 	} catch (error) {
