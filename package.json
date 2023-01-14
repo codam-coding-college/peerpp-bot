@@ -22,12 +22,14 @@
 		"@types/node": "^18.0.0",
 		"@types/node-fetch": "^2.1.0",
 		"@types/sqlite3": "^3.1.8",
+		"prettier": "^2.8.3",
 		"ts-node-dev": "^1.1.6"
 	},
 	"scripts": {
 		"dev": "ts-node-dev --quiet --rs --respawn --clear --transpile-only src/app.ts",
 		"init-db": "sqlite3 peerdb.sqlite < ./sql/default.sql",
 		"build": "tsc",
-		"start": "node build/app.js"
+		"start": "node build/app.js",
+		"lint:fix": "prettier --write src"
 	}
 }

@@ -20,14 +20,13 @@ export const slackApp = new App({
 	appToken: Env.SLACK_APP_TOKEN,
 	port: Env.SLACKBOT_PORT || 3000,
 	logLevel: LogLevel.ERROR,
-	socketMode: true
+	socketMode: true,
 });
 
 /*============================================================================*/
 
 /** Utility functions for the slack bot */
 export namespace SlackBot {
-
 	/**
 	 * Find the oldest evaluation that has been booked by the bot.
 	 * @param locks The reserved evaluations by the bot.
@@ -45,7 +44,7 @@ export namespace SlackBot {
 		}
 
 		return best as Intra.ScaleTeam;
-	}
+	};
 
 	/**
 	 * Merges all the locked evaluation in an aggregate view.
@@ -53,19 +52,19 @@ export namespace SlackBot {
 	 * @param locks The reserved evaluations by the bot.
 	 */
 	const aggregateProjects = (locks: Intra.ScaleTeam[]) => {
-		const count: { [key: string]: { teamCount: number, createdAt: Date } } = {};
+		const count: { [key: string]: { teamCount: number; createdAt: Date } } = {};
 
 		for (const lock of locks) {
-			if (!count[lock.projectName])
+			if (!count[lock.projectName]) {
 				count[lock.projectName] = { teamCount: 0, createdAt: new Date() };
+			}
 
 			count[lock.projectName]!.teamCount++;
 
-			if (lock.createdAt.getTime() < count[lock.projectName]!.createdAt.getTime())
-				count[lock.projectName]!.createdAt = lock.createdAt;
+			if (lock.createdAt.getTime() < count[lock.projectName]!.createdAt.getTime()) count[lock.projectName]!.createdAt = lock.createdAt;
 		}
 		return count;
-	}
+	};
 
 	/**
 	 * Send a message to a given user with a given message.
@@ -76,8 +75,9 @@ export namespace SlackBot {
 		const opt: ChatPostMessageArguments = { channel: user.slackUID, text: message };
 
 		const response = await slackApp.client.chat.postMessage(opt);
-		if (!response.ok)
+		if (!response.ok) {
 			throw new Error(`Failed to send message: ${response.error}`);
+		}
 	}
 
 	/**
@@ -87,29 +87,33 @@ export namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
-		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
+		await DB.insert(lock.teamID).catch((reason) => {
+			throw new Error(reason);
+		});
 
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
 		const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-		if (!scaleResponse.ok)
+		if (!scaleResponse.ok) {
 			throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
+		}
 
-		const evaluationDate = new Date(Date.now() + (15 * 60 * 1000));
+		const evaluationDate = new Date(Date.now() + 15 * 60 * 1000);
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
 		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
 
-		for (const user of correcteds)
+		for (const user of correcteds) {
 			text += `${user.intraLogin} `;
+		}
 		text += `at ${evaluationDate}, they will be notified on slack. Please contact each other.`;
 		await respond(text);
 
-		for (const user of correcteds)
+		for (const user of correcteds) {
 			await SlackBot.sendMessage(user, `You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to set a date for the evaluation.\n`);
+		}
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
 	}
-
 
 	//= Command functions =//
 
@@ -129,11 +133,9 @@ export namespace SlackBot {
 		locks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 		const projects = aggregateProjects(locks);
 
-		let text: string = "Available evaluations:\n"
+		let text: string = "Available evaluations:\n";
 		for (const project in projects) {
-			const timeLocked = prettyMilliseconds(Date.now() - projects[project]!.createdAt.getTime(),
-				{ verbose: true, unitCount: 1 }
-			);
+			const timeLocked = prettyMilliseconds(Date.now() - projects[project]!.createdAt.getTime(), { verbose: true, unitCount: 1 });
 
 			text += `\`${project} | ${projects[project]!.teamCount} teams | Locked ${timeLocked} ago\`\n`;
 		}
@@ -153,11 +155,11 @@ export namespace SlackBot {
 		}
 
 		const corrector = await getFullUser(user);
-		if (!await Intra.hasGroup(corrector.intraUID, Config.groupID)) {
+		if (!(await Intra.hasGroup(corrector.intraUID, Config.groupID))) {
 			await respond("Sorry, you're not a Peer++ evalutor. Please apply! :doot:");
 			return;
 		}
-		if (!await Intra.validatedProject(corrector.intraUID, projectName)) {
+		if (!(await Intra.validatedProject(corrector.intraUID, projectName))) {
 			await respond("Sorry, you can't book a project you have not completed :sus:");
 			return;
 		}
@@ -165,14 +167,14 @@ export namespace SlackBot {
 		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\``);
 		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\`...`);
 
-		const locks = (await Intra.getBotEvaluations()).filter(value => value.projectName == projectName);
+		const locks = (await Intra.getBotEvaluations()).filter((value) => value.projectName == projectName);
 		if (locks.length == 0) {
 			await respond(`No-one needs to be evaluated on \`${projectName}\``);
-			return
+			return;
 		}
 
 		await respond(`Found a team to be evaluated, booking evaluation...`);
-		await swapScaleTeams(respond, corrector, getHighestPriorityTeam(locks))
+		await swapScaleTeams(respond, corrector, getHighestPriorityTeam(locks));
 	}
 }
 
@@ -182,15 +184,17 @@ export namespace SlackBot {
 slackApp.command("/projects", async (ctx) => {
 	let text = `Possible projects to evaluate:\n`;
 
-	for (const project of Config.projects)
+	for (const project of Config.projects) {
 		text += `- \`${project.name}\`\n`;
+	}
 	await ctx.ack(text);
 });
 
 /** List all available evaluations. */
 slackApp.command("/evaluations", async ({ ack, respond }) => {
-	try { await SlackBot.displayEvaluations(respond); }
-	catch (error) {
+	try {
+		await SlackBot.displayEvaluations(respond);
+	} catch (error) {
 		Logger.log(`Failed to display evaluations: ${error}`);
 		await respond(`:panic: Sorry the bot failed: ${error}`);
 	}
@@ -199,8 +203,9 @@ slackApp.command("/evaluations", async ({ ack, respond }) => {
 
 /** Book an evaluation for the given project. */
 slackApp.command("/book", async ({ ack, respond, body }) => {
-	try { await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id }); }
-	catch (error) {
+	try {
+		await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id });
+	} catch (error) {
 		Logger.log(`Failed to book an evaluation: ${error}`);
 		await respond(`:panic: Sorry the bot failed: ${error}`);
 	}
