@@ -61,7 +61,9 @@ export namespace SlackBot {
 
 			count[lock.projectName]!.teamCount++;
 
-			if (lock.createdAt.getTime() < count[lock.projectName]!.createdAt.getTime()) count[lock.projectName]!.createdAt = lock.createdAt;
+			if (lock.createdAt.getTime() < count[lock.projectName]!.createdAt.getTime()) {
+				count[lock.projectName]!.createdAt = lock.createdAt;
+			}
 		}
 		return count;
 	};
@@ -110,7 +112,10 @@ export namespace SlackBot {
 		await respond(text);
 
 		for (const user of correcteds) {
-			await SlackBot.sendMessage(user, `You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to set a date for the evaluation.\n`);
+			await SlackBot.sendMessage(
+				user,
+				`You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to set a date for the evaluation.\n`
+			);
 		}
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
 	}
@@ -135,7 +140,10 @@ export namespace SlackBot {
 
 		let text: string = "Available evaluations:\n";
 		for (const project in projects) {
-			const timeLocked = prettyMilliseconds(Date.now() - projects[project]!.createdAt.getTime(), { verbose: true, unitCount: 1 });
+			const timeLocked = prettyMilliseconds(Date.now() - projects[project]!.createdAt.getTime(), {
+				verbose: true,
+				unitCount: 1,
+			});
 
 			text += `\`${project} | ${projects[project]!.teamCount} teams | Locked ${timeLocked} ago\`\n`;
 		}

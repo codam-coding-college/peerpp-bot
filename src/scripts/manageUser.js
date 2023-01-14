@@ -18,7 +18,9 @@ const config = JSON.parse(fs.readFileSync("./config/config.json").toString());
 //===================================================//
 
 (async () => {
-	if (!["add", "remove"].includes(args[0]) || args[1] == undefined) return console.error("Invalid usage: add | remove <user>");
+	if (!["add", "remove"].includes(args[0]) || args[1] == undefined) {
+		return console.error("Invalid usage: add | remove <user>");
+	}
 
 	const api = await new fast42.default([
 		{
@@ -40,21 +42,30 @@ const config = JSON.parse(fs.readFileSync("./config/config.json").toString());
 				},
 			});
 
-			if (groupAddResponse.status == 201) return console.log("User Added!");
-			else if (groupAddResponse.status == 422) return console.log("User was already added");
+			if (groupAddResponse.status == 201) {
+				return console.log("User Added!");
+			} else if (groupAddResponse.status == 422) {
+				return console.log("User was already added");
+			}
 			return console.error(`Intra failed to add user: ${userResponse.statusText}`);
 		}
 
 		case "remove": {
 			const groupsResponse = await api.get(`/users/${user.id}/groups_users`);
-			if (!groupsResponse.ok) return console.error(`Intra failed to get group data: ${groupsResponse.statusText}`);
+			if (!groupsResponse.ok) {
+				return console.error(`Intra failed to get group data: ${groupsResponse.statusText}`);
+			}
 
 			const groupUsers = await groupsResponse.json();
 			for (const groupUser of groupUsers) {
-				if (groupUser.group.id != config.groupID) continue;
+				if (groupUser.group.id != config.groupID) {
+					continue;
+				}
 
 				const deletionResponse = await api.delete(`/groups_users/${groupUser.id}`);
-				if (deletionResponse.status != 204) return console.error(`Intra failed to delete group user: ${groupsResponse.statusText}`);
+				if (deletionResponse.status != 204) {
+					return console.error(`Intra failed to delete group user: ${groupsResponse.statusText}`);
+				}
 				return console.log("User removed!");
 			}
 			return console.log("User was not in group!");
