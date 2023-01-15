@@ -142,6 +142,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 						hook,
 						`Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`
 					);
+					SlackBot.notifyOfNewLock(hook.project.name);
 					Logger.log("Booked a Peer++ evaluation, notified users!");
 				} else {
 					Logger.log("Ignored: Peer++ evaluation not required");
