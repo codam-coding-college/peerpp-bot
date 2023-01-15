@@ -48,11 +48,9 @@ export interface IncompleteUser {
  */
 function isIntraDataMissing(user: IncompleteUser): boolean {
 	return (
-		(user.intraLogin !== undefined || user.intraUID !== undefined) && (
-			user.level === undefined || 
-			user.campusID === undefined || 
-			user.staff === undefined)
-	)
+		(user.intraLogin !== undefined || user.intraUID !== undefined) &&
+		(user.level === undefined || user.campusID === undefined || user.staff === undefined)
+	);
 }
 
 /**
@@ -61,7 +59,7 @@ function isIntraDataMissing(user: IncompleteUser): boolean {
  * @returns True if we can construct the missing data with the current existing data.
  */
 function isSlackDataMissing(user: IncompleteUser): boolean {
-	return (user.slackUID === undefined || user.email === undefined)
+	return user.slackUID === undefined || user.email === undefined;
 }
 
 /*============================================================================*/
@@ -75,8 +73,9 @@ async function fetchIntraData(user: IncompleteUser) {
 	const id = (isUIDValid ? user.intraUID : user.intraLogin)!;
 
 	const userResponse = await Intra.api.get(`/users/${id}`);
-	if (!userResponse.ok)
-		throw new Error(`Unable to fetch user ${id}: Reason: "${userResponse.statusText}"`)
+	if (!userResponse.ok) {
+		throw new Error(`Unable to fetch user ${id}: Reason: "${userResponse.statusText}"`);
+	}
 
 	const json = await userResponse.json();
 	user.intraLogin = isUIDValid ? json.login : user.intraLogin;
@@ -92,26 +91,23 @@ async function fetchIntraData(user: IncompleteUser) {
 	}
 
 	// TODO: Check if this is actually necessary todo.
-	if (user.level === undefined)
-		throw new Error(`Could not find user in cursus ${Config.cursusID}}`);
+	if (user.level === undefined) throw new Error(`Could not find user in cursus ${Config.cursusID}}`);
 
 	// Get the campus
 	user.campusID = 1; // Default to Paris
 	for (const campusUser of json.campus_users) {
-		if (campusUser.is_primary) 
-			user.campusID = campusUser.campus_id;
+		if (campusUser.is_primary) user.campusID = campusUser.campus_id;
 	}
 }
 
 /*============================================================================*/
 
-
 /**
  * Recursive function that fetches the complete user data if one of the 4 required
  * IDs are filled in.
- * 
+ *
  * @Note This action is expensive due to various API calls.
- * 
+ *
  * @param user The incomplete user object with partial information.
  * @returns A completed user object with all the information.
  */
@@ -123,38 +119,43 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 	if (isIntraDataMissing(user)) {
 		await fetchIntraData(user);
 		return getFullUser(user);
-	}
-	else if (isSlackDataMissing(user)) {
+	} else if (isSlackDataMissing(user)) {
 		// Do we have the UID?
 		if (user.slackUID != undefined) {
-
-			await slackApp.client.users.info({
-				user: user.slackUID!,
-			}).catch((reason: any) => {
-				throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
-			}).then((value: UsersInfoResponse) => {
-				if (!value.user?.profile?.display_name)
-					throw new Error(`User from slackUID "${user.slackUID}" has no display name`);
-				user.intraLogin = value.user.profile.display_name;
-			})
+			await slackApp.client.users
+				.info({
+					user: user.slackUID!,
+				})
+				.catch((reason: any) => {
+					throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
+				})
+				.then((value: UsersInfoResponse) => {
+					if (!value.user?.profile?.display_name)
+						throw new Error(`User from slackUID "${user.slackUID}" has no display name`);
+					user.intraLogin = value.user.profile.display_name;
+				});
 		}
 		// Fetch via email
 		else if (user.email != undefined) {
-			await slackApp.client.users.lookupByEmail({
-				email: user.email!,
-			}).catch((reason) => {
-				throw new Error(`Could not get email ${user.email}: ${reason}`);
-			}).then((value) => {
-				user.slackUID = value.user!.id;
-			});
+			await slackApp.client.users
+				.lookupByEmail({
+					email: user.email!,
+				})
+				.catch((reason) => {
+					throw new Error(`Could not get email ${user.email}: ${reason}`);
+				})
+				.then((value) => {
+					user.slackUID = value.user!.id;
+				});
 		}
 
 		return getFullUser(user);
 	}
 
 	// Make sure we have all the data, also
-	if (Object.values(user).find((value) => value == undefined))
+	if (Object.values(user).find((value) => value == undefined)) {
 		throw new Error(`Failed to fetch full data: ${JSON.stringify(user)}`);
+	}
 	Logger.log(`Fetched user: "${user.intraLogin}"`);
 	return {
 		intraUID: user.intraUID!,

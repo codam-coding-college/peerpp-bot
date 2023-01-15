@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------------
 
 import DB from "./db";
-import util from "util"
+import util from "util";
 import { Env } from "./env";
 import { CronJob } from "cron";
 import { Config } from "./config";
@@ -21,13 +21,15 @@ import Logger, { LogType } from "./utils/logger";
 async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
-	let locks: Intra.ScaleTeam[] = []
-	try { locks = await Intra.getBotEvaluations(); }
-	catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
+	let locks: Intra.ScaleTeam[] = [];
+	try {
+		locks = await Intra.getBotEvaluations();
+	} catch (error) {
+		return Logger.log(`${error}`, LogType.ERROR);
+	}
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
-	if (locks.length == 0)
-		return Logger.log("No locks to delete");
+	if (locks.length == 0) return Logger.log("No locks to delete");
 
 	let n: number = 0;
 	for (const lock of locks) {
@@ -39,11 +41,11 @@ async function checkExpiredLocks() {
 				DB.insert(lock.teamID);
 
 				const responseDelete = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-				if (!responseDelete.ok)
-					throw new Error(`Failed to delete lock: ${responseDelete.statusText}`);
+				if (!responseDelete.ok) throw new Error(`Failed to delete lock: ${responseDelete.statusText}`);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
+			} catch (error) {
+				return Logger.log(`${error}`, LogType.ERROR);
 			}
-			catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
 			n++;
 		}
 	}
@@ -54,7 +56,7 @@ async function checkExpiredLocks() {
 async function deleteExpiredLocks() {
 	Logger.log("Deleting expired locks from database...");
 	await DB.emptyOldLocks().catch((reason) => {
-		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING)
+		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING);
 	});
 }
 
@@ -77,13 +79,17 @@ export const db = new Database(Config.dbPath, (err) => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
 
-	Intra.api = await new Fast42([{
-		client_id: Env.INTRA_UID,
-		client_secret: Env.INTRA_SECRET
-	}]).init().catch((reason) => {
-		Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
-		process.exit(1);
-	});
+	Intra.api = await new Fast42([
+		{
+			client_id: Env.INTRA_UID,
+			client_secret: Env.INTRA_SECRET,
+		},
+	])
+		.init()
+		.catch((reason) => {
+			Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
+			process.exit(1);
+		});
 	Logger.log("Connected to Intra V2");
 
 	checkExpiredLocks();

@@ -15,11 +15,11 @@ namespace Configuration {
 		cursusID: number;
 		botID: number;
 		groupID: number;
-		poolID: number,
+		poolID: number;
 		lockExpirationDays: number;
 		randomEvalChance: number;
-		logOutput: string,
-		dbPath: string,
+		logOutput: string;
+		dbPath: string;
 		projects: { id: number; name: string }[];
 	}
 }

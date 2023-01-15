@@ -19,15 +19,18 @@ const env = dotenv.parse(fs.readFileSync("./config/.env"));
 //===================================================//
 
 (async () => {
-	if (args[0] === undefined || args[1] === undefined || args[2] === undefined)
+	if (args[0] === undefined || args[1] === undefined || args[2] === undefined) {
 		return console.error("Invalid usage: <scaleID> <teamID> <userID>");
+	}
 
-	const api = await new fast42.default([{
-		client_id: env["INTRA_UID"],
-		client_secret: env["INTRA_SECRET"]
-	}]).init();
+	const api = await new fast42.default([
+		{
+			client_id: env["INTRA_UID"],
+			client_secret: env["INTRA_SECRET"],
+		},
+	]).init();
 
-	const evaluationDate = new Date(Date.now() + (60 * 1000));
+	const evaluationDate = new Date(Date.now() + 60 * 1000);
 	const body = {
 		scale_teams: [
 			{
@@ -40,7 +43,8 @@ const env = dotenv.parse(fs.readFileSync("./config/.env"));
 	};
 
 	const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
-	if (!scaleTeamResponse.ok)
+	if (!scaleTeamResponse.ok) {
 		throw new Error(`Failed to book evaluation ${scaleTeamResponse.statusText}`);
-	console.log('Created an evaluation')
+	}
+	console.log("Created an evaluation");
 })();

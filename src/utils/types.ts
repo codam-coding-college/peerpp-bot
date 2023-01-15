@@ -15,8 +15,8 @@ export namespace IntraResponse {
 		validated: boolean;
 		leader: boolean;
 		occurrence: number;
-		user: { login: string }
-		team: { project_id: number }
+		user: { login: string };
+		team: { project_id: number };
 	}
 }
 
@@ -75,7 +75,7 @@ export namespace IntraWebhook {
 		id: number;
 		team: Team;
 		truant: SimpleUser;
-		scale: { id: number, correction_number: number };
+		scale: { id: number; correction_number: number };
 		begin_at: string;
 		comment?: string;
 		old_feedback?: string;
