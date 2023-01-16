@@ -14,6 +14,7 @@ import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/index";
+import db from "../db";
 
 /*============================================================================*/
 
@@ -23,8 +24,7 @@ import * as Checks from "../checks/index";
  * @param secret The Webhook secret.
  * @returns Status code and error message.
  */
-function filterHook(req: Request, secret: string) {
-	// TODO: Check for duplicate delivery ID, sometimes intra is stupid and sends it twice.
+async function filterHook(req: Request, secret: string) {
 	if (!req.is("application/json")) {
 		return { code: 400, msg: "Content-Type is not application/json" };
 	}
@@ -36,6 +36,9 @@ function filterHook(req: Request, secret: string) {
 	}
 	if (req.headers["x-secret"] !== secret) {
 		return { code: 412, msg: "X-Secret header incorrect" };
+	}
+	if (!(await db.hasWebhookDelivery(req.headers["x-delivery"][0]!))) {
+		return { code: 204, msg: "Webhook already received" };
 	}
 	return null;
 }
@@ -144,8 +147,9 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
+	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = filterHook(req, Env.WEBHOOK_CREATE_SECRET);
+	const filter = await filterHook(req, Env.WEBHOOK_CREATE_SECRET);
 
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
@@ -198,8 +202,9 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is destroyed.
 webhookApp.post("/delete", async (req: Request, res: Response) => {
+	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = filterHook(req, Env.WEBHOOK_DELETE_SECRET);
+	const filter = await filterHook(req, Env.WEBHOOK_DELETE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
@@ -237,8 +242,9 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is changed in some way.
 webhookApp.post("/update", async (req: Request, res: Response) => {
+	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
+	const filter = await filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
