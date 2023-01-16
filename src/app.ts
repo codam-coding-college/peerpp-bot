@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------------
 
 import DB from "./db";
-import util from "util"
+import util from "util";
 import { Env } from "./env";
 import { CronJob } from "cron";
 import { Config } from "./config";
@@ -17,20 +17,21 @@ import Logger, { LogType } from "./utils/logger";
 import RavenUtils from "./utils/raven";
 import Raven from "raven";
 
-
 /*============================================================================*/
 
 /** Check which currently booked evaluations are expired. */
 async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
-	let locks: Intra.ScaleTeam[] = []
-	try { locks = await Intra.getBotEvaluations(); }
-	catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
+	let locks: Intra.ScaleTeam[] = [];
+	try {
+		locks = await Intra.getBotEvaluations();
+	} catch (error) {
+		return Logger.log(`${error}`, LogType.ERROR);
+	}
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
-	if (locks.length == 0)
-		return Logger.log("No locks to delete");
+	if (locks.length == 0) return Logger.log("No locks to delete");
 
 	let n: number = 0;
 	for (const lock of locks) {
@@ -42,8 +43,9 @@ async function checkExpiredLocks() {
 				DB.insert(lock.teamID);
 				await Intra.deleteEvaluation(lock);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
+			} catch (error) {
+				return Logger.log(`${error}`, LogType.ERROR);
 			}
-			catch (error) { return Logger.log(`${error}`, LogType.ERROR); }
 			n++;
 		}
 	}
@@ -54,7 +56,7 @@ async function checkExpiredLocks() {
 async function deleteExpiredLocks() {
 	Logger.log("Deleting expired locks from database...");
 	await DB.emptyOldLocks().catch((reason) => {
-		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING)
+		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING);
 	});
 }
 

@@ -5,9 +5,17 @@
 
 import { db } from "./app";
 import { Config } from "./config";
+import Logger, { LogType } from "./utils/logger";
+import { User } from "./utils/user";
 import RavenUtils from "./utils/raven";
 
 /*============================================================================*/
+
+async function dbRun(query: string): Promise<void> {
+	return await new Promise((resolve, reject) => {
+		db.run(query, (err) => (err ? reject(err) : resolve()));
+	});
+}
 
 /** SQLlite3 database wrapper functions */
 namespace DB {
@@ -53,6 +61,24 @@ namespace DB {
 				}
 				return resolve(row["amount"] > 0);
 			});
+		});
+	}
+
+	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {
+		const { intraUID, intraLogin, slackUID, email, level, staff, campusID } = user;
+		await dbRun(
+			`INSERT OR REPLACE INTO evaluators(intraUID, slackUID, intraLogin, email, level, staff, campusID, notifyOfNewLock) VALUES(${intraUID}, '${intraLogin}', '${slackUID}', '${email}', ${level}, ${staff}, ${campusID}, ${notify})`
+		);
+	}
+
+	export function allNotifiableEvaluators(onData: (user: User) => void) {
+		const query = `SELECT intraUID, slackUID, intraLogin, email, level, staff, campusID FROM evaluators WHERE notifyOfNewLock = 1`;
+		db.each(query, (err, row) => {
+			if (err) {
+				Logger.log(`Failed to get all notifiable evaluators: ${err}`, LogType.ERROR);
+			} else {
+				onData(row);
+			}
 		});
 	}
 }

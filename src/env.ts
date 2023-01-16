@@ -10,15 +10,15 @@ import dotenv from "dotenv";
 
 namespace Environment {
 	export const file = dotenv.parse(fs.readFileSync("./config/.env"));
-	
+
 	export interface Layout {
 		SLACK_TOKEN: string;
 		SLACK_APP_TOKEN: string;
-	
+
 		WEBHOOK_CREATE_SECRET: string;
 		WEBHOOK_DELETE_SECRET: string;
 		WEBHOOK_UPDATE_SECRET: string;
-	
+
 		INTRA_UID: string;
 		INTRA_SECRET: string;
 
@@ -44,7 +44,7 @@ export const Env: Environment.Layout = {
 	SENTRY_SECRET: Environment.file["SENTRY_SECRET"]!,
 
 	WEBHOOK_PORT: parseInt(Environment.file["WEBHOOK_PORT"]!),
-	SLACKBOT_PORT: parseInt(Environment.file["SLACKBOT_PORT"]!)
+	SLACKBOT_PORT: parseInt(Environment.file["SLACKBOT_PORT"]!),
 };
 
 /*============================================================================*/

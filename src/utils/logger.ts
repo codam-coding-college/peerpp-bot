@@ -17,7 +17,6 @@ export enum LogType {
 
 /** A console.log wrapper for IO operations on the terminal and output */
 class Logger {
-
 	/** The file path where the logs are stored. */
 	public static outputPath: string = "log.txt";
 
@@ -64,9 +63,8 @@ class Logger {
 	private static nowISO(): string {
 		return `${new Date().toISOString().slice(0, -5)}Z`;
 	}
-
 }
 
 /*============================================================================*/
 
-export default Logger
+export default Logger;

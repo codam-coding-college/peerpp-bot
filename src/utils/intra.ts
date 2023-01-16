@@ -15,7 +15,7 @@ import RavenUtils from "./raven";
 /** Utility functions for interacting with the Intra API. */
 export namespace Intra {
 	export let api: Fast42;
-	export type Login = string | number
+	export type Login = string | number;
 
 	export interface ScaleTeam {
 		/** The ScaleTeamID itself. */
@@ -59,10 +59,14 @@ export namespace Intra {
 			}
 			const projectUsers = (await page.json()) as any[];
 
-			for (const projectUser of projectUsers)
-				if (projectUser.project.name.toLowerCase() == name &&
-					projectUser["validated?"] != null && projectUser["validated?"] == true)
+			for (const projectUser of projectUsers) {
+				if (
+					projectUser.project.name.toLowerCase() == name &&
+					projectUser["validated?"] != null &&
+					projectUser["validated?"] == true
+				)
 					return true;
+			}
 		}
 		return false;
 	}
@@ -70,11 +74,11 @@ export namespace Intra {
 	/**
 	 * Check wether the given mark is sufficient enough to be considered a passing grade.
 	 * @param projectID The project to check.
-	 * @param mark The given 'grade' 
+	 * @param mark The given 'grade'
 	 */
 	export async function markIsPass(projectID: number, mark: number) {
 		const projectResponse = await Intra.api.get(`/projects/${projectID}`, {
-			"filter[cursus_id]": `${Config.cursusID}`
+			"filter[cursus_id]": `${Config.cursusID}`,
 		});
 		if (!projectResponse.ok) {
 			RavenUtils.ReportURL(projectResponse);
@@ -88,10 +92,8 @@ export namespace Intra {
 		const defaultSession = projectSessions.find((value) => value.campus_id == null && value.cursus_id == null);
 		const session = projectSessions.find((value) => value.campus_id == Config.campusID);
 
-		if (session !== undefined)
-			minimumMark = session.minimum_mark
-		else if (defaultSession !== undefined)
-			minimumMark = defaultSession.minimum_mark;
+		if (session !== undefined) minimumMark = session.minimum_mark;
+		else if (defaultSession !== undefined) minimumMark = defaultSession.minimum_mark;
 		return mark >= minimumMark;
 	}
 
@@ -107,7 +109,7 @@ export namespace Intra {
 			throw new Error(`Failed to fetch user groups: ${response.statusText}`);
 		}
 
-		const groups = await response.json() as any[];
+		const groups = (await response.json()) as any[];
 		return groups.find((value: any) => value.group.id === groupID) != undefined;
 	}
 
@@ -121,23 +123,23 @@ export namespace Intra {
 			RavenUtils.ReportURL(response);
 			throw new Error(`Failed to fetch team users: ${response.statusText}`);
 		}
-		return await response.json() as IntraResponse.TeamUser[];
+		return (await response.json()) as IntraResponse.TeamUser[];
 	}
 
-	/** 
+	/**
 	 * Fetches all the placeholder evaluations of the bot.
 	 * @returns All currently booked evaluations by the bot.
 	 */
 	export async function getBotEvaluations() {
 		const pages = await api.getAllPages(`/users/${Config.botID}/scale_teams`, {
 			"filter[campus_id]": `${Config.campusID}`,
-			"filter[cursus_id]": `${Config.cursusID}`
+			"filter[cursus_id]": `${Config.cursusID}`,
 		});
 		await Promise.all(pages).catch((reason) => {
 			throw new Error(`Failed to get evaluations: ${reason}`);
 		});
 
-		const locks: Intra.ScaleTeam[] = []
+		const locks: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
 			if (!page.ok) {
 				RavenUtils.ReportURL(page);
@@ -146,7 +148,7 @@ export namespace Intra {
 
 			const locksData = await page.json();
 			for (const lock of locksData) {
-				const project = Config.projects.find(p => p.id === lock.team.project_id)!;
+				const project = Config.projects.find((p) => p.id === lock.team.project_id)!;
 				const tempLock: ScaleTeam = {
 					id: lock.id,
 					scaleID: lock.scale_id,
@@ -156,8 +158,8 @@ export namespace Intra {
 					projectName: project.name.toLowerCase(),
 					createdAt: new Date(lock.created_at),
 					corrector: { intraLogin: lock.corrector.login, intraUID: lock.corrector.id },
-					correcteds: lock.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
-				}
+					correcteds: lock.correcteds.map((c) => ({ intraLogin: c.login, intraUID: c.id })),
+				};
 				locks.push(tempLock);
 			}
 		}
@@ -176,11 +178,11 @@ export namespace Intra {
 			"filter[scale_id]": scaleID.toString(),
 			"filter[team_id]": teamID.toString(),
 			"filter[campus_id]": `${Config.campusID}`,
-			"filter[cursus_id]": `${Config.cursusID}`
+			"filter[cursus_id]": `${Config.cursusID}`,
 		});
 		await Promise.all(pages).catch((reason) => {
 			throw new Error(`Failed to get evaluations: ${reason}`);
-		})
+		});
 
 		// Another API call to simply fetch the name of the project.
 		const projectResponse = await api.get(`/projects/${projectID}`);
@@ -190,9 +192,9 @@ export namespace Intra {
 		}
 		const project = await projectResponse.json();
 
-		const evals: Intra.ScaleTeam[] = []
+		const evals: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
-			const evaluations = await page.json() as any[];
+			const evaluations = (await page.json()) as any[];
 			for (const evaluation of evaluations) {
 
 				// Skip absent users, those evaluations don't count
@@ -209,7 +211,7 @@ export namespace Intra {
 					projectName: (project.name as string).toLowerCase(),
 					createdAt: new Date(evaluation.created_at),
 					corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
-					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
+					correcteds: evaluation.correcteds.map((c) => ({ intraLogin: c.login, intraUID: c.id })),
 				});
 			}
 		}
@@ -217,7 +219,7 @@ export namespace Intra {
 	}
 
 	/**
-	 * Returns all the evaluations as a corrector withing a given 
+	 * Returns all the evaluations as a corrector withing a given
 	 * @param user The user to fetch the evaluations from.
 	 * @param numDays The day range, for instance 7 days in the past and future.
 	 * @param type The type of evaluations to get the user as, say as being corrected or as corrector.
@@ -232,13 +234,13 @@ export namespace Intra {
 		const pages = await Intra.api.getAllPages(`user/${user}/scale_teams/${type}`, {
 			"filter[campus_id]": `${Config.campusID}`,
 			"filter[cursus_id]": `${Config.cursusID}`,
-			"range[created_at]": `${past.toISOString()},${future.toISOString()}`
+			"range[created_at]": `${past.toISOString()},${future.toISOString()}`,
 		});
 		await Promise.all(pages).catch((reason) => {
 			throw new Error(`Failed to get evaluations: ${reason}`);
 		});
 
-		const evals: Intra.ScaleTeam[] = []
+		const evals: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
 			if (!page.ok) {
 				RavenUtils.ReportURL(page);
@@ -247,11 +249,11 @@ export namespace Intra {
 
 			const evaluations = await page.json() as any[];
 			for (const evaluation of evaluations) {
-
 				// NOTE (W2): Avoid another API call by just looking for projects you can book.
-				const project = Config.projects.find(p => p.id === evaluation.team.project_id);
-				if (project === undefined)
+				const project = Config.projects.find((p) => p.id === evaluation.team.project_id);
+				if (project === undefined) {
 					continue;
+				}
 
 				evals.push({
 					id: evaluation.id,
@@ -263,7 +265,7 @@ export namespace Intra {
 					projectName: (project.name as string).toLowerCase(),
 					createdAt: new Date(evaluation.created_at),
 					corrector: { intraLogin: evaluation.corrector.login, intraUID: evaluation.corrector.id },
-					correcteds: evaluation.correcteds.map(c => ({ intraLogin: c.login, intraUID: c.id }))
+					correcteds: evaluation.correcteds.map((c) => ({ intraLogin: c.login, intraUID: c.id })),
 				});
 			}
 		}
@@ -329,7 +331,7 @@ export namespace Intra {
 		for (const teamUser of teamUsers) {
 			Logger.log(`Gave a point to: ${teamUser.user.login}`);
 			const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {
-				"reason": "Peer++ Evaluation lock refund"
+				reason: "Peer++ Evaluation lock refund",
 			});
 			if (!pointAddResponse.ok) {
 				RavenUtils.ReportURL(pointAddResponse);
