@@ -217,8 +217,8 @@ export namespace SlackBot {
 		const user = await getFullUser({ slackUID: slackUID });
 		await DB.saveEvaluator(user, notify);
 		const response = notify
-			? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to stop receiving notifications`
-			: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to start receiving notifications`;
+			? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
+			: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
 		await respond(response);
 	}
 }

@@ -29,7 +29,7 @@
 	},
 	"scripts": {
 		"dev": "ts-node-dev --quiet --rs --respawn --clear --transpile-only src/app.ts",
-		"init-db": "sqlite3 peerdb.sqlite < ./sql/default.sql",
+		"init-db": "sqlite3 ./db/peerdb.sqlite < ./sql/default.sql",
 		"build": "tsc",
 		"start": "node build/app.js",
 		"lint:fix": "prettier --write src"
