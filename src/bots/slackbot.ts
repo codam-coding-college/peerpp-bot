@@ -9,7 +9,7 @@ import { Config } from "../config";
 import Intra from "../utils/intra";
 import Logger from "../utils/logger";
 import prettyMilliseconds from "pretty-ms";
-import { App, LogLevel, RespondFn } from "@slack/bolt";
+import { App, LogLevel, RespondFn, SlashCommand } from "@slack/bolt";
 import { ChatPostMessageArguments } from "@slack/web-api";
 import { getFullUser, IncompleteUser, User } from "../utils/user";
 
@@ -80,6 +80,24 @@ export namespace SlackBot {
 		if (!response.ok) {
 			throw new Error(`Failed to send message: ${response.error}`);
 		}
+	}
+
+	/**
+	 *  This function registers a command and handles exceptions
+	 *  To not use try/catch in the `cb()` function, it will be caught automatically and a message will be logged and sent to the user
+	 */
+	export function registerCommand(cmd: string, cb: (respond: RespondFn, body: SlashCommand) => Promise<void> | void) {
+		slackApp.command(cmd, async (context) => {
+			// commands should always be acknowledged within 3 seconds
+			await context.ack();
+
+			try {
+				await cb(context.respond, context.body);
+			} catch (error) {
+				Logger.log(`Request failed: ${error}`);
+				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
+			}
+		});
 	}
 
 	/**
@@ -184,6 +202,17 @@ export namespace SlackBot {
 		await respond(`Found a team to be evaluated, booking evaluation...`);
 		await swapScaleTeams(respond, corrector, getHighestPriorityTeam(locks));
 	}
+
+	export function notifyOfNewLock(projectName: string) {
+		DB.allNotifiableEvaluators((user) => {
+			SlackBot.sendMessage(
+				user,
+				`A new Peer++ evaluation for the project \`${projectName}\` is ready.
+Use the command \`/book\` to book it.
+Use the command \`/notify-off\` to stop receiving these notifications.`
+			);
+		});
+	}
 }
 
 /*============================================================================*/
@@ -220,4 +249,22 @@ slackApp.command("/book", async ({ ack, respond, body }) => {
 	await ack();
 });
 
+async function setNotifyStatus(respond: RespondFn, slackUID: string, notify: boolean) {
+	const user = await getFullUser({ slackUID: slackUID });
+	await DB.saveEvaluator(user, notify);
+	const response = notify
+		? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to stop receiving notifications`
+		: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to start receiving notifications`;
+	await respond(response);
+}
+
+/** Notify me when a new peer++ evaluation is available */
+SlackBot.registerCommand("/notify-on", async (respond, body) => {
+	setNotifyStatus(respond, body.user_id, true);
+});
+
+/** Do not notify me when a new peer++ evaluation is available */
+SlackBot.registerCommand("/notify-off", async (respond, body) => {
+	setNotifyStatus(respond, body.user_id, false);
+});
 /*============================================================================*/
