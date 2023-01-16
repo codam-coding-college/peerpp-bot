@@ -221,15 +221,6 @@ export namespace SlackBot {
 			: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
 		await respond(response);
 	}
-  
-  export async function setNotifyStatus(respond: RespondFn, slackUID: string, notify: boolean) {
-    const user = await getFullUser({ slackUID: slackUID });
-    await DB.saveEvaluator(user, notify);
-    const response = notify
-      ? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
-      : `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
-    await respond(response);
-  }
 }
 
 /*============================================================================*/
