@@ -8,7 +8,6 @@ import Fast42 from "@codam/fast42";
 import { Config } from "../config";
 import { IntraResponse } from "./types";
 import Logger from "./logger";
-import RavenUtils from "./raven";
 
 /*============================================================================*/
 
@@ -53,10 +52,8 @@ export namespace Intra {
 		});
 
 		for await (const page of pages) {
-			if (!page.ok) {
-				RavenUtils.ReportURL(page);
+			if (!page.ok)
 				throw new Error(`Failed to get projects: ${page.status}`);
-			}
 			const projectUsers = (await page.json()) as any[];
 
 			for (const projectUser of projectUsers) {
@@ -80,10 +77,8 @@ export namespace Intra {
 		const projectResponse = await Intra.api.get(`/projects/${projectID}`, {
 			"filter[cursus_id]": `${Config.cursusID}`,
 		});
-		if (!projectResponse.ok) {
-			RavenUtils.ReportURL(projectResponse);
+		if (!projectResponse.ok)
 			throw new Error(`Failed to fetch project: ${projectResponse.statusText}`);
-		}
 
 		const projectData = await projectResponse.json();
 		const projectSessions = projectData.project_sessions as any[];
@@ -104,10 +99,8 @@ export namespace Intra {
 	 */
 	export async function hasGroup(user: Login, groupID: number): Promise<boolean> {
 		const response = await api.get(`/users/${user}/groups_users`);
-		if (!response.ok) {
-			RavenUtils.ReportURL(response);
+		if (!response.ok)
 			throw new Error(`Failed to fetch user groups: ${response.statusText}`);
-		}
 
 		const groups = (await response.json()) as any[];
 		return groups.find((value: any) => value.group.id === groupID) != undefined;
@@ -119,10 +112,8 @@ export namespace Intra {
 	 */
 	export async function getTeamUsers(teamID: number) {
 		const response = await api.get(`/teams/${teamID}/teams_users`);
-		if (!response.ok) {
-			RavenUtils.ReportURL(response);
+		if (!response.ok)
 			throw new Error(`Failed to fetch team users: ${response.statusText}`);
-		}
 		return (await response.json()) as IntraResponse.TeamUser[];
 	}
 
@@ -141,10 +132,8 @@ export namespace Intra {
 
 		const locks: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
-			if (!page.ok) {
-				RavenUtils.ReportURL(page);
+			if (!page.ok)
 				throw new Error(`Failed to get evaluation locks: ${page.status}`);
-			}
 
 			const locksData = await page.json();
 			for (const lock of locksData) {
@@ -186,10 +175,8 @@ export namespace Intra {
 
 		// Another API call to simply fetch the name of the project.
 		const projectResponse = await api.get(`/projects/${projectID}`);
-		if (!projectResponse.ok) {
-			RavenUtils.ReportURL(projectResponse);
+		if (!projectResponse.ok)
 			throw new Error(`Failed to get project: ${projectResponse.statusText}`);
-		}
 		const project = await projectResponse.json();
 
 		const evals: Intra.ScaleTeam[] = [];
@@ -242,10 +229,8 @@ export namespace Intra {
 
 		const evals: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
-			if (!page.ok) {
-				RavenUtils.ReportURL(page);
+			if (!page.ok)
 				throw new Error(`Failed to get project: ${page.statusText}`);
-			}
 
 			const evaluations = await page.json() as any[];
 			for (const evaluation of evaluations) {
@@ -292,10 +277,8 @@ export namespace Intra {
 		};
 
 		const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
-		if (!scaleTeamResponse.ok) {
-			RavenUtils.ReportURL(scaleTeamResponse);
+		if (!scaleTeamResponse.ok)
 			throw new Error(`Failed to book evaluation ${scaleTeamResponse.statusText}`);
-		}
 	}
 
 	/**
@@ -314,18 +297,14 @@ export namespace Intra {
 	 */
 	export async function givePointToTeam(teamID: number) {
 		const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`)
-		if (!teamResponse.ok) {
-			RavenUtils.ReportURL(teamResponse);
+		if (!teamResponse.ok)
 			throw new Error(`Failed to fetch team: ${teamResponse.statusText}`);
-		}
 		const teamUsers = await teamResponse.json();
 
 		// Remove from the pool.
 		const pointRemResponse = await Intra.api.delete(`/pools/${Config.poolID}/points/remove`, { "points": teamUsers.length });
-		if (!pointRemResponse.ok) {
-			RavenUtils.ReportURL(pointRemResponse);
+		if (!pointRemResponse.ok)
 			throw new Error(`Failed to point from pool: ${pointRemResponse.statusText}`);
-		}
 
 		// Give them back.
 		for (const teamUser of teamUsers) {
@@ -333,10 +312,8 @@ export namespace Intra {
 			const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {
 				reason: "Peer++ Evaluation lock refund",
 			});
-			if (!pointAddResponse.ok) {
-				RavenUtils.ReportURL(pointAddResponse);
+			if (!pointAddResponse.ok)
 				throw new Error(`Failed to give point: ${pointRemResponse.statusText}`);
-			}
 		}
 	}
 
@@ -346,10 +323,8 @@ export namespace Intra {
 	 */
 	export async function deleteEvaluation(scaleTeam: ScaleTeam) {
 		const responseDelete = await Intra.api.delete(`/scale_teams/${scaleTeam.id}`, {});
-		if (!responseDelete.ok) {
-			RavenUtils.ReportURL(responseDelete);
+		if (!responseDelete.ok)
 			throw new Error(`Failed to delete lock: ${responseDelete.statusText}`);
-		}
 	}
 
 }

@@ -14,8 +14,6 @@ import { Database } from "sqlite3";
 import { slackApp } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
-import RavenUtils from "./utils/raven";
-import Raven from "raven";
 
 /*============================================================================*/
 
@@ -67,7 +65,6 @@ const expirationJob = new CronJob("*/15 * * * *", checkExpiredLocks);
 const emptyExpiredJob = new CronJob("0 0 * * 0", deleteExpiredLocks);
 export const db = new Database(Config.dbPath, (err) => {
 	if (err !== null) {
-		RavenUtils.ReportErr(err);
 		Logger.log(`Failed to create / open Database: ${err}`, LogType.ERROR);
 		process.exit(1);
 	}
@@ -79,13 +76,11 @@ export const db = new Database(Config.dbPath, (err) => {
 (async () => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
-	Raven.config(`https://${Env.SENTRY_SECRET}@sentry.codam.nl/${Config.sentryID}`).install();
 
 	Intra.api = await new Fast42([{
 		client_id: Env.INTRA_UID,
 		client_secret: Env.INTRA_SECRET
 	}]).init().catch((reason) => {
-		RavenUtils.ReportMSG(reason, LogType.ERROR);
 		Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
 		process.exit(1);
 	});

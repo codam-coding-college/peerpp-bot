@@ -4,11 +4,10 @@
 // -----------------------------------------------------------------------------
 
 import Intra from "./intra";
-import Logger, { LogType } from "./logger";
+import Logger from "./logger";
 import { Config } from "../config";
 import { slackApp } from "../bots/slackbot";
 import { UsersInfoResponse } from "@slack/web-api";
-import RavenUtils from "./raven";
 
 /*============================================================================*/
 
@@ -74,10 +73,8 @@ async function fetchIntraData(user: IncompleteUser) {
 	const id = (isUIDValid ? user.intraUID : user.intraLogin)!;
 
 	const userResponse = await Intra.api.get(`/users/${id}`);
-	if (!userResponse.ok) {
-		RavenUtils.ReportURL(userResponse);
+	if (!userResponse.ok)
 		throw new Error(`Unable to fetch user ${id}: Reason: "${userResponse.statusText}"`)
-	}
 
 	const json = await userResponse.json();
 	user.intraLogin = isUIDValid ? json.login : user.intraLogin;
@@ -115,10 +112,8 @@ async function fetchIntraData(user: IncompleteUser) {
  */
 export async function getFullUser(user: IncompleteUser): Promise<User> {
 	// Ensure that we have at least one required property is filled.
-	if (!user.intraUID && !user.slackUID && !user.intraLogin && !user.email) {
-		RavenUtils.ReportMSG("Failed to fetch user information due to missing data", LogType.ERROR);
+	if (!user.intraUID && !user.slackUID && !user.intraLogin && !user.email)
 		throw new Error(`Unable to fetch full user, missing required ID fields`);
-	}
 
 	if (isIntraDataMissing(user)) {
 		await fetchIntraData(user);
@@ -130,7 +125,6 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 			await slackApp.client.users.info({
 				user: user.slackUID!,
 			}).catch((reason: any) => {
-				RavenUtils.ReportMSG(reason, LogType.ERROR);
 				throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
 			}).then((value: UsersInfoResponse) => {
 				if (!value.user?.profile?.display_name)
@@ -143,7 +137,6 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 			await slackApp.client.users.lookupByEmail({
 				email: user.email!,
 			}).catch((reason) => {
-				RavenUtils.ReportMSG(reason, LogType.ERROR);
 				throw new Error(`Could not get email ${user.email}: ${reason}`);
 			}).then((value) => {
 				user.slackUID = value.user!.id;

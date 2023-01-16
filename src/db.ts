@@ -7,7 +7,6 @@ import { db } from "./app";
 import { Config } from "./config";
 import Logger, { LogType } from "./utils/logger";
 import { User } from "./utils/user";
-import RavenUtils from "./utils/raven";
 
 /*============================================================================*/
 
@@ -23,10 +22,8 @@ namespace DB {
 	export function emptyOldLocks() {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
-				if (err != null) {
-					RavenUtils.ReportErr(err);
+				if (err != null)
 					return reject(`Failed to clear database: ${err}`);
-				}
 				return resolve();
 			});
 		});
@@ -39,10 +36,8 @@ namespace DB {
 	export function insert(teamID: number) {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
-				if (err != null) {
-					RavenUtils.ReportErr(err);
+				if (err != null)
 					return reject(`Failed to insert value ${teamID}: ${err}`);
-				}
 				return resolve();
 			});
 		});
@@ -56,7 +51,6 @@ namespace DB {
 		return new Promise<boolean>((resolve, reject) => {
 			db.get(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
 				if (err != null) {
-					RavenUtils.ReportErr(err);
 					return reject(`Failed to check if ${teamID} exists: ${err}`);
 				}
 				return resolve(row["amount"] > 0);
