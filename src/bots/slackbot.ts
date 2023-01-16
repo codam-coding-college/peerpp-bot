@@ -226,11 +226,12 @@ export namespace SlackBot {
 /*============================================================================*/
 
 /** Display all the projects available for evaluations. */
-SlackBot.registerCommand("/projects", async () => {
+SlackBot.registerCommand("/projects", async (respond) => {
 	let text = `Possible projects to evaluate:\n`;
 
 	for (const project of Config.projects)
 		text += `- \`${project.name}\`\n`;
+	await respond(text);
 });
 
 /** List all available evaluations. */
