@@ -11,6 +11,7 @@ namespace Configuration {
 	export const file = fs.readFileSync("./config/config.json").toString();
 
 	export interface Layout {
+		sentryID: number;
 		campusID: number;
 		cursusID: number;
 		botID: number;
@@ -21,6 +22,7 @@ namespace Configuration {
 		logOutput: string;
 		dbPath: string;
 		projects: { id: number; name: string }[];
+		blocked: { studentA: string, studentB: string }[];
 	}
 }
 

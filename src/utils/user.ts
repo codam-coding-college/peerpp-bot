@@ -73,9 +73,8 @@ async function fetchIntraData(user: IncompleteUser) {
 	const id = (isUIDValid ? user.intraUID : user.intraLogin)!;
 
 	const userResponse = await Intra.api.get(`/users/${id}`);
-	if (!userResponse.ok) {
-		throw new Error(`Unable to fetch user ${id}: Reason: "${userResponse.statusText}"`);
-	}
+	if (!userResponse.ok)
+		throw new Error(`Unable to fetch user ${id}: Reason: "${userResponse.statusText}"`)
 
 	const json = await userResponse.json();
 	user.intraLogin = isUIDValid ? json.login : user.intraLogin;
@@ -122,31 +121,26 @@ export async function getFullUser(user: IncompleteUser): Promise<User> {
 	} else if (isSlackDataMissing(user)) {
 		// Do we have the UID?
 		if (user.slackUID != undefined) {
-			await slackApp.client.users
-				.info({
-					user: user.slackUID!,
-				})
-				.catch((reason: any) => {
-					throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
-				})
-				.then((value: UsersInfoResponse) => {
-					if (!value.user?.profile?.display_name)
-						throw new Error(`User from slackUID "${user.slackUID}" has no display name`);
-					user.intraLogin = value.user.profile.display_name;
-				});
+
+			await slackApp.client.users.info({
+				user: user.slackUID!,
+			}).catch((reason: any) => {
+				throw new Error(`Could not find slackID ${user.slackUID}: ${reason}`);
+			}).then((value: UsersInfoResponse) => {
+				if (!value.user?.profile?.display_name)
+					throw new Error(`User from slackUID "${user.slackUID}" has no display name`);
+				user.intraLogin = value.user.profile.display_name;
+			})
 		}
 		// Fetch via email
 		else if (user.email != undefined) {
-			await slackApp.client.users
-				.lookupByEmail({
-					email: user.email!,
-				})
-				.catch((reason) => {
-					throw new Error(`Could not get email ${user.email}: ${reason}`);
-				})
-				.then((value) => {
-					user.slackUID = value.user!.id;
-				});
+			await slackApp.client.users.lookupByEmail({
+				email: user.email!,
+			}).catch((reason) => {
+				throw new Error(`Could not get email ${user.email}: ${reason}`);
+			}).then((value) => {
+				user.slackUID = value.user!.id;
+			});
 		}
 
 		return getFullUser(user);

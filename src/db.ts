@@ -21,15 +21,11 @@ namespace DB {
 	/** Deletes all expiredTeam rows which are older than the lock days.  */
 	export function emptyOldLocks() {
 		return new Promise<void>((resolve, reject) => {
-			db.run(
-				`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`,
-				(err) => {
-					if (err != null) {
-						return reject(`Failed to clear database: ${err}`);
-					}
-					return resolve();
-				}
-			);
+			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
+				if (err != null)
+					return reject(`Failed to clear database: ${err}`);
+				return resolve();
+			});
 		});
 	}
 
@@ -40,9 +36,8 @@ namespace DB {
 	export function insert(teamID: number) {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
-				if (err != null) {
+				if (err != null)
 					return reject(`Failed to insert value ${teamID}: ${err}`);
-				}
 				return resolve();
 			});
 		});

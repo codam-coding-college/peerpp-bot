@@ -83,17 +83,17 @@ export namespace SlackBot {
 	}
 
 	/**
-	 *  This function registers a command and handles exceptions
-	 *  To not use try/catch in the `cb()` function, it will be caught automatically and a message will be logged and sent to the user
+	 *  This function registers a command and handles exceptions.
+	 *  To not use try/catch in the `cb()` function, it will be caught automatically and a message will be logged and sent to the user.
 	 */
 	export function registerCommand(cmd: string, cb: (respond: RespondFn, body: SlashCommand) => Promise<void> | void) {
 		slackApp.command(cmd, async (context) => {
-			// commands should always be acknowledged within 3 seconds
+
+			// Commands should always be acknowledged within 3 seconds
 			await context.ack();
 
-			try {
-				await cb(context.respond, context.body);
-			} catch (error) {
+			try { await cb(context.respond, context.body); }
+			catch (error) {
 				Logger.log(`Request failed: ${error}`);
 				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
 			}
@@ -107,20 +107,19 @@ export namespace SlackBot {
 	 * @param lock The reserved evaluation by the bot.
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
-		await DB.insert(lock.teamID).catch((reason) => {
-			throw new Error(reason);
-		});
-
-		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
-		const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-		if (!scaleResponse.ok) {
-			throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
+		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
+		if (correcteds.includes(corrector)) {
+			await respond("You can't book yourself. Nice try :dongle:");
+			return;
 		}
+
+		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
+		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
+		await Intra.deleteEvaluation(lock);
 
 		const evaluationDate = new Date(Date.now() + 15 * 60 * 1000);
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
-		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
 		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
 
 		for (const user of correcteds) {
@@ -208,63 +207,60 @@ export namespace SlackBot {
 			SlackBot.sendMessage(
 				user,
 				`A new Peer++ evaluation for the project \`${projectName}\` is ready.
-Use the command \`/book\` to book it.
-Use the command \`/notify-off\` to stop receiving these notifications.`
+				Use the command \`/book\` to book it.
+				Use the command \`/notify-off\` to stop receiving these notifications.`
 			);
 		});
 	}
+
+	export async function setNotifyStatus(respond: RespondFn, slackUID: string, notify: boolean) {
+		const user = await getFullUser({ slackUID: slackUID });
+		await DB.saveEvaluator(user, notify);
+		const response = notify
+			? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
+			: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
+		await respond(response);
+	}
+  
+  export async function setNotifyStatus(respond: RespondFn, slackUID: string, notify: boolean) {
+    const user = await getFullUser({ slackUID: slackUID });
+    await DB.saveEvaluator(user, notify);
+    const response = notify
+      ? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
+      : `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
+    await respond(response);
+  }
 }
 
 /*============================================================================*/
 
 /** Display all the projects available for evaluations. */
-slackApp.command("/projects", async (ctx) => {
+SlackBot.registerCommand("/projects", async (respond) => {
 	let text = `Possible projects to evaluate:\n`;
 
-	for (const project of Config.projects) {
+	for (const project of Config.projects)
 		text += `- \`${project.name}\`\n`;
-	}
-	await ctx.ack(text);
+	await respond(text);
 });
 
 /** List all available evaluations. */
-slackApp.command("/evaluations", async ({ ack, respond }) => {
-	try {
-		await SlackBot.displayEvaluations(respond);
-	} catch (error) {
-		Logger.log(`Failed to display evaluations: ${error}`);
-		await respond(`:panic: Sorry the bot failed: ${error}`);
-	}
-	await ack();
+SlackBot.registerCommand("/evaluations", async (respond) => {
+	await SlackBot.displayEvaluations(respond);
 });
 
 /** Book an evaluation for the given project. */
-slackApp.command("/book", async ({ ack, respond, body }) => {
-	try {
-		await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id });
-	} catch (error) {
-		Logger.log(`Failed to book an evaluation: ${error}`);
-		await respond(`:panic: Sorry the bot failed: ${error}`);
-	}
-	await ack();
+SlackBot.registerCommand("/book", async (respond, body) => {
+	await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id });
 });
-
-async function setNotifyStatus(respond: RespondFn, slackUID: string, notify: boolean) {
-	const user = await getFullUser({ slackUID: slackUID });
-	await DB.saveEvaluator(user, notify);
-	const response = notify
-		? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
-		: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
-	await respond(response);
-}
 
 /** Notify me when a new peer++ evaluation is available */
 SlackBot.registerCommand("/notify-on", async (respond, body) => {
-	setNotifyStatus(respond, body.user_id, true);
+	await SlackBot.setNotifyStatus(respond, body.user_id, true);
 });
 
 /** Do not notify me when a new peer++ evaluation is available */
 SlackBot.registerCommand("/notify-off", async (respond, body) => {
-	setNotifyStatus(respond, body.user_id, false);
+	await SlackBot.setNotifyStatus(respond, body.user_id, false);
 });
+
 /*============================================================================*/

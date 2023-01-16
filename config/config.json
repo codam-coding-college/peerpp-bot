@@ -1,4 +1,5 @@
 {
+	"sentryID": 14,
 	"campusID": 14,
 	"cursusID": 21,
 	"botID": 111044,
@@ -27,5 +28,6 @@
 		{ "id":1336, "name": "ft_irc"		},
 		{ "id":1332, "name": "webserv"		},
 		{ "id":1335, "name": "ft_containers"}
-	]
+	],
+	"blocked": []
 }

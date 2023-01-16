@@ -40,6 +40,35 @@ function filterHook(req: Request, secret: string) {
 	return null;
 }
 
+/**
+ * Checks the evaluator and evaluatee, blocks their evaluation if
+ * they are listed as blocked.
+ * @param hook The Intra webhook response.
+ */
+async function blockPotentialEvaluation(hook: IntraWebhook.Root) {
+	const corrector = hook.user.login;
+	const correctds = await Intra.getTeamUsers(hook.team.id);
+
+	// Fetch the users this user is blocked with.
+	const blockedUsers = Config.blocked.filter((value) => {
+		return (value.studentA == corrector || value.studentB == corrector);
+	});
+
+	// Check if any of the correctds is in that list, if so return true.
+	let yeetIt: boolean = false;
+	for (const student of correctds) {
+		const matchedBlocks = blockedUsers.filter((value) => {
+			return (value.studentA == student.user.login || value.studentB == student.user.login);
+		});
+		
+		// No match, bye felica.
+		if (matchedBlocks.length == 0)
+			continue;
+		yeetIt = true;
+	}
+	return (yeetIt);
+}
+
 /*============================================================================*/
 
 export namespace Webhook {
@@ -124,6 +153,16 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	}
 
 	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
+	if (await blockPotentialEvaluation(hook)) {
+
+		// 42 Being epic here :D
+		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
+		const yeetEval = evaluations.find((value) => { return (value.id == hook.id)});
+		if (yeetEval != undefined) {
+			await Intra.deleteEvaluation(yeetEval);
+			return Logger.log(`Evaluation cancelled: These users shouldn't evaluate each other, yikes.`);
+		}
+	}
 
 	try {
 		await DB.exists(hook.team.id)
@@ -136,7 +175,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 				} else if (await Webhook.requiresEvaluation(hook)) {
 					Logger.log("Booking a Peer++ evaluation!");
 					// NOTE (W2): Because deleting a scale team does not give back the point later.
-					await Intra.givePointToTeam(hook.team.id);
+					// await Intra.givePointToTeam(hook.team.id);
 					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
 					await Webhook.sendNotification(
 						hook,
@@ -247,13 +286,8 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		) {
 			Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
-			await DB.insert(hook.team.id).catch((reason) => {
-				throw new Error(reason);
-			});
-			const scaleResponse = await Intra.api.delete(`/scale_teams/${lock.id}`, {});
-			if (!scaleResponse.ok) {
-				throw new Error(`Failed to delete lock: ${scaleResponse.statusText}`);
-			}
+			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
+			await Intra.deleteEvaluation(lock);
 			res.status(204).send();
 			return await Webhook.sendNotification(
 				hook,
