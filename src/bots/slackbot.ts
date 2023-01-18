@@ -88,12 +88,12 @@ export namespace SlackBot {
 	 */
 	export function registerCommand(cmd: string, cb: (respond: RespondFn, body: SlashCommand) => Promise<void> | void) {
 		slackApp.command(cmd, async (context) => {
-
 			// Commands should always be acknowledged within 3 seconds
 			await context.ack();
 
-			try { await cb(context.respond, context.body); }
-			catch (error) {
+			try {
+				await cb(context.respond, context.body);
+			} catch (error) {
 				Logger.log(`Request failed: ${error}`);
 				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
 			}
@@ -113,7 +113,9 @@ export namespace SlackBot {
 			return;
 		}
 
-		await DB.insert(lock.teamID).catch((reason) => { throw new Error(reason) });
+		await DB.insert(lock.teamID).catch((reason) => {
+			throw new Error(reason);
+		});
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
 		await Intra.deleteEvaluation(lock);
 
@@ -206,9 +208,9 @@ export namespace SlackBot {
 		DB.allNotifiableEvaluators((user) => {
 			SlackBot.sendMessage(
 				user,
-				`A new Peer++ evaluation for the project \`${projectName}\` is ready.
-				Use the command \`/book\` to book it.
-				Use the command \`/notify-off\` to stop receiving these notifications.`
+				`A new Peer++ evaluation for the project \`${projectName}\` is ready.` +
+					`Use the command \`/book\` to book it.` +
+					`Use the command \`/notify-off\` to stop receiving these notifications.`
 			);
 		});
 	}
@@ -229,8 +231,9 @@ export namespace SlackBot {
 SlackBot.registerCommand("/projects", async (respond) => {
 	let text = `Possible projects to evaluate:\n`;
 
-	for (const project of Config.projects)
+	for (const project of Config.projects) {
 		text += `- \`${project.name}\`\n`;
+	}
 	await respond(text);
 });
 
