@@ -59,9 +59,11 @@ namespace DB {
 	}
 
 	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {
-		const { intraUID, intraLogin, slackUID, email, level, staff, campusID } = user;
+		const { intraUID, intraLogin, slackUID, email, level, campusID } = user;
+		const staff = user.staff ? 1 : 0;
 		await dbRun(
-			`INSERT OR REPLACE INTO evaluators(intraUID, slackUID, intraLogin, email, level, staff, campusID, notifyOfNewLock) VALUES(${intraUID}, '${intraLogin}', '${slackUID}', '${email}', ${level}, ${staff}, ${campusID}, ${notify})`
+			`INSERT OR REPLACE INTO evaluators(intraUID, slackUID, intraLogin, email, level, staff, campusID, notifyOfNewLock) ` +
+				`VALUES(${intraUID}, '${slackUID}', '${intraLogin}', '${email}', ${level}, ${staff}, ${campusID}, ${notify})`
 		);
 	}
 
