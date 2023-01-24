@@ -58,36 +58,6 @@ namespace DB {
 		});
 	}
 
-	/**
-	 * Returns true if the delivery was added to the db, else false.
-	 * @param delivery The webhook `x-delivery` header.
-	 * @returns 
-	 */
-	export function hasWebhookDelivery(delivery: string) {
-		return new Promise<boolean>(async (resolve, reject) => {
-			const hasDelivery = () => {
-				return new Promise<boolean>((resolve, reject) => {
-					db.get(`SELECT COUNT(*) AS amount FROM webhookDeliveries WHERE delivery = ${delivery}`, (err, row) => {
-						if (err != null)
-							return reject(false);
-						return resolve(row["amount"] > 0);
-					});
-				});
-			};
-
-			if (await hasDelivery()) return reject(false);
-
-			// New delivery, insert it into the db.
-			db.run(`INSERT INTO webhookDelivery(delivery) VALUES(${delivery})`, (err) => {
-				if (err != null) {
-					Logger.log(`Failed to insert delivery: ${delivery} : ${err}`);
-					return reject(false);
-				}
-				return resolve(true);
-			});
-		});
-	}
-
 	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {
 		const { intraUID, intraLogin, slackUID, email, level, staff, campusID } = user;
 		await dbRun(
