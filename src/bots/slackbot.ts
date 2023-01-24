@@ -11,7 +11,7 @@ import Logger from "../utils/logger";
 import prettyMilliseconds from "pretty-ms";
 import { App, LogLevel, RespondFn, SlashCommand } from "@slack/bolt";
 import { ChatPostMessageArguments } from "@slack/web-api";
-import { getFullUser, IncompleteUser, User } from "../utils/user";
+import { getFullUser, User } from "../utils/user";
 
 /*============================================================================*/
 
@@ -101,6 +101,26 @@ export namespace SlackBot {
 	}
 
 	/**
+	 * Registers a command that can only be used by evaluators.
+	 * It is slower than the `registerCommand()` because of the extra API call.
+	 * Use `registerCommand()` if you don't need to check if the user is an Peer++ evaluator.
+	 **/
+	export function registerEvaluatorCommand(
+		cmd: string,
+		cb: (respond: RespondFn, body: SlashCommand, invoker: User) => Promise<void> | void
+	) {
+		registerCommand(cmd, async (respond, body) => {
+			const invoker = await getFullUser({ slackUID: body.user_id });
+
+			if (!(await Intra.hasGroup(invoker.intraUID!, Config.groupID))) {
+				await respond("You're not a Peer++ evaluator. Please apply! :doot:");
+				return;
+			}
+			await cb(respond, body, invoker);
+		});
+	}
+
+	/**
 	 * Swaps the lock with a proper evaluation of the corrector.
 	 * @param respond The messaging function.
 	 * @param corrector The user doing the correction.
@@ -175,17 +195,12 @@ export namespace SlackBot {
 	 * @param respond The slack messaging function.
 	 * @param user The corrector.
 	 */
-	export async function bookEvaluation(projectName: string, respond: RespondFn, user: IncompleteUser) {
+	export async function bookEvaluation(projectName: string, respond: RespondFn, corrector: User) {
 		if (!projectName || !Config.projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase())) {
 			await respond(`Project \`${projectName}\` not recognized, invoke /projects for more info`);
 			return;
 		}
 
-		const corrector = await getFullUser(user);
-		if (!(await Intra.hasGroup(corrector.intraUID, Config.groupID))) {
-			await respond("Sorry, you're not a Peer++ evalutor. Please apply! :doot:");
-			return;
-		}
 		if (!(await Intra.validatedProject(corrector.intraUID, projectName))) {
 			await respond("Sorry, you can't book a project you have not completed :sus:");
 			return;
@@ -243,17 +258,17 @@ SlackBot.registerCommand("/evaluations", async (respond) => {
 });
 
 /** Book an evaluation for the given project. */
-SlackBot.registerCommand("/book", async (respond, body) => {
-	await SlackBot.bookEvaluation(body.text, respond, { slackUID: body.user_id });
+SlackBot.registerEvaluatorCommand("/book", async (respond, body, invoker) => {
+	await SlackBot.bookEvaluation(body.text, respond, invoker);
 });
 
 /** Notify me when a new peer++ evaluation is available */
-SlackBot.registerCommand("/notify-on", async (respond, body) => {
+SlackBot.registerEvaluatorCommand("/notify-on", async (respond, body) => {
 	await SlackBot.setNotifyStatus(respond, body.user_id, true);
 });
 
 /** Do not notify me when a new peer++ evaluation is available */
-SlackBot.registerCommand("/notify-off", async (respond, body) => {
+SlackBot.registerEvaluatorCommand("/notify-off", async (respond, body) => {
 	await SlackBot.setNotifyStatus(respond, body.user_id, false);
 });
 

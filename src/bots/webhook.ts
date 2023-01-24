@@ -14,7 +14,6 @@ import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/index";
-import db from "../db";
 
 /*============================================================================*/
 
@@ -24,7 +23,8 @@ import db from "../db";
  * @param secret The Webhook secret.
  * @returns Status code and error message.
  */
-async function filterHook(req: Request, secret: string) {
+function filterHook(req: Request, secret: string) {
+	// TODO: Check for duplicate delivery ID, sometimes intra is stupid and sends it twice.
 	if (!req.is("application/json")) {
 		return { code: 400, msg: "Content-Type is not application/json" };
 	}
@@ -36,9 +36,6 @@ async function filterHook(req: Request, secret: string) {
 	}
 	if (req.headers["x-secret"] !== secret) {
 		return { code: 412, msg: "X-Secret header incorrect" };
-	}
-	if (!(await db.hasWebhookDelivery(req.headers["x-delivery"][0]!))) {
-		return { code: 204, msg: "Webhook already received" };
 	}
 	return null;
 }
@@ -97,9 +94,7 @@ export namespace Webhook {
 		// If not the last evaluation, then ignore.
 		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
 		if (evaluations.length != hook.scale.correction_number - 1) {
-			Logger.log(
-				`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`
-			);
+			Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
 			return false;
 		}
 
@@ -147,9 +142,8 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_CREATE_SECRET);
+	const filter = filterHook(req, Env.WEBHOOK_CREATE_SECRET);
 
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
@@ -169,28 +163,26 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	}
 
 	try {
-		await DB.exists(hook.team.id)
-			.catch((reason) => {
-				throw new Error(reason);
-			})
-			.then(async (value) => {
-				if (value) {
-					Logger.log("Ignored: Create is from an expired team.");
-				} else if (await Webhook.requiresEvaluation(hook)) {
-					Logger.log("Booking a Peer++ evaluation!");
-					// NOTE (W2): Because deleting a scale team does not give back the point later.
-					// await Intra.givePointToTeam(hook.team.id);
-					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-					await Webhook.sendNotification(
-						hook,
-						`Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`
-					);
-					SlackBot.notifyOfNewLock(hook.project.name);
-					Logger.log("Booked a Peer++ evaluation, notified users!");
-				} else {
-					Logger.log("Ignored: Peer++ evaluation not required");
-				}
-			});
+		if (await DB.exists(hook.team.id)) {
+			// Team was already entered.
+			Logger.log("Ignored: Create is from an expired team.");
+		} else if (await Webhook.requiresEvaluation(hook)) {
+			
+			// Requires an evaluation.
+			Logger.log("Booking a Peer++ evaluation!");
+
+			// NOTE (W2): Because deleting a scale team does not give back the point later.
+			// await Intra.givePointToTeam(hook.team.id);
+			await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
+			await Webhook.sendNotification(
+				hook,
+				`Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`
+			);
+			SlackBot.notifyOfNewLock(hook.project.name);
+			Logger.log("Booked a Peer++ evaluation, notified users!");
+		} else {
+			Logger.log("Ignored: Peer++ evaluation not required");
+		}
 	} catch (error) {
 		res.status(500).send();
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
@@ -202,9 +194,8 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is destroyed.
 webhookApp.post("/delete", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_DELETE_SECRET);
+	const filter = filterHook(req, Env.WEBHOOK_DELETE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
@@ -242,9 +233,8 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is changed in some way.
 webhookApp.post("/update", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
+	const filter = filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
 		return Logger.log(`Webhook: ${filter}`);
@@ -253,11 +243,8 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 
 	try {
-		if (
-			await DB.exists(hook.team.id).catch((reason) => {
-				throw new Error(reason);
-			})
-		) {
+		const check = await DB.exists(hook.team.id)
+		if (check) {
 			res.status(204).send();
 			return Logger.log("Ignored: Update is from an expired team.");
 		}
@@ -268,11 +255,9 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 
 	// Bot was marked as absent.
 	if (hook.user && hook.user.id == Config.botID && hook.truant.id !== undefined) {
-		// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
 		try {
-			await DB.insert(hook.team.id).catch((reason) => {
-				throw new Error(reason);
-			});
+			// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
+			await DB.insert(hook.team.id);
 		} catch (error) {
 			res.status(500).send();
 			return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
