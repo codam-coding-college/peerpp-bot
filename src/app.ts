@@ -22,23 +22,24 @@ async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
 	let locks: Intra.ScaleTeam[] = [];
-	try {
-		locks = await Intra.getBotEvaluations();
-	} catch (error) {
+	try { locks = await Intra.getBotEvaluations(); }
+	catch (error) {
 		return Logger.log(`${error}`, LogType.ERROR);
 	}
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
-	if (locks.length == 0) return Logger.log("No locks to delete");
+	if (locks.length == 0)
+		return Logger.log("No locks to delete");
 
 	let n: number = 0;
 	for (const lock of locks) {
 		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + Config.lockExpirationDays));
+
 		if (Date.now() >= unlockDate.getTime()) {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
 
 			try {
-				DB.insert(lock.teamID);
+				await DB.insert(lock.teamID);
 				await Intra.deleteEvaluation(lock);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
 			} catch (error) {
@@ -53,6 +54,7 @@ async function checkExpiredLocks() {
 /** Check which expired evaluations are more than a week old. */
 async function deleteExpiredLocks() {
 	Logger.log("Deleting expired locks from database...");
+
 	await DB.emptyOldLocks().catch((reason) => {
 		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING);
 	});
