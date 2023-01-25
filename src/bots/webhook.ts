@@ -27,16 +27,15 @@ async function filterAlreadyDeliveredWebhook(req: Request) {
 		Logger.log(`WEBHOOK: Request does not contain ${headerKey} key: ${JSON.stringify(req)}`);
 		return false;
 	}
-	const exists = await db.hasWebhookDelivery(id).catch((e) => {
+
+	await db.addWebhookDelivery(id).catch((e) => {
+		Logger.log(`WEBHOOK: Could not add webhook delivery: ${e}`);
+	});
+
+	return db.hasWebhookDelivery(id).catch((e) => {
 		Logger.log(`WEBHOOK: Could not load from db: ${e}`);
 		return false;
 	});
-	if (exists) {
-		await db.addWebhookDelivery(id).catch((e) => {
-			Logger.log(`WEBHOOK: Could not add webhook delivery: ${e}`);
-		});
-	}
-	return exists;
 }
 
 /**
