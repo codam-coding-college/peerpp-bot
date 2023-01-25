@@ -105,10 +105,7 @@ export namespace SlackBot {
 	 * It is slower than the `registerCommand()` because of the extra API call.
 	 * Use `registerCommand()` if you don't need to check if the user is an Peer++ evaluator.
 	 **/
-	export function registerEvaluatorCommand(
-		cmd: string,
-		cb: (respond: RespondFn, body: SlashCommand, invoker: User) => Promise<void> | void
-	) {
+	export function registerEvaluatorCommand(cmd: string, cb: (respond: RespondFn, body: SlashCommand, invoker: User) => Promise<void> | void) {
 		registerCommand(cmd, async (respond, body) => {
 			const invoker = await getFullUser({ slackUID: body.user_id });
 

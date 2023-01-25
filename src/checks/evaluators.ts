@@ -21,11 +21,7 @@ import { getFullUser, User } from "../utils/user";
  * @param evaluations The evaluations of the project.
  * @return True if an evaluation is required, else false.
  */
-export async function Evaluators(
-	hook: IntraWebhook.Root,
-	evaluations: Intra.ScaleTeam[],
-	teamUsers: IntraResponse.TeamUser[]
-) {
+export async function Evaluators(hook: IntraWebhook.Root, evaluations: Intra.ScaleTeam[], teamUsers: IntraResponse.TeamUser[]) {
 	const leaderData = teamUsers.find((value) => value.leader == true)!;
 
 	let levels: number[] = [];
