@@ -11,8 +11,14 @@ import { User } from "./utils/user";
 /*============================================================================*/
 
 async function dbRun(query: string): Promise<void> {
-	return await new Promise((resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		db.run(query, (err) => (err ? reject(err) : resolve()));
+	});
+}
+
+async function dbGet<T>(query: string): Promise<T> {
+	return new Promise((resolve, reject) => {
+		db.run(query, (err, t) => (err ? reject(err) : resolve(t)));
 	});
 }
 
@@ -54,6 +60,15 @@ namespace DB {
 				return resolve(row["amount"] > 0);
 			});
 		});
+	}
+
+	export async function hasWebhookDelivery(id: string): Promise<boolean> {
+		const { amount } = await dbGet<{ amount: number }>(`SELECT COUNT(*) AS amount FROM webhookDeliveries WHERE delivery = ${id}`);
+		return amount > 0;
+	}
+
+	export async function addWebhookDelivery(id: string): Promise<void> {
+		await dbRun(`INSERT INTO webhookDelivery(delivery) VALUES(${id})`);
 	}
 
 	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {
