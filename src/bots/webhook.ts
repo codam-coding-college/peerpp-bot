@@ -51,22 +51,21 @@ async function blockPotentialEvaluation(hook: IntraWebhook.Root) {
 
 	// Fetch the users this user is blocked with.
 	const blockedUsers = Config.blocked.filter((value) => {
-		return (value.studentA == corrector || value.studentB == corrector);
+		return value.studentA == corrector || value.studentB == corrector;
 	});
 
 	// Check if any of the correctds is in that list, if so return true.
 	let yeetIt: boolean = false;
 	for (const student of correctds) {
 		const matchedBlocks = blockedUsers.filter((value) => {
-			return (value.studentA == student.user.login || value.studentB == student.user.login);
+			return value.studentA == student.user.login || value.studentB == student.user.login;
 		});
-		
+
 		// No match, bye felica.
-		if (matchedBlocks.length == 0)
-			continue;
+		if (matchedBlocks.length == 0) continue;
 		yeetIt = true;
 	}
-	return (yeetIt);
+	return yeetIt;
 }
 
 /*============================================================================*/
@@ -152,10 +151,11 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
 	if (await blockPotentialEvaluation(hook)) {
-
 		// 42 Being epic here :D
 		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
-		const yeetEval = evaluations.find((value) => { return (value.id == hook.id)});
+		const yeetEval = evaluations.find((value) => {
+			return value.id == hook.id;
+		});
 		if (yeetEval != undefined) {
 			await Intra.deleteEvaluation(yeetEval);
 			return Logger.log(`Evaluation cancelled: These users shouldn't evaluate each other, yikes.`);
@@ -167,7 +167,6 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 			// Team was already entered.
 			Logger.log("Ignored: Create is from an expired team.");
 		} else if (await Webhook.requiresEvaluation(hook)) {
-			
 			// Requires an evaluation.
 			Logger.log("Booking a Peer++ evaluation!");
 
@@ -243,7 +242,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
 
 	try {
-		const check = await DB.exists(hook.team.id)
+		const check = await DB.exists(hook.team.id);
 		if (check) {
 			res.status(204).send();
 			return Logger.log("Ignored: Update is from an expired team.");
@@ -270,20 +269,15 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		// If an evaluation is finished, failed and it was locked then remove the lock.
 		const lock = (await Intra.getBotEvaluations()).find((lock) => lock.teamID == hook.team.id);
 
-		if (
-			lock != undefined &&
-			hook.final_mark != null &&
-			!(await Intra.markIsPass(hook.project.id, hook.final_mark))
-		) {
+		if (lock != undefined && hook.final_mark != null && !(await Intra.markIsPass(hook.project.id, hook.final_mark))) {
 			Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
-			await DB.insert(hook.team.id).catch((reason) => { throw new Error(reason); })
+			await DB.insert(hook.team.id).catch((reason) => {
+				throw new Error(reason);
+			});
 			await Intra.deleteEvaluation(lock);
 			res.status(204).send();
-			return await Webhook.sendNotification(
-				hook,
-				`Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`
-			);
+			return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`);
 		}
 		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
 	} catch (error) {

@@ -22,14 +22,14 @@ async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
 	let locks: Intra.ScaleTeam[] = [];
-	try { locks = await Intra.getBotEvaluations(); }
-	catch (error) {
+	try {
+		locks = await Intra.getBotEvaluations();
+	} catch (error) {
 		return Logger.log(`${error}`, LogType.ERROR);
 	}
 
 	Logger.log(`Current amount of locks: ${locks.length}`);
-	if (locks.length == 0)
-		return Logger.log("No locks to delete");
+	if (locks.length == 0) return Logger.log("No locks to delete");
 
 	let n: number = 0;
 	for (const lock of locks) {
@@ -79,13 +79,17 @@ export const db = new Database(Config.dbPath, (err) => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
 
-	Intra.api = await new Fast42([{
-		client_id: Env.INTRA_UID,
-		client_secret: Env.INTRA_SECRET
-	}]).init().catch((reason) => {
-		Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
-		process.exit(1);
-	});
+	Intra.api = await new Fast42([
+		{
+			client_id: Env.INTRA_UID,
+			client_secret: Env.INTRA_SECRET,
+		},
+	])
+		.init()
+		.catch((reason) => {
+			Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
+			process.exit(1);
+		});
 	Logger.log("Connected to Intra V2");
 
 	checkExpiredLocks();
