@@ -218,12 +218,7 @@ export namespace SlackBot {
 
 	export function notifyOfNewLock(projectName: string) {
 		DB.allNotifiableEvaluators((user) => {
-			SlackBot.sendMessage(
-				user,
-				`A new Peer++ evaluation for the project \`${projectName}\` is ready.` +
-					`Use the command \`/book\` to book it.` +
-					`Use the command \`/notify-off\` to stop receiving these notifications.`
-			);
+			SlackBot.sendMessage(user, `A new Peer++ evaluation for \`${projectName}\` is ready to be booked`);
 		});
 	}
 
