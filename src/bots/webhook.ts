@@ -13,7 +13,7 @@ import { getFullUser } from "../utils/user";
 import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
-import * as Checks from "../checks/index";
+import * as Checks from "../checks/evaluators";
 
 /*============================================================================*/
 
@@ -108,7 +108,7 @@ export namespace Webhook {
 
 		// NOTE (W2): Completely fucked up and weird endpoint btw.
 		const teamUsers = await Intra.getTeamUsers(hook.team.id);
-		return (await Checks.Evaluators(hook, evaluations, teamUsers)) || (await Checks.Random());
+		return (await Checks.evaluators(hook, evaluations, teamUsers)) || Checks.random();
 	}
 
 	/**
