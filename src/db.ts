@@ -16,9 +16,9 @@ async function dbRun(query: string): Promise<void> {
 	});
 }
 
-async function dbGet<T>(query: string): Promise<T> {
+async function dbGet<T>(query: string): Promise<Partial<T>> {
 	return new Promise((resolve, reject) => {
-		db.run(query, (err, t) => (err ? reject(err) : resolve(t)));
+		db.get(query, (err, t) => (err ? reject(err) : resolve(t)));
 	});
 }
 
@@ -63,12 +63,11 @@ namespace DB {
 	}
 
 	export async function hasWebhookDelivery(id: string): Promise<boolean> {
-		const { amount } = await dbGet<{ amount: number }>(`SELECT COUNT(*) AS amount FROM webhookDeliveries WHERE delivery = ${id}`);
-		return amount > 0;
+		return !!(await dbGet<any>(`SELECT delivery FROM webhookDeliveries WHERE delivery = '${id}'`));
 	}
 
 	export async function addWebhookDelivery(id: string): Promise<void> {
-		await dbRun(`INSERT INTO webhookDelivery(delivery) VALUES(${id})`);
+		await dbRun(`INSERT INTO webhookDeliveries(delivery) VALUES('${id}')`);
 	}
 
 	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {

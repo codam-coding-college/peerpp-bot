@@ -22,20 +22,25 @@ import db from "../db";
 // This is where we filter those situations
 async function filterAlreadyDeliveredWebhook(req: Request) {
 	const headerKey = "x-delivery";
-	const id = req.headers[headerKey]?.[0];
-	if (!id) {
-		Logger.log(`WEBHOOK: Request does not contain ${headerKey} key: ${JSON.stringify(req)}`);
+	const id = req.headers[headerKey];
+	if (!id || typeof id !== "string") {
+		Logger.log(`WEBHOOK: Request header "${headerKey}" has invalid value of: "${id}"`);
 		return false;
+	}
+
+	const hasDelivery = await db.hasWebhookDelivery(id).catch((e) => {
+		Logger.log(`WEBHOOK: Could not load from db: ${e}`);
+		return false;
+	});
+	if (hasDelivery) {
+		return true;
 	}
 
 	await db.addWebhookDelivery(id).catch((e) => {
 		Logger.log(`WEBHOOK: Could not add webhook delivery: ${e}`);
 	});
 
-	return db.hasWebhookDelivery(id).catch((e) => {
-		Logger.log(`WEBHOOK: Could not load from db: ${e}`);
-		return false;
-	});
+	return false;
 }
 
 /**

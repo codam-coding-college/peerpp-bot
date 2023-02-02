@@ -1,0 +1,88 @@
+{
+	"id": 4992262,
+	"team": {
+		"id": 4637443,
+		"project_id": 1994,
+		"name": "leon's group",
+		"created_at": "2023-01-24 11:03:43 UTC",
+		"updated_at": "2023-01-27 12:31:29 UTC",
+		"locked_at": "2023-01-24 11:03:43 UTC",
+		"closed_at": "2023-01-24 11:09:32 UTC",
+		"final_mark": null,
+		"repo_url": "git@vogsphere-v2.codam.nl:vogsphere/intra-uuid-b1caa8d8-fb13-4c8b-b2bd-8a090fcdd6bf-4637443-leon",
+		"repo_uuid": "intra-uuid-b1caa8d8-fb13-4c8b-b2bd-8a090fcdd6bf-4637443-leon",
+		"deadline_at": null,
+		"terminating_at": null,
+		"project_session_id": 9148,
+		"status": "waiting_for_correction"
+	},
+	"truant": null,
+	"flag": {
+		"id": 1,
+		"name": "Ok",
+		"positive": true,
+		"icon": "check-4",
+		"created_at": "2015-09-14 23:06:52 UTC",
+		"updated_at": "2015-09-14 23:06:52 UTC"
+	},
+	"scale": {
+		"id": 19456,
+		"name": "scale 3",
+		"comment": "",
+		"introduction_md": "Please comply with the following rules:\n\n- Remain polite, courteous, respectful and constructive throughout the \n  evaluation process. The well-being of the community depends on it.\n\n- Identify with the student or group whose work is evaluated the possible \n  dysfunctions in their project. Take the time to discuss and debate the \n  problems that may have been identified.\n\n- You must consider that there might be some differences in how your peers \n  might have understood the project's instructions and the scope of its \n  functionalities. Always keep an open mind and grade them as honestly as \n  possible. The pedagogy is useful only and only if the peer-evaluation is \n  done seriously.\n",
+		"disclaimer_md": "",
+		"guidelines_md": "- Only grade the work that was turned in the Git repository of the evaluated \n  student or group.\n\n- Double-check that the Git repository belongs to the student(s). Ensure that \n  the project is the one expected. Also, check that \"git clone\" is used in an \n  empty folder.\n\n- Check carefully that no malicious aliases was used to fool you and make you \n  evaluate something that is not the content of the official repository.\n\n- To avoid any surprises and if applicable, review together any scripts used \n  to facilitate the grading (scripts for testing or automation).\n\n- If you have not completed the assignment you are going to evaluate, you have \n  to read the entire subject prior to starting the evaluation process.\n\n- Use the available flags to report an empty repository, a non-functioning \n  program, a Norm error, cheating, and so forth. \n  In these cases, the evaluation process ends and the final grade is 0, \n  or -42 in case of cheating. However, except for cheating, student are \n  strongly encouraged to review together the work that was turned in, in order \n  to identify any mistakes that shouldn't be repeated in the future.\n",
+		"created_at": "2022-12-13 13:55:59 UTC",
+		"updated_at": "2022-12-13 13:55:59 UTC",
+		"evaluation_id": 6897,
+		"is_primary": true,
+		"correction_number": 3,
+		"duration": 4,
+		"manual_subscription": false,
+		"is_external": false,
+		"free": false
+	},
+	"begin_at": "2023-01-28 23:00:00 UTC",
+	"comment": null,
+	"old_feedback": null,
+	"feedback_rating": null,
+	"final_mark": null,
+	"token": null,
+	"ip": null,
+	"filled_at": null,
+	"created_at": "2023-01-27 12:31:29 UTC",
+	"updated_at": "2023-01-27 12:31:29 UTC",
+	"project": {
+		"id": 1994,
+		"name": "Born2beroot",
+		"slug": "born2beroot"
+	},
+	"user": {
+		"id": 132644,
+		"email": "leon.de.la.hamette@codam.nl",
+		"login": "leon",
+		"first_name": "Leon",
+		"last_name": "De La Hamette",
+		"usual_first_name": null,
+		"url": "https://api.intra.42.fr/v2/users/leon",
+		"phone": "",
+		"displayname": "Leon De La Hamette",
+		"image": {
+			"link": "https://cdn.intra.42.fr/users/3bcb5429983fe1ba2dd05c9e1262f606/leon.jpg",
+			"versions": {
+				"large": "https://cdn.intra.42.fr/users/7246e8e5fc3d01ef33bf74da1b95e434/large_leon.jpg",
+				"medium": "https://cdn.intra.42.fr/users/6a2d60eec879bb4b2f85826b5800e0e0/medium_leon.jpg",
+				"small": "https://cdn.intra.42.fr/users/8a7d466fb01c7ce7b76cba5ea52bdaa0/small_leon.jpg",
+				"micro": "https://cdn.intra.42.fr/users/85f6b59dc424338b5cbacac1c093db0c/micro_leon.jpg"
+			}
+		},
+		"staff?": true,
+		"correction_point": -92,
+		"pool_month": "december",
+		"pool_year": "2018",
+		"location": null,
+		"wallet": 290,
+		"created_at": "2022-08-31 17:16:36 UTC",
+		"updated_at": "2023-01-27 12:31:29 UTC"
+	}
+}
