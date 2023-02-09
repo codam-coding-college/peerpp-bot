@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS expiredTeam(
 	created_at INTEGER DEFAULT (datetime('now', 'localtime'))
 );
 
+-- Students that want to receive notifcations.
 CREATE TABLE IF NOT EXISTS evaluators(
 	intraUID INTEGER PRIMARY KEY NOT NULL,
 	slackUID varchar(512) NOT NULL,
@@ -16,3 +17,9 @@ CREATE TABLE IF NOT EXISTS evaluators(
 
 	notifyOfNewLock BOOLEAN NOT NULL
 );
+
+-- Avoid duplicate deliveries.
+CREATE TABLE IF NOT EXISTS webhookDeliveries(
+	delivery varchar(1024) PRIMARY KEY NOT NULL
+	body varchar(65535) NOT NULL
+)
