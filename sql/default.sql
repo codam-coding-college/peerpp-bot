@@ -20,6 +20,6 @@ CREATE TABLE IF NOT EXISTS evaluators(
 
 -- Avoid duplicate deliveries.
 CREATE TABLE IF NOT EXISTS webhookDeliveries(
-	delivery varchar(1024) PRIMARY KEY NOT NULL
+	delivery varchar(1024) PRIMARY KEY NOT NULL,
 	body varchar(65535) NOT NULL
 )
