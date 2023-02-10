@@ -49,25 +49,22 @@ async function filterAlreadyDeliveredWebhook(req: Request) {
  */
 function filterHook(secret: string): (req: Request, res: Response, next: NextFunction) => Promise<void> {
 	return async (req: Request, res: Response, next: NextFunction) => {
-		let filter;
+		let filter: { code: number; msg: string } | undefined = undefined;
+
 		if (!req.is("application/json")) {
 			filter = { code: 400, msg: "Content-Type is not application/json" };
-		}
-		if (!req.headers["x-delivery"]) {
+		} else if (!req.headers["x-delivery"]) {
 			filter = { code: 400, msg: "X-Delivery header missing" };
-		}
-		if (!req.headers["x-secret"]) {
+		} else if (!req.headers["x-secret"]) {
 			filter = { code: 400, msg: "X-Secret header missing" };
-		}
-		if (req.headers["x-secret"] !== secret) {
+		} else if (req.headers["x-secret"] !== secret) {
 			filter = { code: 412, msg: "X-Secret header incorrect" };
-		}
-		if (await filterAlreadyDeliveredWebhook(req)) {
+		} else if (await filterAlreadyDeliveredWebhook(req)) {
 			filter = { code: 200, msg: "Webhook already delivered" };
 		}
 
 		if (filter) {
-			Logger.log(`Webhook filtered: ${filter}`);
+			Logger.log(`Webhook filtered: ${JSON.stringify(filter)}`);
 			res.status(filter.code).send(filter.msg);
 		} else {
 			next();
