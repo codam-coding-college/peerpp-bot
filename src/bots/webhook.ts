@@ -44,14 +44,11 @@ async function filterAlreadyDeliveredWebhook(req: Request) {
 }
 
 /**
- * Filters for requests and sends back corresponding error.
- * @param req The incoming request.
+ * Filters for requests and, if required sends corresponding error.
  * @param secret The Webhook secret.
- * @returns Status code and error message.
  */
-function filterHook(secret: string): (req: Request, res: Response, next: NextFunction) => void {
-	return (req: Request, res: Response, next: NextFunction) => {
-		// TODO: Check for duplicate delivery ID
+function filterHook(secret: string): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+	return async (req: Request, res: Response, next: NextFunction) => {
 		let filter;
 		if (!req.is("application/json")) {
 			filter = { code: 400, msg: "Content-Type is not application/json" };
@@ -64,6 +61,9 @@ function filterHook(secret: string): (req: Request, res: Response, next: NextFun
 		}
 		if (req.headers["x-secret"] !== secret) {
 			filter = { code: 412, msg: "X-Secret header incorrect" };
+		}
+		if (await filterAlreadyDeliveredWebhook(req)) {
+			filter = { code: 200, msg: "Webhook already delivered" };
 		}
 
 		if (filter) {
