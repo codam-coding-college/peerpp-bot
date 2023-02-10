@@ -187,6 +187,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 		});
 		if (yeetEval != undefined) {
 			await Intra.deleteEvaluation(yeetEval);
+			res.status(200).send();
 			return Logger.log(`Evaluation cancelled: These users shouldn't evaluate each other, yikes.`);
 		}
 	}
@@ -230,7 +231,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 		return Logger.log(`Webhook: ${filter}`);
 	}
 
-	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name}`);
+	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 	if (hook.user && hook.user.id != Config.botID) {
 		res.status(204).send();
 		return Logger.log("Ignored: Webhook does not concern bot.");
@@ -270,7 +271,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		return Logger.log(`Webhook: ${filter}`);
 	}
 
-	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
+	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 
 	try {
 		const check = await DB.exists(hook.team.id);
