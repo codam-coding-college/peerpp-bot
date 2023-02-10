@@ -198,7 +198,11 @@ export namespace SlackBot {
 			return;
 		}
 
-		if (!(await Intra.validatedProject(corrector.intraUID, projectName))) {
+		const canEvaluate = 
+		await Intra.validatedProject(corrector.intraUID, projectName) ||
+		await Intra.hasCompletedCore(corrector.intraLogin);
+
+		if (!canEvaluate) {
 			await respond("Sorry, you can't book a project you have not completed :sus:");
 			return;
 		}

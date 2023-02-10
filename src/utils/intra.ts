@@ -40,7 +40,7 @@ export namespace Intra {
 	}
 
 	/**
-	 * Checks if the given user has completed a gievn project.
+	 * Checks if the given user has completed a given project.
 	 * @param user The user.
 	 * @param name The display name of the project, not slug. E.g Config file.
 	 * @returns True if the user did the project, else false.
@@ -58,6 +58,30 @@ export namespace Intra {
 			for (const projectUser of projectUsers) {
 				if (projectUser.project.name.toLowerCase() == name && projectUser["validated?"] != null && projectUser["validated?"] == true) return true;
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the given user has completed a the common core.
+	 * @param user The user.
+	 * @returns True if the user did the complete it, else false.
+	 */
+	export async function hasCompletedCore(user: Login) {
+		const pages = await api.getAllPages(`/users/${user}/quests_users`);
+		await Promise.all(pages).catch((reason) => {
+			throw new Error(`Failed to get project users: ${reason}`);
+		});
+
+		for await (const page of pages) {
+			if (!page.ok) throw new Error(`Failed to get projects: ${page.status}`);
+			const quests = await page.json();
+			const quest = quests.find((x: any) => x.quest_id == 59);
+
+			if (quest == undefined)
+				continue;
+			else if (quest.validated_at != null)
+				return true;
 		}
 		return false;
 	}
