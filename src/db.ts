@@ -11,55 +11,51 @@ import { User } from "./utils/user";
 /*============================================================================*/
 
 async function dbRun(query: string): Promise<void> {
-	return new Promise((resolve, reject) => {
-		db.run(query, (err) => (err ? reject(err) : resolve()));
+	return await new Promise((resolve, reject) => {
+		db.run(query, (err) => {
+			if (err) {
+				err.message = `Query failed: "${query}"\n${err.message}`;
+				return reject(err);
+			}
+			resolve();
+		});
 	});
 }
 
-async function dbGet<T>(query: string): Promise<Partial<T>> {
+async function dbGet<T>(query: string): Promise<T> {
 	return new Promise((resolve, reject) => {
-		db.get(query, (err, t) => (err ? reject(err) : resolve(t)));
+		db.get(query, (err, t) => {
+			if (err) {
+				err.message = `Query failed: "${query}"\n${err.message}`;
+				return reject(err);
+			}
+			resolve(t);
+		});
 	});
 }
 
 /** SQLlite3 database wrapper functions */
 namespace DB {
 	/** Deletes all expiredTeam rows which are older than the lock days.  */
-	export function emptyOldLocks() {
-		return new Promise<void>((resolve, reject) => {
-			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
-				if (err != null) return reject(`Failed to clear database: ${err}`);
-				return resolve();
-			});
-		});
+	export async function emptyOldLocks() {
+		await dbRun(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`);
 	}
 
 	/**
 	 * Insert the given team into the database and mark them as expired.
 	 * @param teamID The TeamID.
 	 */
-	export function insert(teamID: number) {
-		return new Promise<void>((resolve, reject) => {
-			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
-				if (err != null) return reject(`Failed to insert value ${teamID}: ${err}`);
-				return resolve();
-			});
-		});
+	export async function insert(teamID: number) {
+		await dbRun(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`);
 	}
 
 	/**
 	 * Checks wether the given teamID exists in the db.
 	 * @param teamID The TeamID.
 	 */
-	export function exists(teamID: number) {
-		return new Promise<boolean>((resolve, reject) => {
-			db.get(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
-				if (err != null) {
-					return reject(`Failed to check if ${teamID} exists: ${err}`);
-				}
-				return resolve(row["amount"] > 0);
-			});
-		});
+	export async function exists(teamID: number) {
+		const team = await dbGet<{ amount: number }>(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ${teamID}`);
+		return team.amount > 0;
 	}
 
 	export async function hasWebhookDelivery(id: string): Promise<boolean> {

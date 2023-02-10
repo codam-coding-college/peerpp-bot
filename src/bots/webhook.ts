@@ -13,7 +13,7 @@ import { getFullUser } from "../utils/user";
 import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
-import * as Checks from "../checks/index";
+import * as Checks from "../checks/evaluators";
 import db from "../db";
 
 /*============================================================================*/
@@ -44,28 +44,32 @@ async function filterAlreadyDeliveredWebhook(req: Request) {
 }
 
 /**
- * Filters for requests and sends back corresponding error.
- * @param req The incoming request.
+ * Filters for requests and, if required sends corresponding error.
  * @param secret The Webhook secret.
- * @returns Status code and error message.
  */
-async function filterHook(req: Request, secret: string) {
-	if (!req.is("application/json")) {
-		return { code: 400, msg: "Content-Type is not application/json" };
-	}
-	if (!req.headers["x-delivery"]) {
-		return { code: 400, msg: "X-Delivery header missing" };
-	}
-	if (!req.headers["x-secret"]) {
-		return { code: 400, msg: "X-Secret header missing" };
-	}
-	if (req.headers["x-secret"] !== secret) {
-		return { code: 412, msg: "X-Secret header incorrect" };
-	}
-	if (await filterAlreadyDeliveredWebhook(req)) {
-		return { code: 200, msg: "Webhook already received" };
-	}
-	return null;
+function filterHook(secret: string): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		let filter: { code: number; msg: string } | undefined = undefined;
+
+		if (!req.is("application/json")) {
+			filter = { code: 400, msg: "Content-Type is not application/json" };
+		} else if (!req.headers["x-delivery"]) {
+			filter = { code: 400, msg: "X-Delivery header missing" };
+		} else if (!req.headers["x-secret"]) {
+			filter = { code: 400, msg: "X-Secret header missing" };
+		} else if (req.headers["x-secret"] !== secret) {
+			filter = { code: 412, msg: "X-Secret header incorrect" };
+		} else if (await filterAlreadyDeliveredWebhook(req)) {
+			filter = { code: 200, msg: "Webhook already delivered" };
+		}
+
+		if (filter) {
+			Logger.log(`Webhook filtered: ${JSON.stringify(filter)}`);
+			res.status(filter.code).send(filter.msg);
+		} else {
+			next();
+		}
+	};
 }
 
 /**
@@ -127,7 +131,7 @@ export namespace Webhook {
 
 		// NOTE (W2): Completely fucked up and weird endpoint btw.
 		const teamUsers = await Intra.getTeamUsers(hook.team.id);
-		return (await Checks.Evaluators(hook, evaluations, teamUsers)) || (await Checks.Random());
+		return (await Checks.evaluators(hook, evaluations, teamUsers)) || Checks.random();
 	}
 
 	/**
@@ -168,15 +172,8 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // TODO: Figure out how evaluation points should be handled.
 
 // Runs whenever a ScaleTeam / Evaluation is created.
-webhookApp.post("/create", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+webhookApp.post("/create", filterHook(Env.WEBHOOK_CREATE_SECRET), async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_CREATE_SECRET);
-
-	if (filter) {
-		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
-	}
 
 	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
 	if (await blockPotentialEvaluation(hook)) {
@@ -222,14 +219,8 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 /*============================================================================*/
 
 // Runs whenever a ScaleTeam / Evaluation is destroyed.
-webhookApp.post("/delete", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+webhookApp.post("/delete", filterHook(Env.WEBHOOK_DELETE_SECRET), async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_DELETE_SECRET);
-	if (filter) {
-		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
-	}
 
 	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 	if (hook.user && hook.user.id != Config.botID) {
@@ -262,14 +253,8 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 /*============================================================================*/
 
 // Runs whenever a ScaleTeam / Evaluation is changed in some way.
-webhookApp.post("/update", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+webhookApp.post("/update", filterHook(Env.WEBHOOK_UPDATE_SECRET), async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
-	const filter = await filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
-	if (filter) {
-		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
-	}
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 
