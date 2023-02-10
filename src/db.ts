@@ -58,6 +58,14 @@ namespace DB {
 		return team.amount > 0;
 	}
 
+	export async function hasWebhookDelivery(id: string): Promise<boolean> {
+		return !!(await dbGet<any>(`SELECT delivery FROM webhookDeliveries WHERE delivery = '${id}'`));
+	}
+
+	export async function addWebhookDelivery(id: string, body: string): Promise<void> {
+		await dbRun(`INSERT INTO webhookDeliveries(delivery, body) VALUES('${id}', '${body}')`);
+	}
+
 	export async function saveEvaluator(user: User, notify: boolean): Promise<void> {
 		const { intraUID, intraLogin, slackUID, email, level, campusID } = user;
 		const staff = user.staff ? 1 : 0;

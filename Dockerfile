@@ -18,7 +18,7 @@ COPY package.json ./
 COPY package-lock.json ./
 
 # Setup the application itself
-RUN npm install --silent
+RUN npm install
 
 COPY . ./
 

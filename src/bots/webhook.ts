@@ -14,8 +14,34 @@ import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/evaluators";
+import db from "../db";
 
 /*============================================================================*/
+
+// Intra, like many distributed systems will sometimes deliver the same webhook > 1 times
+// This is where we filter those situations
+async function filterAlreadyDeliveredWebhook(req: Request) {
+	const headerKey = "x-delivery";
+	const id = req.headers[headerKey];
+	if (!id || typeof id !== "string") {
+		Logger.log(`WEBHOOK: Request header "${headerKey}" has invalid value of: "${id}"`);
+		return false;
+	}
+
+	const hasDelivery = await db.hasWebhookDelivery(id).catch((e) => {
+		Logger.log(`WEBHOOK: Could not load from db: ${e}`);
+		return false;
+	});
+	if (hasDelivery) {
+		return true;
+	}
+
+	await db.addWebhookDelivery(id, JSON.stringify(req.body)).catch((e) => {
+		Logger.log(`WEBHOOK: Could not add webhook delivery: ${e}`);
+	});
+
+	return false;
+}
 
 /**
  * Filters for requests and sends back corresponding error.
@@ -161,6 +187,7 @@ webhookApp.post("/create", filterHook(Env.WEBHOOK_CREATE_SECRET), async (req: Re
 		});
 		if (yeetEval != undefined) {
 			await Intra.deleteEvaluation(yeetEval);
+			res.status(200).send();
 			return Logger.log(`Evaluation cancelled: These users shouldn't evaluate each other, yikes.`);
 		}
 	}
@@ -198,7 +225,7 @@ webhookApp.post("/create", filterHook(Env.WEBHOOK_CREATE_SECRET), async (req: Re
 webhookApp.post("/delete", filterHook(Env.WEBHOOK_DELETE_SECRET), async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
 
-	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name}`);
+	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 	if (hook.user && hook.user.id != Config.botID) {
 		res.status(204).send();
 		return Logger.log("Ignored: Webhook does not concern bot.");
@@ -232,7 +259,7 @@ webhookApp.post("/delete", filterHook(Env.WEBHOOK_DELETE_SECRET), async (req: Re
 webhookApp.post("/update", filterHook(Env.WEBHOOK_UPDATE_SECRET), async (req: Request, res: Response) => {
 	const hook: IntraWebhook.Root = req.body;
 
-	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name}`);
+	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 
 	try {
 		const check = await DB.exists(hook.team.id);
