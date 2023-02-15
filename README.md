@@ -34,3 +34,21 @@ When using the container, configure the paths to your liking.
 1. Use `make up` to run in a docker container.
 2. Use `make down` to shut down the docker container.
 
+### Virtual Machine
+
+We recommend setting up a log rotate in the `logs` directory.
+To find or create log rotations go to `/etc/logrotate.d`.
+
+You can use the configuration below:
+```
+/root/peer-bot/logs/log.txt {
+        weekly
+        missingok
+        rotate 4
+        compress
+        delaycompress
+        shred
+        ifempty
+        create 644 root root
+}
+```
