@@ -224,9 +224,9 @@ export namespace SlackBot {
 		DB.allNotifiableEvaluators((user) => {
 			SlackBot.sendMessage(
 				user,
-				`A new Peer++ evaluation for the project \`${projectName}\` is ready.` +
-					`Use the command \`/book\` to book it.` +
-					`Use the command \`/notify-off\` to stop receiving these notifications.`
+				`A new Peer++ evaluation for the project \`${projectName.toLowerCase()}\` is ready.` +
+				`\nUse the command \`/book\` to book it.` +
+				`\nUse the command \`/notify-off\` to stop receiving these notifications.`
 			);
 		});
 	}
