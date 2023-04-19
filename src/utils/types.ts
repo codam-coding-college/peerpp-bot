@@ -16,7 +16,7 @@ export namespace IntraResponse {
 		leader: boolean;
 		occurrence: number;
 		user: { login: string };
-		team: { project_id: number };
+		team: { project_id: number, status: string };
 	}
 }
 

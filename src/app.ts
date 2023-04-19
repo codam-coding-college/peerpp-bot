@@ -14,6 +14,7 @@ import { Database } from "sqlite3";
 import { slackApp } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
+import { IntraResponse } from "./utils/types";
 
 /*============================================================================*/
 
@@ -34,7 +35,9 @@ async function checkExpiredLocks() {
 	let n: number = 0;
 	for (const lock of locks) {
 		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + Config.lockExpirationDays));
-
+		//Get lock project state --> cancel any locks that are already finished/evaluated
+		let teamU : IntraResponse.TeamUser[] = await Intra.getTeamUsers(lock.teamID);
+		Logger.log(`Team: ${teamU}`);
 		if (Date.now() >= unlockDate.getTime()) {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
 
