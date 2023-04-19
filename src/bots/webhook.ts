@@ -246,7 +246,16 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 				if (value) {
 					Logger.log("Ignored: Delete is from an expired team.");
 				} else {
-					Logger.log("Some silly student tried to cancel the bot", LogType.WARNING);
+					Logger.log("Some student tried to cancel the bot", LogType.WARNING);
+					if (await Webhook.requiresEvaluation(hook)) {
+						Logger.log("Re-booking a Peer++ evaluation!");
+					} else {
+						Logger.log("Ignored: Peer++ evaluation not required");
+						//Give a point back to the team ?
+						// await Intra.givePointToTeam(hook.team.id);
+						res.status(204).send();
+						return;
+					}
 					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
 					await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
 					Logger.log(`Re-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);
