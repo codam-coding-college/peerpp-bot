@@ -38,7 +38,9 @@ async function checkExpiredLocks() {
 		//Get lock project state --> cancel any locks that are already finished/evaluated
 		let teamU : IntraResponse.TeamUser[] = await Intra.getTeamUsers(lock.teamID);
 		Logger.log(`Team: ${teamU}`);
-		if (Date.now() >= unlockDate.getTime()) {
+		let projectState : string | undefined = teamU[0]?.team.status;
+		Logger.log(`Project state: ${projectState}`);
+		if (Date.now() >= unlockDate.getTime() || projectState == "finished") {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
 
 			try {
