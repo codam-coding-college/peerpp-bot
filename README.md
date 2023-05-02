@@ -34,6 +34,23 @@ When using the container, configure the paths to your liking.
 1. Use `make up` to run in a docker container.
 2. Use `make down` to shut down the docker container.
 
+---
+
+## How do I fix little oopsies ?
+Sometimes it can happen that students need to have their special
+moments where they can't do a Peer++ evaluation.
+
+To fix things like:
+
+### "I want points back!"
+If they want to be given back a few points the following script adds 1 point from the pool: `node src/scripts/addPoint.js <user name>`
+
+
+### "I need to do this eval now or my deadlines will fuck me!"
+Do `sqlite3 db/peerdb.sqlite` then `INSERT INTO expiredTeam(teamID) VALUES(<teamID>)`. To get the TeamID just check the logs or got intra. Tell them to then simply cancel the bot, decide if they can the point back or not.
+
+---
+
 ### Virtual Machine
 
 We recommend setting up a log rotate in the `logs` directory.

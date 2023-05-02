@@ -199,8 +199,9 @@ export namespace SlackBot {
 		}
 
 		const canEvaluate = 
-		await Intra.validatedProject(corrector.intraUID, projectName) ||
-		await Intra.hasCompletedCore(corrector.intraLogin);
+		await Intra.validatedProject(corrector.intraUID, projectName) //||
+		// NOTE: For the future person who comes here, no sure if this thing works?
+		// await Intra.hasCompletedCore(corrector.intraLogin);
 
 		if (!canEvaluate) {
 			await respond("Sorry, you can't book a project you have not completed :sus:");
