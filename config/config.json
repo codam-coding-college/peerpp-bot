@@ -76,9 +76,6 @@
 		}
 	],
 	"blocked": [
-		{
-			"studentA": "ageels",
-			"studentB": "ybakker"
-		}
+		{ "studentA": "salty", "studentB": "jpeg" }
 	]
 }
