@@ -3,7 +3,7 @@
 // See README in the root project for more information.
 // -----------------------------------------------------------------------------
 
-// Script to fetch all current users in the specified group id in the config.
+// Script to book an evaluation onto a team
 
 const fs = require("fs");
 const fast42 = require("@codam/fast42");
