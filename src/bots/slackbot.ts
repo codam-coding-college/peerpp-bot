@@ -78,7 +78,7 @@ export namespace SlackBot {
 
 		const response = await slackApp.client.chat.postMessage(opt);
 		if (!response.ok) {
-			throw new Error(`Failed to send message: ${response.error}`);
+			throw new Error(`Failed to send Slack message to ${user.intraLogin}: ${response.error}`);
 		}
 	}
 
@@ -198,7 +198,7 @@ export namespace SlackBot {
 			return;
 		}
 
-		const canEvaluate = 
+		const canEvaluate =
 		await Intra.validatedProject(corrector.intraUID, projectName) //||
 		// NOTE: For the future person who comes here, no sure if this thing works?
 		// await Intra.hasCompletedCore(corrector.intraLogin);

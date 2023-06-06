@@ -138,7 +138,7 @@ export namespace Webhook {
 	export async function sendNotification(hook: IntraWebhook.Root, text: string) {
 		const response = await Intra.api.get(`/teams/${hook.team.id}`);
 		if (!response.ok) {
-			throw new Error(`Failed to notify users: ${response.statusText}`);
+			throw new Error(`Failed fetch team ${hook.team.id} to send notification: ${response.statusText}`);
 		}
 
 		const Team = await response.json();

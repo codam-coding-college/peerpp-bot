@@ -48,11 +48,11 @@ export namespace Intra {
 	export async function validatedProject(user: Login, name: string) {
 		const pages = await api.getAllPages(`/users/${user}/projects_users`);
 		await Promise.all(pages).catch((reason) => {
-			throw new Error(`Failed to get project users: ${reason}`);
+			throw new Error(`Failed to get project users for ${user}: ${reason}`);
 		});
 
 		for await (const page of pages) {
-			if (!page.ok) throw new Error(`Failed to get projects: ${page.status}`);
+			if (!page.ok) throw new Error(`Failed to get projects_users: ${page.status}`);
 			const projectUsers = (await page.json()) as any[];
 
 			for (const projectUser of projectUsers) {
@@ -70,11 +70,11 @@ export namespace Intra {
 	export async function hasCompletedCore(user: Login) {
 		const pages = await api.getAllPages(`/users/${user}/quests_users`);
 		await Promise.all(pages).catch((reason) => {
-			throw new Error(`Failed to get project users: ${reason}`);
+			throw new Error(`Failed to get project users for ${user}: ${reason}`);
 		});
 
 		for await (const page of pages) {
-			if (!page.ok) throw new Error(`Failed to get projects: ${page.status}`);
+			if (!page.ok) throw new Error(`Failed to get quests_users: ${page.status}`);
 			const quests = await page.json();
 			const quest = quests.find((x: any) => x.quest_id == 59);
 
@@ -95,7 +95,7 @@ export namespace Intra {
 		const projectResponse = await Intra.api.get(`/projects/${projectID}`, {
 			"filter[cursus_id]": `${Config.cursusID}`,
 		});
-		if (!projectResponse.ok) throw new Error(`Failed to fetch project: ${projectResponse.statusText}`);
+		if (!projectResponse.ok) throw new Error(`Failed to fetch project ${projectID}: ${projectResponse.statusText}`);
 
 		const projectData = await projectResponse.json();
 		const projectSessions = projectData.project_sessions as any[];
@@ -116,7 +116,7 @@ export namespace Intra {
 	 */
 	export async function hasGroup(user: Login, groupID: number): Promise<boolean> {
 		const response = await api.get(`/users/${user}/groups_users`);
-		if (!response.ok) throw new Error(`Failed to fetch user groups: ${response.statusText}`);
+		if (!response.ok) throw new Error(`Failed to fetch groups_users for user ${user}, groupID ${groupID}: ${response.statusText}`);
 
 		const groups = (await response.json()) as any[];
 		return groups.find((value: any) => value.group.id === groupID) != undefined;
@@ -128,7 +128,7 @@ export namespace Intra {
 	 */
 	export async function getTeamUsers(teamID: number) {
 		const response = await api.get(`/teams/${teamID}/teams_users`);
-		if (!response.ok) throw new Error(`Failed to fetch team users: ${response.statusText}`);
+		if (!response.ok) throw new Error(`Failed to fetch teams_users for team ${teamID}: ${response.statusText}`);
 		return (await response.json()) as IntraResponse.TeamUser[];
 	}
 
@@ -142,7 +142,7 @@ export namespace Intra {
 			"filter[cursus_id]": `${Config.cursusID}`,
 		});
 		await Promise.all(pages).catch((reason) => {
-			throw new Error(`Failed to get evaluations: ${reason}`);
+			throw new Error(`Failed to get evaluation locks for bot (user ${Config.botID}): ${reason}`);
 		});
 
 		const locks: Intra.ScaleTeam[] = [];
@@ -184,12 +184,12 @@ export namespace Intra {
 			"filter[cursus_id]": `${Config.cursusID}`,
 		});
 		await Promise.all(pages).catch((reason) => {
-			throw new Error(`Failed to get evaluations: ${reason}`);
+			throw new Error(`Failed to get evaluations for projectID ${projectID}, scaleID ${scaleID}, teamID ${teamID}: ${reason}`);
 		});
 
 		// Another API call to simply fetch the name of the project.
 		const projectResponse = await api.get(`/projects/${projectID}`);
-		if (!projectResponse.ok) throw new Error(`Failed to get project: ${projectResponse.statusText}`);
+		if (!projectResponse.ok) throw new Error(`Failed to get project ${projectID}: ${projectResponse.statusText}`);
 		const project = await projectResponse.json();
 
 		const evals: Intra.ScaleTeam[] = [];
@@ -235,12 +235,12 @@ export namespace Intra {
 			"range[created_at]": `${past.toISOString()},${future.toISOString()}`,
 		});
 		await Promise.all(pages).catch((reason) => {
-			throw new Error(`Failed to get evaluations: ${reason}`);
+			throw new Error(`Failed to get evaluations between ${past.toISOString()} and ${future.toISOString()} for ${user}: ${reason}`);
 		});
 
 		const evals: Intra.ScaleTeam[] = [];
 		for await (const page of pages) {
-			if (!page.ok) throw new Error(`Failed to get project: ${page.statusText}`);
+			if (!page.ok) throw new Error(`Failed to get scale_teams: ${page.statusText}`);
 
 			const evaluations = (await page.json()) as any[];
 			for (const evaluation of evaluations) {
@@ -287,7 +287,7 @@ export namespace Intra {
 		};
 
 		const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
-		if (!scaleTeamResponse.ok) throw new Error(`Failed to book evaluation ${scaleTeamResponse.statusText}`);
+		if (!scaleTeamResponse.ok) throw new Error(`Failed to book evaluation with scaleID ${scaleID}, teamID ${teamID}, correctorID ${correctorID} on ${date.toISOString()}: ${scaleTeamResponse.statusText}`);
 	}
 
 	/**
@@ -306,12 +306,13 @@ export namespace Intra {
 	 */
 	export async function givePointToTeam(teamID: number) {
 		const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`);
-		if (!teamResponse.ok) throw new Error(`Failed to fetch team: ${teamResponse.statusText}`);
+		if (!teamResponse.ok) throw new Error(`Failed to fetch team ${teamID}: ${teamResponse.statusText}`);
 		const teamUsers = await teamResponse.json();
 
 		// Remove from the pool.
-		const pointRemResponse = await Intra.api.delete(`/pools/${Config.poolID}/points/remove`, { points: teamUsers.length });
-		if (!pointRemResponse.ok) throw new Error(`Failed to point from pool: ${pointRemResponse.statusText}`);
+		const pointsToRemove = teamUsers.length;
+		const pointRemResponse = await Intra.api.delete(`/pools/${Config.poolID}/points/remove`, { points: pointsToRemove });
+		if (!pointRemResponse.ok) throw new Error(`Failed to remove ${pointsToRemove} points from pool ${Config.poolID}: ${pointRemResponse.statusText}`);
 
 		// Give them back.
 		for (const teamUser of teamUsers) {
@@ -319,7 +320,7 @@ export namespace Intra {
 			const pointAddResponse = await Intra.api.post(`/users/${teamUser.user.id}/correction_points/add`, {
 				reason: "Peer++ Evaluation lock refund",
 			});
-			if (!pointAddResponse.ok) throw new Error(`Failed to give point: ${pointRemResponse.statusText}`);
+			if (!pointAddResponse.ok) throw new Error(`Failed to give a point to ${teamUser.user.id}: ${pointRemResponse.statusText}`);
 		}
 	}
 
@@ -329,7 +330,7 @@ export namespace Intra {
 	 */
 	export async function deleteEvaluation(scaleTeam: ScaleTeam) {
 		const responseDelete = await Intra.api.delete(`/scale_teams/${scaleTeam.id}`, {});
-		if (!responseDelete.ok) throw new Error(`Failed to delete lock: ${responseDelete.statusText}`);
+		if (!responseDelete.ok) throw new Error(`Failed to delete evaluation lock with scale_team id ${scaleTeam.id}: ${responseDelete.statusText}`);
 	}
 }
 
