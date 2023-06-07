@@ -74,6 +74,11 @@ async function filterHook(req: Request, secret: string) {
  * @param hook The Intra webhook response.
  */
 async function blockPotentialEvaluation(hook: IntraWebhook.Root) {
+	if (!hook.user || !hook.user.login) {
+		Logger.log("blockPotentialEvaluation: ignored evaluation, no corrector (hook.user.login)");
+		return false;
+	}
+
 	const corrector = hook.user.login;
 	const correctds = await Intra.getTeamUsers(hook.team.id);
 
