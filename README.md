@@ -18,30 +18,28 @@ Read more about it [here](https://codam.notion.site/Peer-Evaluations-810cdd67140
 Convert `./config/env-example` to `.env` and fill in the secret data.
 
 By default port `8080` is used for the webhooks express server
-and port `3000` is used for the slack bot using the slack bolt api.
+and port `3000` is used for the slack bot using the slackbot API.
 
 The slackbot runs over Websockets instead of HTTP Requests.
 
-## Local development
-
+### Development
 1. Install NodeJS 18.x or higher.
 2. Install dependencies: `npm install`
 3. Use `npm run dev` for development mode.
 
-## Production
-When using the container, configure the paths to your liking.
+### Production
+In production environments, use Docker.
 
-1. Use `make up` to run in a docker container.
-2. Use `make down` to shut down the docker container.
+- Use `make up` to run in a docker container.
+- Use `make down` to shut down the docker container.
 
----
+Or, if you're confident in your Docker skills, you can just use the `docker compose` command directly.
 
-### Virtual Machine
+#### Logrotate
+In production, we recommend setting up a logrotate in the `logs` directory.
+Create a logrotate config in the `/etc/logrotate.d` folder.
 
-We recommend setting up a log rotate in the `logs` directory.
-To find or create log rotations go to `/etc/logrotate.d`.
-
-You can use the configuration below:
+You can use or modify the configuration below:
 ```
 /root/peer-bot/logs/log.txt {
         weekly
@@ -54,3 +52,30 @@ You can use the configuration below:
         create 644 root root
 }
 ```
+
+---
+
+## Useful how-tos
+### Add a user to the peer++ group
+1. Go to the `peer-bot` directory.
+2. Run `node src/scripts/manageUser.js add <login>` where `<login>` is the login of the user you want to add to the peer++ group.
+
+### Remove a user from the peer++ group
+1. Go to the `peer-bot` directory.
+2. Run `node src/scripts/manageUser.js remove <login>` where `<login>` is the login of the user you want to remove from the peer++ group.
+
+### List all users in the peer++ group
+1. Go to the `peer-bot` directory.
+2. Run `node src/scripts/getUsers.js`.
+
+### Manually schedule a peer++ evaluation
+1. Go to the `peer-bot` directory.
+2. Run `node src/scripts/bookEval.js <scaleID> <teamID> <userID>` where `<scaleID>` is the scaleID of the scale you want to use for the evaluation, `<teamID>` is the teamID of the team you want to schedule an evaluation for and `<userID>` is the userID of the evaluator (the one evaluating the team).
+
+### Allow cancellation of a peer++ evaluation
+1. Go to the `peer-bot` directory.
+2. Run `sqlite3 db/peerdb.sqlite`.
+3. Run `INSERT INTO expiredTeam(teamID) VALUES ('<teamID>');` in the sqlite3 shell, where `<teamID>` is the teamID of the team you want to cancel the evaluation for.
+4. Run `.exit` to exit the sqlite3 shell.
+5. Tell the team that they can now cancel the evaluation (make them press x next to the evaluation on the Intranet).
+6. Run `node src/scripts/addPoint.js <login>` where `<login>` is the login of the student who lost an evaluation point for the cancellation. This will refund the point to the student.
