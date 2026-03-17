@@ -10,7 +10,7 @@
 ## What is the Peer++ system?
 The peer++ evaluation system ensures quality evaluations by matching students with high-level evaluators.
 
-Read more about it [here](https://codam.notion.site/Peer-Evaluations-810cdd6714074f1b881fc8d4e54e5e5f).
+Read more about it in [ABOUT.md](ABOUT.md).
 
 ---
 
