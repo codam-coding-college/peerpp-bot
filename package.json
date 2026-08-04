@@ -3,6 +3,9 @@
 	"version": "4.14.5",
 	"description": "",
 	"main": "src/app.ts",
+	"engines": {
+		"node": ">=20"
+	},
 	"dependencies": {
 		"@codam/fast42": "^3.1.1",
 		"@slack/bolt": "^5.0.0",
