@@ -6,7 +6,7 @@ module.exports = {
 		[
 			"@semantic-release/exec",
 			{
-				publishCmd: 'docker tag codam-coding-college/peerpp-bot ghcr.io/codam-coding-college/peerpp-bot:${nextRelease.version} && docker push ghcr.io/codam-coding-college/peerpp-bot:${nextRelease.version}'
+				publishCmd: 'docker tag ghcr.io/codam-coding-college/peerpp-bot ghcr.io/codam-coding-college/peerpp-bot:${nextRelease.version} && docker push ghcr.io/codam-coding-college/peerpp-bot:${nextRelease.version}'
 			}
 		],
 		[
@@ -19,7 +19,7 @@ module.exports = {
 		[
 			"@semantic-release/git",
 			{
-				assets: ["package.json"],
+				assets: ["package.json", "package-lock.json"],
 				message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
 			}
 		]
