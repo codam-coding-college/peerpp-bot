@@ -19,7 +19,7 @@ import { getFullUser, User } from "../utils/user";
 export const slackApp = new App({
 	token: Env.SLACK_TOKEN,
 	appToken: Env.SLACK_APP_TOKEN,
-	port: Env.SLACKBOT_PORT || 3000,
+	port: Env.SLACKBOT_PORT,
 	logLevel: LogLevel.ERROR,
 	socketMode: true,
 });

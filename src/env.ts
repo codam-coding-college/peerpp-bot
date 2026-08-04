@@ -20,7 +20,7 @@ namespace Environment {
 		}
 	}
 
-	export const file = dotenv.parse(read());
+	const file = dotenv.parse(read());
 
 	export interface Layout {
 		SLACK_TOKEN: string;
@@ -38,24 +38,69 @@ namespace Environment {
 		WEBHOOK_PORT: number;
 		SLACKBOT_PORT: number;
 	}
+
+	/** Returns the value of the given key, or undefined when it is absent or empty. */
+	function optional(key: string): string | undefined {
+		const value = file[key]?.trim();
+		return value ? value : undefined;
+	}
+
+	/**
+	 * Reads the environment and exits with a report of everything that is wrong with it,
+	 * so a misconfigured bot never gets as far as talking to Intra or Slack.
+	 */
+	export function load(): Layout {
+		const problems: string[] = [];
+
+		/** A secret the bot cannot run without. */
+		function secret(key: string): string {
+			const value = optional(key);
+			if (value === undefined) problems.push(`${key} is missing or empty`);
+			return value ?? "";
+		}
+
+		/** A port, or undefined when it is not set, so the caller can supply its default. */
+		function port(key: string): number | undefined {
+			const value = optional(key);
+			if (value === undefined) return undefined;
+
+			const parsed = Number(value);
+			if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+				problems.push(`${key} is not a valid port number: "${value}"`);
+				return undefined;
+			}
+			return parsed;
+		}
+
+		const env: Layout = {
+			SLACK_TOKEN: secret("SLACK_TOKEN"),
+			SLACK_APP_TOKEN: secret("SLACK_APP_TOKEN"),
+
+			WEBHOOK_CREATE_SECRET: secret("WEBHOOK_CREATE_SECRET"),
+			WEBHOOK_DELETE_SECRET: secret("WEBHOOK_DELETE_SECRET"),
+			WEBHOOK_UPDATE_SECRET: secret("WEBHOOK_UPDATE_SECRET"),
+
+			INTRA_UID: secret("INTRA_UID"),
+			INTRA_SECRET: secret("INTRA_SECRET"),
+
+			SENTRY_SECRET: optional("SENTRY_SECRET") ?? "",
+
+			WEBHOOK_PORT: port("WEBHOOK_PORT") ?? 8080,
+			SLACKBOT_PORT: port("SLACKBOT_PORT") ?? 3000,
+		};
+
+		if (problems.length > 0) {
+			console.error("Invalid configuration in ./config/.env:");
+			for (const problem of problems) console.error(`  - ${problem}`);
+			console.error("See config/.env-example for the values the bot expects.");
+			process.exit(1);
+		}
+
+		return env;
+	}
 }
 
 /** The environment file to store sensitive data such as secrets & tokens. */
-export const Env: Environment.Layout = {
-	SLACK_TOKEN: Environment.file["SLACK_TOKEN"]!,
-	SLACK_APP_TOKEN: Environment.file["SLACK_APP_TOKEN"]!,
-
-	WEBHOOK_CREATE_SECRET: Environment.file["WEBHOOK_CREATE_SECRET"]!,
-	WEBHOOK_DELETE_SECRET: Environment.file["WEBHOOK_DELETE_SECRET"]!,
-	WEBHOOK_UPDATE_SECRET: Environment.file["WEBHOOK_UPDATE_SECRET"]!,
-
-	INTRA_UID: Environment.file["INTRA_UID"]!,
-	INTRA_SECRET: Environment.file["INTRA_SECRET"]!,
-
-	SENTRY_SECRET: Environment.file["SENTRY_SECRET"]!,
-
-	WEBHOOK_PORT: parseInt(Environment.file["WEBHOOK_PORT"]!),
-	SLACKBOT_PORT: parseInt(Environment.file["SLACKBOT_PORT"]!),
-};
+export const Env: Environment.Layout = Environment.load();
 
 /*============================================================================*/
