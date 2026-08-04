@@ -7,6 +7,7 @@ import { db } from "./app";
 import { Config } from "./config";
 import Logger, { LogType } from "./utils/logger";
 import { User } from "./utils/user";
+import Raven from "raven";
 
 /*============================================================================*/
 
@@ -83,6 +84,7 @@ namespace DB {
 		const query = `SELECT intraUID, slackUID, intraLogin, email, level, staff, campusID FROM evaluators WHERE notifyOfNewLock = 1`;
 		db.each<User>(query, (err, row) => {
 			if (err) {
+				Raven.captureException(err);
 				Logger.log(`Failed to get all notifiable evaluators: ${err}`, LogType.ERROR);
 			} else {
 				onData(row);

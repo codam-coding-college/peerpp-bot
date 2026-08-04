@@ -15,6 +15,7 @@ import { slackApp } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
 import { IntraResponse } from "./utils/types";
+import Raven from "raven";
 
 /*============================================================================*/
 
@@ -26,6 +27,7 @@ async function checkExpiredLocks() {
 	try {
 		locks = await Intra.getBotEvaluations();
 	} catch (error) {
+		Raven.captureException(error);
 		return Logger.log(`${error}`, LogType.ERROR);
 	}
 
@@ -48,6 +50,7 @@ async function checkExpiredLocks() {
 				await Intra.deleteEvaluation(lock);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
 			} catch (error) {
+				Raven.captureException(error);
 				return Logger.log(`${error}`, LogType.ERROR);
 			}
 			n++;
@@ -61,6 +64,7 @@ async function deleteExpiredLocks() {
 	Logger.log("Deleting expired locks from database...");
 
 	await DB.emptyOldLocks().catch((reason) => {
+		Raven.captureException(reason);
 		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING);
 	});
 }
@@ -72,6 +76,7 @@ const expirationJob = new CronJob("*/15 * * * *", checkExpiredLocks);
 const emptyExpiredJob = new CronJob("0 0 * * 0", deleteExpiredLocks);
 export const db = new Database(Config.dbPath, (err) => {
 	if (err !== null) {
+		Raven.captureException(err);
 		Logger.log(`Failed to create / open Database: ${err}`, LogType.ERROR);
 		process.exit(1);
 	}
@@ -83,6 +88,7 @@ export const db = new Database(Config.dbPath, (err) => {
 (async () => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
+	if (Env.SENTRY_SECRET) Raven.config(`https://${Env.SENTRY_SECRET}@sentry.codam.nl/${Config.sentryID}`).install();
 
 	Intra.api = await new Fast42([
 		{
@@ -92,6 +98,7 @@ export const db = new Database(Config.dbPath, (err) => {
 	])
 		.init()
 		.catch((reason) => {
+			Raven.captureException(reason);
 			Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
 			process.exit(1);
 		});

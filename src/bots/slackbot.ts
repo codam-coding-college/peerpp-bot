@@ -8,6 +8,7 @@ import { Env } from "../env";
 import { Config } from "../config";
 import Intra from "../utils/intra";
 import Logger from "../utils/logger";
+import Raven from "raven";
 import prettyMilliseconds from "pretty-ms";
 import { App, LogLevel, RespondFn, SlashCommand } from "@slack/bolt";
 import { ChatPostMessageArguments } from "@slack/web-api";
@@ -94,6 +95,7 @@ export namespace SlackBot {
 			try {
 				await cb(context.respond, context.body);
 			} catch (error) {
+				Raven.captureException(error);
 				Logger.log(`Request failed: ${error}`);
 				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
 			}

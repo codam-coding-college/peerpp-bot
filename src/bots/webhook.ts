@@ -12,6 +12,7 @@ import { SlackBot } from "./slackbot";
 import { getFullUser } from "../utils/user";
 import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
+import Raven from "raven";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/index";
 import db from "../db";
@@ -219,6 +220,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 		}
 	} catch (error) {
 		res.status(500).send();
+		Raven.captureException(error);
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 	}
 	res.status(204).send();
@@ -268,6 +270,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 			});
 	} catch (error) {
 		res.status(500).send();
+		Raven.captureException(error);
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 	}
 	res.status(204).send();
@@ -295,6 +298,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		}
 	} catch (error) {
 		res.status(500).send();
+		Raven.captureException(error);
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 	}
 
@@ -305,6 +309,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 			await DB.insert(hook.team.id);
 		} catch (error) {
 			res.status(500).send();
+			Raven.captureException(error);
 			return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 		}
 		res.status(204).send();
@@ -328,6 +333,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
 	} catch (error) {
 		res.status(500).send();
+		Raven.captureException(error);
 		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
 	}
 	res.status(204).send();
