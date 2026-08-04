@@ -1,4 +1,3 @@
-
 // Visit https://aka.ms/tsconfig.json to read more about this file
 {
 	"compilerOptions": {
@@ -9,6 +8,7 @@
 		"rootDir": "./src/",
 		"removeComments": true,
 		"downlevelIteration": false,
+		"ignoreDeprecations": "6.0",
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
 		"strictBindCallApply": true,
@@ -28,5 +28,7 @@
 	"exclude": [
 		"node_modules/",
 	],
-	"include": ["src/"]
+	"include": [
+		"src/"
+	]
 }
