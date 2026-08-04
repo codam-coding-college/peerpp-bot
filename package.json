@@ -5,13 +5,14 @@
 	"main": "src/app.ts",
 	"dependencies": {
 		"@codam/fast42": "^3.1.1",
+		"@slack/bolt": "^3.11.1",
+		"@slack/web-api": "^6.13.0",
 		"cron": "^2.1.0",
 		"dotenv": "^16.0.1",
 		"express": "^4.18.1",
 		"pretty-ms": "^7.0.0",
 		"raven": "^2.6.4",
-		"sqlite3": "^6.0.1",
-		"url-parameter-append": "^1.0.5"
+		"sqlite3": "^6.0.1"
 	},
 	"devDependencies": {
 		"@semantic-release/commit-analyzer": "^13.0.1",
@@ -20,8 +21,6 @@
 		"@semantic-release/github": "^12.0.9",
 		"@semantic-release/npm": "^13.1.5",
 		"@semantic-release/release-notes-generator": "^14.1.1",
-		"@slack/bolt": "^3.11.1",
-		"@slack/types": "^2.5.0",
 		"@types/cron": "^2.0.0",
 		"@types/express": "^4.17.13",
 		"@types/node": "^18.0.0",
