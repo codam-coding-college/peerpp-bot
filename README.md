@@ -23,9 +23,10 @@ and port `3000` is used for the slack bot using the slackbot API.
 The slackbot runs over Websockets instead of HTTP Requests.
 
 ### Development
-1. Install NodeJS 18.x or higher.
+1. Install NodeJS 20.x or higher (the production container runs NodeJS 26).
 2. Install dependencies: `npm install`
-3. Use `npm run dev` for development mode.
+3. Initialize the database: `npm run init-db` (requires the `sqlite3` CLI).
+4. Use `npm run dev` for development mode.
 
 ### Production
 In production environments, use Docker.
