@@ -18,7 +18,7 @@ async function dbRun(query: string): Promise<void> {
 
 async function dbGet<T>(query: string): Promise<Partial<T>> {
 	return new Promise((resolve, reject) => {
-		db.get(query, (err, t) => (err ? reject(err) : resolve(t)));
+		db.get<Partial<T>>(query, (err, t) => (err ? reject(err) : resolve(t)));
 	});
 }
 
@@ -53,11 +53,11 @@ namespace DB {
 	 */
 	export function exists(teamID: number) {
 		return new Promise<boolean>((resolve, reject) => {
-			db.get(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ${teamID}`, (err, row) => {
+			db.get<{ amount: number }>(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ?`, [teamID], (err, row) => {
 				if (err != null) {
 					return reject(`Failed to check if ${teamID} exists: ${err}`);
 				}
-				return resolve(row["amount"] > 0);
+				return resolve(row.amount > 0);
 			});
 		});
 	}
@@ -81,7 +81,7 @@ namespace DB {
 
 	export function allNotifiableEvaluators(onData: (user: User) => void) {
 		const query = `SELECT intraUID, slackUID, intraLogin, email, level, staff, campusID FROM evaluators WHERE notifyOfNewLock = 1`;
-		db.each(query, (err, row) => {
+		db.each<User>(query, (err, row) => {
 			if (err) {
 				Logger.log(`Failed to get all notifiable evaluators: ${err}`, LogType.ERROR);
 			} else {
