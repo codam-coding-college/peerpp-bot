@@ -1,15 +1,26 @@
 // -----------------------------------------------------------------------------
-// Codam Coding College, Amsterdam @ 2022.
+// Codam Coding College, Amsterdam @ 2022-2026.
 // See README in the root project for more information.
 // -----------------------------------------------------------------------------
 
-import fs from "fs";
 import dotenv from "dotenv";
+import { MissingConfigFileError, readConfigFile } from "./utils/configfile";
 
 /*============================================================================*/
 
 namespace Environment {
-	export const file = dotenv.parse(fs.readFileSync("./config/.env"));
+	function read(): string {
+		try {
+			return readConfigFile("./config/.env", "Copy config/.env-example to config/.env and fill in the values. In Docker, mount ./config into /app/config.");
+		} catch (error) {
+			if (!(error instanceof MissingConfigFileError)) throw error;
+
+			console.error(error.message);
+			process.exit(1);
+		}
+	}
+
+	export const file = dotenv.parse(read());
 
 	export interface Layout {
 		SLACK_TOKEN: string;

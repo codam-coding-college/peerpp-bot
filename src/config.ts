@@ -1,14 +1,25 @@
 // -----------------------------------------------------------------------------
-// Codam Coding College, Amsterdam @ 2022.
+// Codam Coding College, Amsterdam @ 2022-2026.
 // See README in the root project for more information.
 // -----------------------------------------------------------------------------
 
-import fs from "fs";
+import { MissingConfigFileError, readConfigFile } from "./utils/configfile";
 
 /*============================================================================*/
 
 namespace Configuration {
-	export const file = fs.readFileSync("./config/config.json").toString();
+	function read(): string {
+		try {
+			return readConfigFile("./config/config.json", "config/config.json is part of the repository. In Docker, mount ./config into /app/config.");
+		} catch (error) {
+			if (!(error instanceof MissingConfigFileError)) throw error;
+
+			console.error(error.message);
+			process.exit(1);
+		}
+	}
+
+	export const file = read();
 
 	export interface Layout {
 		sentryID: number;

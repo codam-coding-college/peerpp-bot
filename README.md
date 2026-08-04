@@ -58,19 +58,19 @@ You can use or modify the configuration below:
 ## Useful how-tos
 ### Add a user to the peer++ group
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/manageUser.js add <login>` where `<login>` is the login of the user you want to add to the peer++ group.
+2. Run `node src/scripts/manageuser.js add <login>` where `<login>` is the login of the user you want to add to the peer++ group.
 
 ### Remove a user from the peer++ group
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/manageUser.js remove <login>` where `<login>` is the login of the user you want to remove from the peer++ group.
+2. Run `node src/scripts/manageuser.js remove <login>` where `<login>` is the login of the user you want to remove from the peer++ group.
 
 ### List all users in the peer++ group
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/getUsers.js`.
+2. Run `node src/scripts/getusers.js`.
 
 ### Manually schedule a peer++ evaluation
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/bookEval.js <scaleID> <teamID> <userID>` where `<scaleID>` is the scaleID of the scale you want to use for the evaluation, `<teamID>` is the teamID of the team you want to schedule an evaluation for and `<userID>` is the userID of the evaluator (the one evaluating the team).
+2. Run `node src/scripts/bookeval.js <scaleID> <teamID> <userID>` where `<scaleID>` is the scaleID of the scale you want to use for the evaluation, `<teamID>` is the teamID of the team you want to schedule an evaluation for and `<userID>` is the userID of the evaluator (the one evaluating the team).
 
 ### Allow cancellation of a peer++ evaluation
 1. Go to the `peer-bot` directory.
@@ -78,4 +78,4 @@ You can use or modify the configuration below:
 3. Run `INSERT INTO expiredTeam(teamID) VALUES ('<teamID>');` in the sqlite3 shell, where `<teamID>` is the teamID of the team you want to cancel the evaluation for.
 4. Run `.exit` to exit the sqlite3 shell.
 5. Tell the team that they can now cancel the evaluation (make them press x next to the evaluation on the Intranet).
-6. Run `node src/scripts/addPoint.js <login>` where `<login>` is the login of the student who lost an evaluation point for the cancellation. This will refund the point to the student.
+6. Run `node src/scripts/addpoint.js <login>` where `<login>` is the login of the student who lost an evaluation point for the cancellation. This will refund the point to the student.
