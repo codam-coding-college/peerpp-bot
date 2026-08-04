@@ -11,6 +11,7 @@ services:
     container_name: "PeerBot"
     build: ./
     volumes:
+       - ./config:/app/config
        - ./logs:/app/log
        - ./db:/app/db
     ports:

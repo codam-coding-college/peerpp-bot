@@ -32,9 +32,9 @@
 	"scripts": {
 		"prepare": "[ -d .git ] && (P=.git/hooks/pre-commit; echo \"#!/bin/sh\\nnpm run lint:check\" > $P; chmod 777 $P) || true",
 		"dev": "ts-node-dev --quiet --rs --respawn --clear --transpile-only src/app.ts",
-		"init-db": "sqlite3 ./db/peerdb.sqlite < ./sql/default.sql",
+		"init-db": "mkdir -p ./db && sqlite3 ./db/peerdb.sqlite < ./sql/default.sql",
 		"build": "tsc",
-		"start": "node build/app.js",
+		"start": "npm run init-db && node build/app.js",
 		"lint:check": "prettier --check src",
 		"lint:fix": "prettier --write src"
 	},

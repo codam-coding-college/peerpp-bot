@@ -9,4 +9,5 @@ Makefile
 
 *.yml
 *.txt
-*.sqlite
+**/*.sqlite
+**/*.env

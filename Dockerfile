@@ -3,16 +3,13 @@
 # See README in the root project for more information.
 # -----------------------------------------------------------------------------
 
-FROM debian:buster
+FROM node:26-trixie
 
 WORKDIR /app
 RUN chmod a+rw ./
 
-# The node version on the package deb is outdated as hell
-# so we need to fetch the latest from nodesource
-RUN apt update && apt -y install curl gnupg sqlite3
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt -y install nodejs
+# The sqlite3 CLI is not part of the base image, but init-db needs it on startup.
+RUN apt update && apt -y install sqlite3
 
 COPY package.json ./
 COPY package-lock.json ./
@@ -22,7 +19,6 @@ RUN npm install
 
 COPY . ./
 
-RUN npm run init-db
 RUN npm run build
 
 ENTRYPOINT [ "npm", "run", "start" ]

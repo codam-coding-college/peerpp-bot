@@ -15,7 +15,7 @@ Read more about it in [ABOUT.md](ABOUT.md).
 ---
 
 ## Installation
-Convert `./config/env-example` to `.env` and fill in the secret data.
+Convert `./config/.env-example` to `.env` and fill in the secret data.
 
 By default port `8080` is used for the webhooks express server
 and port `3000` is used for the slack bot using the slackbot API.
