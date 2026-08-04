@@ -198,8 +198,7 @@ export namespace SlackBot {
 			return;
 		}
 
-		const canEvaluate =
-		await Intra.validatedProject(corrector.intraUID, projectName) //||
+		const canEvaluate = await Intra.validatedProject(corrector.intraUID, projectName); //||
 		// NOTE: For the future person who comes here, no sure if this thing works?
 		// await Intra.hasCompletedCore(corrector.intraLogin);
 
@@ -226,8 +225,8 @@ export namespace SlackBot {
 			SlackBot.sendMessage(
 				user,
 				`A new Peer++ evaluation for the project \`${projectName.toLowerCase()}\` is ready.` +
-				`\nUse the command \`/book\` to book it.` +
-				`\nUse the command \`/notify-off\` to stop receiving these notifications.`
+					`\nUse the command \`/book\` to book it.` +
+					`\nUse the command \`/notify-off\` to stop receiving these notifications.`
 			);
 		});
 	}

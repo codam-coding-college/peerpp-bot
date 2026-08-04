@@ -78,10 +78,8 @@ export namespace Intra {
 			const quests = await page.json();
 			const quest = quests.find((x: any) => x.quest_id == 59);
 
-			if (quest == undefined)
-				continue;
-			else if (quest.validated_at != null)
-				return true;
+			if (quest == undefined) continue;
+			else if (quest.validated_at != null) return true;
 		}
 		return false;
 	}
@@ -287,7 +285,10 @@ export namespace Intra {
 		};
 
 		const scaleTeamResponse = await api.post("/scale_teams/multiple_create", body);
-		if (!scaleTeamResponse.ok) throw new Error(`Failed to book evaluation with scaleID ${scaleID}, teamID ${teamID}, correctorID ${correctorID} on ${date.toISOString()}: ${scaleTeamResponse.statusText}`);
+		if (!scaleTeamResponse.ok)
+			throw new Error(
+				`Failed to book evaluation with scaleID ${scaleID}, teamID ${teamID}, correctorID ${correctorID} on ${date.toISOString()}: ${scaleTeamResponse.statusText}`
+			);
 	}
 
 	/**
