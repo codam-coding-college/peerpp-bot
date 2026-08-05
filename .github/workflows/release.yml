@@ -1,0 +1,14 @@
+name: Build, Publish & Release
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: codam-coding-college/release-config/.github/workflows/release.yml@main
+    secrets: inherit
