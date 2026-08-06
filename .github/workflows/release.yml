@@ -11,4 +11,3 @@ on:
 jobs:
   deploy:
     uses: codam-coding-college/release-config/.github/workflows/release.yml@main
-    secrets: inherit
