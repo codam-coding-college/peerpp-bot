@@ -94,7 +94,7 @@ export namespace SlackBot {
 			try {
 				await cb(context.respond, context.body);
 			} catch (error) {
-				Raven.captureException(error);
+				Raven.captureException(error instanceof Error ? error : new Error(String(error)));
 				Logger.log(`Request failed: ${error}`);
 				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
 			}
@@ -111,7 +111,7 @@ export namespace SlackBot {
 			const invoker = await getFullUser({ slackUID: body.user_id });
 
 			if (!(await Intra.hasGroup(invoker.intraUID!, Config.groupID))) {
-				await respond("You're not a Peer++ evaluator. Please apply! :doot:");
+				await respond("You are not a Peer++ evaluator. Please apply! :doot:");
 				return;
 			}
 			await cb(respond, body, invoker);
@@ -140,18 +140,16 @@ export namespace SlackBot {
 		const evaluationDate = new Date(Date.now() + 15 * 60 * 1000);
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
-		let text = `You will evaluate team \`${lock.teamName}\`, consisting of: `;
-
-		for (const user of correcteds) {
-			text += `${user.intraLogin} `;
-		}
-		text += `at ${evaluationDate}, they will be notified on slack. Please contact each other.`;
-		await respond(text);
+		await respond(
+			`You will evaluate team \`${lock.teamName}\`, consisting of ${correcteds
+				.map((u) => u.intraLogin)
+				.join(", ")} at ${evaluationDate}. They will be notified on slack. Please contact each other.`
+		);
 
 		for (const user of correcteds) {
 			await SlackBot.sendMessage(
 				user,
-				`You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to set a date for the evaluation.\n`
+				`You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to schedule a time and date for the Peer++ evaluation.\n`
 			);
 		}
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
@@ -160,22 +158,22 @@ export namespace SlackBot {
 	//= Command functions =//
 
 	/**
-	 * Display all currently available evaluations, aka the ones the bot locked.
+	 * Display all teams waiting for Peer++ evaluations, aka the ones the bot locked.
 	 * @param respond The slack response function, sends a message to user.
 	 */
 	export async function displayEvaluations(respond: RespondFn) {
-		await respond("Please wait, fetching available evaluations...");
+		await respond("Please wait, fetching teams waiting for a Peer++ evaluation...");
 
 		let locks: Intra.ScaleTeam[] = await Intra.getBotEvaluations();
 		if (locks.length == 0) {
-			await respond("Currently, no-one needs to be evaluated :feelsbadman:");
+			await respond("Currently no-one needs to be evaluated :feelsbadman:");
 			return;
 		}
 
 		locks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 		const projects = aggregateProjects(locks);
 
-		let text: string = "Available evaluations:\n";
+		let text: string = "Projects with teams waiting for a Peer++ evaluation:\n";
 		for (const project in projects) {
 			const timeLocked = prettyMilliseconds(Date.now() - projects[project]!.createdAt.getTime(), {
 				verbose: true,
@@ -225,8 +223,8 @@ export namespace SlackBot {
 		DB.allNotifiableEvaluators((user) => {
 			SlackBot.sendMessage(
 				user,
-				`A new Peer++ evaluation for the project \`${projectName.toLowerCase()}\` is ready.` +
-					`\nUse the command \`/book\` to book it.` +
+				`A \`${projectName.toLowerCase()}\` team is waiting for a Peer++ evaluator to book an evaluation with them.` +
+					`\nUse the command \`/book ${projectName}\` to book it.` +
 					`\nUse the command \`/notify-off\` to stop receiving these notifications.`
 			);
 		});
@@ -236,8 +234,8 @@ export namespace SlackBot {
 		const user = await getFullUser({ slackUID: slackUID });
 		await DB.saveEvaluator(user, notify);
 		const response = notify
-			? `You will now be notified when a new peer++ evaluation is available.\nUse the command \`/notify-off\` to stop receiving notifications`
-			: `You will no longer be notified when a new peer++ evaluation is available.\nUse the command \`/notify-on\` to start receiving notifications`;
+			? `You will now be notified when a team is waiting for a Peer++ evaluation.\nUse the command \`/notify-off\` to stop receiving notifications`
+			: `You will no longer be notified when a team is waiting for a Peer++ evaluation.\nUse the command \`/notify-on\` to start receiving notifications`;
 		await respond(response);
 	}
 }
@@ -254,7 +252,7 @@ SlackBot.registerCommand("/projects", async (respond) => {
 	await respond(text);
 });
 
-/** List all available evaluations. */
+/** List all teams waiting for a Peer++ evaluation. */
 SlackBot.registerCommand("/evaluations", async (respond) => {
 	await SlackBot.displayEvaluations(respond);
 });
