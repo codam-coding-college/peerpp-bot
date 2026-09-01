@@ -255,6 +255,34 @@ export namespace SlackBot {
 	}
 
 	/**
+	 * Display which evaluators are notified about which project, so it is visible
+	 * where the coverage is and who to ask about a project.
+	 * @param respond The slack response function, sends a message to user.
+	 */
+	export async function displayEvaluators(respond: RespondFn) {
+		const watchers = new Map<string, string[]>();
+		for (const favorite of await DB.allFavorites()) {
+			watchers.set(favorite.projectName, [...(watchers.get(favorite.projectName) ?? []), favorite.intraLogin]);
+		}
+
+		// The config can hold several ids under one name, list each name only once.
+		const names = [...new Set(Config.projects.map((project) => project.name.toLowerCase()))];
+		const watched = names.filter((name) => watchers.has(name));
+
+		if (watched.length === 0) {
+			await respond("No-one has favorited a project yet. Use the command `/notify-on <project>` to be the first.");
+			return;
+		}
+
+		let text = "Peer++ evaluators that are notified of new evaluations per project:\n";
+		for (const name of watched) {
+			text += `\`${name}\` - ${watchers.get(name)!.join(", ")}\n`;
+		}
+		text += `\n${names.length - watched.length} of the ${names.length} projects have no-one watching them.`;
+		await respond(text);
+	}
+
+	/**
 	 * Book an evaluation by swapping out the scale teams of the bot with the user.
 	 * @param projectName The project name.
 	 * @param respond The slack messaging function.
@@ -420,6 +448,11 @@ SlackBot.registerCommand("/projects", async (respond, body) => {
 /** List all teams waiting for a Peer++ evaluation. */
 SlackBot.registerCommand("/evaluations", async (respond) => {
 	await SlackBot.displayEvaluations(respond);
+});
+
+/** List which evaluators are notified about which project. */
+SlackBot.registerEvaluatorCommand("/evaluators", async (respond) => {
+	await SlackBot.displayEvaluators(respond);
 });
 
 /** Book an evaluation for the given project. */

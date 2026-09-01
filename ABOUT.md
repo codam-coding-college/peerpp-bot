@@ -70,6 +70,7 @@ without it, the evaluator commands will not work for you.
 | `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified about it. |
 | `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified about all of them. |
 | `/notify-off-all` | Peer++ evaluators | Remove all your favorites and stop every notification. |
+| `/evaluators` | Peer++ evaluators | Show which evaluators are notified about which project. |
 
 ### Booking an evaluation
 
@@ -102,7 +103,9 @@ Want everything, or nothing at all?
 | `/notify-on-all` | favorites every project at once |
 | `/notify-off-all` | clears all your favorites and stops every notification |
 
-Running `/projects` shows the full list with a :star: next to the ones you have favorited.
+Running `/projects` shows the full list with a :star: next to the ones you have favorited,
+and `/evaluators` shows which evaluators are watching which project — handy for spotting
+projects nobody is covering, or finding out who to ask about one.
 
 ---
 

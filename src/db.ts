@@ -160,6 +160,21 @@ namespace DB {
 		});
 	}
 
+	/** Every favorite, with the login of the evaluator that marked it. */
+	export async function allFavorites(): Promise<{ projectName: string; intraLogin: string }[]> {
+		const query = `SELECT f.projectName, e.intraLogin FROM favorites f ` + `INNER JOIN evaluators e ON e.intraUID = f.intraUID ORDER BY f.projectName, e.intraLogin`;
+
+		return new Promise((resolve, reject) => {
+			db.all<{ projectName: string; intraLogin: string }>(query, [], (err, rows) => {
+				if (err !== null) {
+					Raven.captureException(err);
+					return reject(`Failed to get all favorites: ${err}`);
+				}
+				return resolve(rows);
+			});
+		});
+	}
+
 	/** Calls onData for every evaluator that marked the given project as favorite. */
 	export function allEvaluatorsFavoriting(projectName: string, onData: (user: User) => void) {
 		const query =
