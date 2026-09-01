@@ -8,7 +8,7 @@
 </br>
 
 ## What is the Peer++ system?
-The peer++ evaluation system ensures quality evaluations by matching students with high-level evaluators.
+The Peer++ evaluation system ensures quality evaluations by matching students with high-level evaluators.
 
 Read more about it in [ABOUT.md](ABOUT.md).
 
@@ -56,23 +56,23 @@ You can use or modify the configuration below:
 ---
 
 ## Useful how-tos
-### Add a user to the peer++ group
+### Add a user to the Peer++ group
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/manageuser.js add <login>` where `<login>` is the login of the user you want to add to the peer++ group.
+2. Run `node src/scripts/manageuser.js add <login>` where `<login>` is the login of the user you want to add to the Peer++ group.
 
-### Remove a user from the peer++ group
+### Remove a user from the Peer++ group
 1. Go to the `peer-bot` directory.
-2. Run `node src/scripts/manageuser.js remove <login>` where `<login>` is the login of the user you want to remove from the peer++ group.
+2. Run `node src/scripts/manageuser.js remove <login>` where `<login>` is the login of the user you want to remove from the Peer++ group.
 
-### List all users in the peer++ group
+### List all users in the Peer++ group
 1. Go to the `peer-bot` directory.
 2. Run `node src/scripts/getusers.js`.
 
-### Manually schedule a peer++ evaluation
+### Manually schedule a Peer++ evaluation
 1. Go to the `peer-bot` directory.
 2. Run `node src/scripts/bookeval.js <scaleID> <teamID> <userID>` where `<scaleID>` is the scaleID of the scale you want to use for the evaluation, `<teamID>` is the teamID of the team you want to schedule an evaluation for and `<userID>` is the userID of the evaluator (the one evaluating the team).
 
-### Allow cancellation of a peer++ evaluation
+### Allow cancellation of a Peer++ evaluation
 1. Go to the `peer-bot` directory.
 2. Run `sqlite3 db/peerdb.sqlite`.
 3. Run `INSERT INTO expiredTeam(teamID) VALUES ('<teamID>');` in the sqlite3 shell, where `<teamID>` is the teamID of the team you want to cancel the evaluation for.

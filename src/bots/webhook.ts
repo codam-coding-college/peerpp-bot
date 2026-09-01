@@ -106,7 +106,7 @@ async function blockPotentialEvaluation(hook: IntraWebhook.Root) {
 
 export namespace Webhook {
 	/**
-	 * Runs a series of checks, if any fail, a peer++ eval will be required.
+	 * Runs a series of checks, if any fail, a Peer++ eval will be required.
 	 * @param hook The Intra webhook response.
 	 * @return True if evaluation is required, false on error or none of the checks passed.
 	 */

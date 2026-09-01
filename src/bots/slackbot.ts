@@ -260,12 +260,12 @@ SlackBot.registerEvaluatorCommand("/book", async (respond, body, invoker) => {
 	await SlackBot.bookEvaluation(body.text, respond, invoker);
 });
 
-/** Notify me when a new peer++ evaluation is available */
+/** Notify me when a new Peer++ evaluation is available */
 SlackBot.registerEvaluatorCommand("/notify-on", async (respond, body) => {
 	await SlackBot.setNotifyStatus(respond, body.user_id, true);
 });
 
-/** Do not notify me when a new peer++ evaluation is available */
+/** Do not notify me when a new Peer++ evaluation is available */
 SlackBot.registerEvaluatorCommand("/notify-off", async (respond, body) => {
 	await SlackBot.setNotifyStatus(respond, body.user_id, false);
 });
