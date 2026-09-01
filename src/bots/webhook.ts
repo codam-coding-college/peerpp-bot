@@ -211,7 +211,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 			await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
 			await Webhook.sendNotification(
 				hook,
-				`Congratulations! Your \`${hook.project.name}\` has been selected for a Peer++ evaluation :trollface:\nFor more information visit: go.codam.nl`
+				`Your \`${hook.project.name}\` has been selected for a Peer++ evaluation. Wait for a Peer++ evaluator to book an evaluation with you - they will contact you.\nFor more information visit: https://github.com/codam-coding-college/peerpp-bot/blob/main/ABOUT.md`
 			);
 			SlackBot.notifyOfNewLock(hook.project.name);
 			Logger.log("Booked a Peer++ evaluation, notified users!");
@@ -220,8 +220,9 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 		}
 	} catch (error) {
 		res.status(500).send();
-		Raven.captureException(error);
-		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+		const err = error instanceof Error ? error : new Error(String(error));
+		Raven.captureException(err);
+		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
 });
@@ -264,14 +265,18 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 						return;
 					}
 					await Intra.bookPlaceholderEval(hook.scale.id, hook.team.id);
-					await Webhook.sendNotification(hook, "Nice try! You can't cancel Peer++ evaluations :trollface:");
+					await Webhook.sendNotification(
+						hook,
+						"You cannot cancel Peer++ evaluations. Your evaluation has been re-booked. Wait for a Peer++ evaluator to book an evaluation with you - they will contact you."
+					);
 					Logger.log(`Re-booked a placeholder evaluation for: ${hook.team.name} : ${hook.team.id}`);
 				}
 			});
 	} catch (error) {
 		res.status(500).send();
-		Raven.captureException(error);
-		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+		const err = error instanceof Error ? error : new Error(String(error));
+		Raven.captureException(err);
+		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
 });
@@ -298,8 +303,9 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		}
 	} catch (error) {
 		res.status(500).send();
-		Raven.captureException(error);
-		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+		const err = error instanceof Error ? error : new Error(String(error));
+		Raven.captureException(err);
+		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 
 	// Bot was marked as absent.
@@ -309,8 +315,9 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 			await DB.insert(hook.team.id);
 		} catch (error) {
 			res.status(500).send();
-			Raven.captureException(error);
-			return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+			const err = error instanceof Error ? error : new Error(String(error));
+			Raven.captureException(err);
+			return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 		}
 		res.status(204).send();
 		return Logger.log("Lock expired, user manually set the bot as absent.");
@@ -333,8 +340,9 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
 	} catch (error) {
 		res.status(500).send();
-		Raven.captureException(error);
-		return Logger.log(`Something went wrong: ${error}`, LogType.ERROR);
+		const err = error instanceof Error ? error : new Error(String(error));
+		Raven.captureException(err);
+		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
 });
