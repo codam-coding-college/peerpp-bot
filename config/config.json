@@ -27,56 +27,159 @@
 			"name": "push_swap"
 		},
 		{
-			"id": 2005,
-			"name": "minitalk"
+			"id": 2687,
+			"name": "push_swap"
 		},
 		{
-			"id": 2004,
-			"name": "pipex"
+			"id": 2686,
+			"name": "born2beroot"
 		},
 		{
-			"id": 2009,
-			"name": "so_long"
+			"id": 2688,
+			"name": "a-maze-ing"
 		},
 		{
-			"id": 2008,
-			"name": "fdf"
+			"id": 2690,
+			"name": "python module 00"
 		},
 		{
-			"id": 1476,
-			"name": "fract-ol"
+			"id": 2691,
+			"name": "python module 01"
 		},
 		{
-			"id": 1331,
-			"name": "minishell"
+			"id": 2692,
+			"name": "python module 02"
 		},
 		{
-			"id": 1334,
-			"name": "philosophers"
+			"id": 2693,
+			"name": "python module 03"
 		},
 		{
-			"id": 1315,
-			"name": "minirt"
+			"id": 2694,
+			"name": "python module 04"
 		},
 		{
-			"id": 1326,
-			"name": "cub3d"
+			"id": 2695,
+			"name": "python module 05"
 		},
 		{
-			"id": 1336,
-			"name": "ft_irc"
+			"id": 2696,
+			"name": "python module 06"
+		},
+		{
+			"id": 2697,
+			"name": "python module 07"
+		},
+		{
+			"id": 2698,
+			"name": "python module 08"
+		},
+		{
+			"id": 2707,
+			"name": "python module 09"
+		},
+		{
+			"id": 2699,
+			"name": "python module 10"
+		},
+		{
+			"id": 2689,
+			"name": "call me maybe"
+		},
+		{
+			"id": 2705,
+			"name": "fly-in"
+		},
+		{
+			"id": 2704,
+			"name": "codexion"
+		},
+		{
+			"id": 2700,
+			"name": "rag against the machine"
+		},
+		{
+			"id": 2706,
+			"name": "pac-man"
+		},
+		{
+			"id": 2007,
+			"name": "netpractice"
+		},
+		{
+			"id": 2703,
+			"name": "agent smith"
+		},
+		{
+			"id": 2701,
+			"name": "the answer protocol"
+		},
+		{
+			"id": 1983,
+			"name": "inception"
+		},
+		{
+			"id": 2623,
+			"name": "ft_resume"
+		},
+		{
+			"id": 1337,
+			"name": "ft_transcendence"
+		},
+		{
+			"id": 1338,
+			"name": "cpp module 00"
+		},
+		{
+			"id": 1339,
+			"name": "cpp module 01"
+		},
+		{
+			"id": 1340,
+			"name": "cpp module 02"
+		},
+		{
+			"id": 1341,
+			"name": "cpp module 03"
+		},
+		{
+			"id": 1342,
+			"name": "cpp module 04"
+		},
+		{
+			"id": 1343,
+			"name": "cpp module 05"
+		},
+		{
+			"id": 1344,
+			"name": "cpp module 06"
+		},
+		{
+			"id": 1345,
+			"name": "cpp module 07"
+		},
+		{
+			"id": 1346,
+			"name": "cpp module 08"
+		},
+		{
+			"id": 2309,
+			"name": "cpp module 09"
 		},
 		{
 			"id": 1332,
 			"name": "webserv"
 		},
 		{
-			"id": 1335,
-			"name": "ft_containers"
+			"id": 1336,
+			"name": "ft_irc"
 		}
 	],
 	"blocked": [
-		{ "studentA": "salty", "studentB": "jpeg" }
+		{
+			"studentA": "salty",
+			"studentB": "jpeg"
+		}
 	],
 	"staffSlackIDs": []
 }
