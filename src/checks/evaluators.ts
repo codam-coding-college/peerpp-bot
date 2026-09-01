@@ -12,16 +12,16 @@ import { getFullUser, User } from "../utils/user";
 /*============================================================================*/
 
 /**
- * Checks if the previous evaluators had a good enough level and if they did the
- * project.
+ * Checks whether the team's previous correctors were good enough, so that a Peer++
+ * evaluator does not have to step in.
  *
- * Check should make sure that evaluators are EITHER of a high enough level
- * or that someone has at least done the project.
+ * A team is left alone when a corrector was EITHER of a high enough level
+ * or had completed the project themselves.
  *
- * @param evaluations The evaluations of the project.
- * @return True if an evaluation is required, else false.
+ * @param evaluations The evaluations the team already had for this project.
+ * @return True if the team's final evaluation should be locked, else false.
  */
-export async function Evaluators(hook: IntraWebhook.Root, evaluations: Intra.ScaleTeam[], teamUsers: IntraResponse.TeamUser[]) {
+export async function PreviousCorrectors(hook: IntraWebhook.Root, evaluations: Intra.ScaleTeam[], teamUsers: IntraResponse.TeamUser[]) {
 	const leaderData = teamUsers.find((value) => value.leader == true)!;
 
 	let levels: number[] = [];
@@ -30,7 +30,7 @@ export async function Evaluators(hook: IntraWebhook.Root, evaluations: Intra.Sca
 	const leader = await getFullUser({ intraUID: leaderData.user_id });
 	for (const evaluation of evaluations) {
 		if (evaluation.corrector.intraUID == Config.botID) {
-			Logger.log("Ignored: Bot already present for evaluation.");
+			Logger.log("Ignored: the bot is already the corrector of an evaluation.");
 			return false;
 		}
 		if (evaluation.finalMark != null && !(await Intra.markIsPass(hook.project.id, evaluation.finalMark))) {

@@ -3,8 +3,24 @@
 The Peer++ evaluation system ensures the quality of evaluations by matching students with high-level evaluators in the core curriculum.
 Its goal is to discourage cheating in evaluations, keep the focus on the code, and make evaluations instructive.
 
-This is achieved with the Peer++ Slackbot, which reserves ("locks") the last evaluation of your project when it deems it necessary.
+This is achieved with the Peer++ Slackbot, which locks the final evaluation of your team when it deems it necessary.
 Its decision is based on the quality of your previous evaluations — for example, when every previous evaluator was of a low level.
+
+---
+
+## Terminology
+
+The words below mean one specific thing throughout this document and the bot:
+
+| Term | Meaning |
+| --- | --- |
+| **team** | A group of students' attempt at a project. Retrying a project means a new team. |
+| **evaluation** | A corrector evaluating a team. |
+| **corrector** / **evaluator** | The person doing the evaluation. |
+| **corrected** | A member of the team being evaluated. |
+| **Peer++ evaluator** | A student with the Peer++ tag, who may take over locks. |
+| **lock** | Peer++ reserving a team's final evaluation, so the team cannot book another one and a Peer++ evaluator has to take it over. |
+| **correction point** | The point Intra charges a team to book an evaluation. |
 
 ---
 
@@ -13,13 +29,13 @@ Its decision is based on the quality of your previous evaluations — for exampl
 The bot only considers projects from the core curriculum that are on its list — run `/projects` in the Slackbot to see the current list.
 
 When your team books its second-to-last evaluation, the bot checks the evaluations you have had so far.
-Your last slot is **not** locked if any of the following is true:
+Your final evaluation is **not** locked if any of the following is true:
 
 - one of your correctors was at least **2 levels above** the team leader;
 - one of your correctors had **completed the project** themselves;
 - a previous evaluation was a **fail**;
 
-If none of those apply, the bot reserves your final evaluation slot and you have to wait for a Peer++ evaluator to pick you up.
+If none of those apply, the bot locks your final evaluation and you have to wait for a Peer++ evaluator to pick you up.
 Evaluations where the corrector was marked absent do not count towards this check.
 
 > **NOTE:** the bot can also be configured to lock a small percentage of evaluations at random.
@@ -36,17 +52,17 @@ From that point it is up to the two of you to agree on when to do the evaluation
 
 ### If nobody books you
 
-The lock lasts **1 day**. After that the bot removes it and ignores that project attempt from then on,
+The lock lasts **1 day**. After that the bot removes it and ignores that team from then on,
 so you can continue with your regular evaluations without the bot interfering.
 
-If you fail the project and retry it, the bot can lock the last evaluation of the new attempt again.
+If you fail the project and retry it, you form a new team, and the bot can lock the final evaluation of that team again.
 
 ### Do not try to cancel it
 
-Cancelling the bot's evaluation does not get rid of it. The bot notices, immediately re-books your last slot,
+Cancelling the bot's evaluation does not get rid of it. The bot notices, immediately locks your final evaluation again,
 and puts you back in the queue. You are better off waiting.
 
-The evaluation point taken for cancelling the evaluation will not be returned.
+The correction point taken for cancelling the evaluation will not be returned.
 
 ---
 
@@ -63,9 +79,9 @@ without it, the evaluator commands will not work for you.
 
 | Command | Who can use it | Description |
 | --- | --- | --- |
-| `/projects` | everyone | Show which projects the bot can lock evaluations for, with your favorites marked. |
+| `/projects` | everyone | Show which projects the bot can lock a final evaluation for, with your favorites marked. |
 | `/evaluations` | everyone | Show all teams waiting for a Peer++ evaluation that can be booked. |
-| `/book <project_name>` | Peer++ evaluators | Book one of the available evaluations for that project. |
+| `/book <project_name>` | Peer++ evaluators | Take over the lock of a waiting team for that project, becoming its corrector. |
 | `/notify-on <project_name>` | Peer++ evaluators | Mark a project as favorite, and get notified when a team is waiting for a Peer++ evaluation on it. |
 | `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified of its waiting teams. |
 | `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified of every team waiting for a Peer++ evaluation. |
@@ -77,8 +93,8 @@ without it, the evaluator commands will not work for you.
 1. Run `/projects` to see which projects the bot handles.
 2. Run `/evaluations` to see what is currently available, and how long each has been waiting.
 3. Run `/book <project_name>` to take one.
-4. The bot picks the team that has been waiting the longest, swaps out its reservation for yours,
-   and messages both you and the team.
+4. The bot picks the team that has been waiting the longest, takes its lock over by making you
+   the corrector instead of the bot, and messages both you and the team.
 5. Agree on a time with the team and conduct the evaluation.
 
 You cannot book an evaluation for your own team.

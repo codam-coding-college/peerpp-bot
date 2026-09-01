@@ -25,8 +25,11 @@ async function dbGet<T>(query: string): Promise<Partial<T>> {
 
 /** SQLlite3 database wrapper functions */
 namespace DB {
-	/** Deletes all expiredTeam rows which are older than the lock days.  */
-	export function emptyOldLocks() {
+	/**
+	 * Deletes the handled-team records that are older than the lock expiration.
+	 * These live in the expiredTeam table, see markTeamHandled.
+	 */
+	export function deleteOldHandledTeams() {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
 				if (err != null) return reject(`Failed to clear database: ${err}`);
@@ -36,10 +39,14 @@ namespace DB {
 	}
 
 	/**
-	 * Insert the given team into the database and mark them as expired.
-	 * @param teamID The TeamID.
+	 * Marks a team as handled, so the bot ignores it from now on. A team is handled once its
+	 * Peer++ lock is gone for any reason: booked by an evaluator, expired, or removed because
+	 * the team failed or the bot was marked absent.
+	 *
+	 * Despite the table being named expiredTeam, most handled teams did not expire.
+	 * @param teamID The team, a group of students' attempt at a project.
 	 */
-	export function insert(teamID: number) {
+	export function markTeamHandled(teamID: number) {
 		return new Promise<void>((resolve, reject) => {
 			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
 				if (err != null) return reject(`Failed to insert value ${teamID}: ${err}`);
@@ -49,10 +56,10 @@ namespace DB {
 	}
 
 	/**
-	 * Checks wether the given teamID exists in the db.
-	 * @param teamID The TeamID.
+	 * Checks whether the bot already handled the given team, see markTeamHandled.
+	 * @param teamID The team, a group of students' attempt at a project.
 	 */
-	export function exists(teamID: number) {
+	export function isTeamHandled(teamID: number) {
 		return new Promise<boolean>((resolve, reject) => {
 			db.get<{ amount: number }>(`SELECT COUNT(*) AS amount FROM expiredTeam WHERE teamID = ?`, [teamID], (err, row) => {
 				if (err != null) {
@@ -71,6 +78,7 @@ namespace DB {
 		await dbRun(`INSERT INTO webhookDeliveries(delivery) VALUES('${id}')`);
 	}
 
+	/** Stores a Peer++ evaluator so their favorites can be linked to them. */
 	export async function saveEvaluator(user: User): Promise<void> {
 		const { intraUID, intraLogin, slackUID, email, level, campusID } = user;
 		const staff = user.staff ? 1 : 0;

@@ -1,11 +1,13 @@
--- Teams that were booked by the bot but are now expired and should be ignored.
+-- Teams the bot has handled and must ignore from now on: their Peer++ lock is gone,
+-- whether it was booked by an evaluator, expired, or removed. Despite the name, most
+-- of these did not expire.
 CREATE TABLE IF NOT EXISTS expiredTeam(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	teamID INTEGER NOT NULL,
 	created_at INTEGER DEFAULT (datetime('now', 'localtime'))
 );
 
--- Evaluators that can be notified of teams waiting for a Peer++ evaluation.
+-- Peer++ evaluators that used a notify command, so their favorites can be linked to them.
 CREATE TABLE IF NOT EXISTS evaluators(
 	intraUID INTEGER PRIMARY KEY NOT NULL,
 	slackUID varchar(512) NOT NULL,

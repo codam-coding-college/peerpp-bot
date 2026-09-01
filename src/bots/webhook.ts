@@ -70,8 +70,8 @@ async function filterHook(req: Request, secret: string) {
 }
 
 /**
- * Checks the evaluator and evaluatee, blocks their evaluation if
- * they are listed as blocked.
+ * Checks the corrector and the correcteds, and deletes their evaluation if
+ * they are listed as blocked in the config.
  * @param hook The Intra webhook response.
  */
 async function blockPotentialEvaluation(hook: IntraWebhook.Root) {
@@ -108,15 +108,15 @@ export namespace Webhook {
 	/**
 	 * Runs a series of checks, if any fail, a Peer++ eval will be required.
 	 * @param hook The Intra webhook response.
-	 * @return True if evaluation is required, false on error or none of the checks passed.
+	 * @return True if the team's final evaluation should be locked, false on error or when no check passed.
 	 */
-	export async function requiresEvaluation(hook: IntraWebhook.Root) {
+	export async function requiresLock(hook: IntraWebhook.Root) {
 		if (hook.user == null) {
-			Logger.log("Ignored: ScaleTeam is a missing peer-evaluation one");
+			Logger.log("Ignored: the scale_team has no corrector, so it is not a peer evaluation");
 			return false;
 		}
 		if (hook.user.id == Config.botID) {
-			Logger.log("Ignored: ScaleTeam evaluator is the bot itself");
+			Logger.log("Ignored: the corrector is the bot itself, so this is a Peer++ lock");
 			return false;
 		}
 		if (!Config.projects.find((p) => p.id === hook.project.id)) {
@@ -124,7 +124,7 @@ export namespace Webhook {
 			return false;
 		}
 
-		// If not the last evaluation, then ignore.
+		// Only the team's final evaluation gets locked, ignore any earlier one.
 		const evaluations = await Intra.getEvaluations(hook.project.id, hook.scale.id, hook.team.id);
 		if (evaluations.length != hook.scale.correction_number - 1) {
 			Logger.log(`Ignored: ${hook.team.name} did ${evaluations.length} / ${hook.scale.correction_number} evaluations.`);
@@ -133,7 +133,7 @@ export namespace Webhook {
 
 		// NOTE (W2): Completely fucked up and weird endpoint btw.
 		const teamUsers = await Intra.getTeamUsers(hook.team.id);
-		return (await Checks.Evaluators(hook, evaluations, teamUsers)) || (await Checks.Random());
+		return (await Checks.PreviousCorrectors(hook, evaluations, teamUsers)) || (await Checks.Random());
 	}
 
 	/**
@@ -171,7 +171,7 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 /*============================================================================*/
 
-// TODO: Figure out how evaluation points should be handled.
+// TODO: Figure out how correction points should be handled.
 
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
@@ -199,12 +199,11 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	}
 
 	try {
-		if (await DB.exists(hook.team.id)) {
+		if (await DB.isTeamHandled(hook.team.id)) {
 			// Team was already entered.
 			Logger.log("Ignored: Create is from an expired team.");
-		} else if (await Webhook.requiresEvaluation(hook)) {
-			// Requires an evaluation.
-			Logger.log("Booking a Peer++ evaluation!");
+		} else if (await Webhook.requiresLock(hook)) {
+			Logger.log("Locking the final evaluation of the team!");
 
 			// NOTE (W2): Because deleting a scale team does not give back the point later.
 			// await Intra.givePointToTeam(hook.team.id);
@@ -246,7 +245,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 	}
 
 	try {
-		await DB.exists(hook.team.id)
+		await DB.isTeamHandled(hook.team.id)
 			.catch((reason) => {
 				throw new Error(reason);
 			})
@@ -255,7 +254,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 					Logger.log("Ignored: Delete is from an expired team.");
 				} else {
 					Logger.log("Some student tried to cancel the bot", LogType.WARNING);
-					if (await Webhook.requiresEvaluation(hook)) {
+					if (await Webhook.requiresLock(hook)) {
 						Logger.log("Re-booking a Peer++ evaluation!");
 					} else {
 						Logger.log("Ignored: Peer++ evaluation not required");
@@ -296,7 +295,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
 
 	try {
-		const check = await DB.exists(hook.team.id);
+		const check = await DB.isTeamHandled(hook.team.id);
 		if (check) {
 			res.status(204).send();
 			return Logger.log("Ignored: Update is from an expired team.");
@@ -312,7 +311,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	if (hook.user && hook.user.id == Config.botID && hook.truant.id !== undefined) {
 		try {
 			// NOTE (W2): No need to delete the scaleteam here, the cronjob will take care of it.
-			await DB.insert(hook.team.id);
+			await DB.markTeamHandled(hook.team.id);
 		} catch (error) {
 			res.status(500).send();
 			const err = error instanceof Error ? error : new Error(String(error));
@@ -320,24 +319,24 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 			return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 		}
 		res.status(204).send();
-		return Logger.log("Lock expired, user manually set the bot as absent.");
+		return Logger.log("Lock removed, the bot was manually marked absent for it.");
 	}
 
 	try {
-		// If an evaluation is finished, failed and it was locked then remove the lock.
-		const lock = (await Intra.getBotEvaluations()).find((lock) => lock.teamID == hook.team.id);
+		// Drop the lock when the team failed the project, a Peer++ evaluation is pointless then.
+		const lock = (await Intra.getLocks()).find((lock) => lock.teamID == hook.team.id);
 
 		if (lock != undefined && hook.final_mark != null && !(await Intra.markIsPass(hook.project.id, hook.final_mark))) {
 			Logger.log(`Team ${lock.teamName} failed an evaluation, removing lock.`);
 
-			await DB.insert(hook.team.id).catch((reason) => {
+			await DB.markTeamHandled(hook.team.id).catch((reason) => {
 				throw new Error(reason);
 			});
 			await Intra.deleteEvaluation(lock);
 			res.status(204).send();
 			return await Webhook.sendNotification(hook, `Because you failed an evaluation, your Peer++ evaluation has been removed. Good luck next time :)`);
 		}
-		Logger.log("Ignored: User has not failed an evaluation or wasn't locked.");
+		Logger.log("Ignored: the team has not failed an evaluation, or was never locked.");
 	} catch (error) {
 		res.status(500).send();
 		const err = error instanceof Error ? error : new Error(String(error));

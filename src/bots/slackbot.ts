@@ -28,9 +28,9 @@ export const slackApp = new App({
 /** Utility functions for the slack bot */
 export namespace SlackBot {
 	/**
-	 * Find the oldest evaluation that has been booked by the bot.
-	 * @param locks The reserved evaluations by the bot.
-	 * @returns The oldest scaleteam available in the locks, or undefined when there are none.
+	 * Find the Peer++ lock that has been waiting the longest for an evaluator.
+	 * @param locks The Peer++ locks.
+	 * @returns The oldest lock, or undefined when there are none.
 	 */
 	const getHighestPriorityTeam = (locks: Intra.ScaleTeam[]): Intra.ScaleTeam | undefined => {
 		let best: Intra.ScaleTeam | undefined = undefined;
@@ -45,9 +45,9 @@ export namespace SlackBot {
 	};
 
 	/**
-	 * Merges all the locked evaluation in an aggregate view.
-	 * That is for example all libft projects get merged into one row.
-	 * @param locks The reserved evaluations by the bot.
+	 * Merges the Peer++ locks per project, so for example every locked libft team
+	 * ends up on one row.
+	 * @param locks The Peer++ locks.
 	 */
 	const aggregateProjects = (locks: Intra.ScaleTeam[]) => {
 		const count: { [key: string]: { teamCount: number; createdAt: Date } } = {};
@@ -186,10 +186,11 @@ export namespace SlackBot {
 	}
 
 	/**
-	 * Swaps the lock with a proper evaluation of the corrector.
+	 * Hands a Peer++ lock over to a real evaluator: deletes the bot's placeholder and books
+	 * the evaluator as the corrector of the team instead.
 	 * @param respond The messaging function.
-	 * @param corrector The user doing the correction.
-	 * @param lock The reserved evaluation by the bot.
+	 * @param corrector The Peer++ evaluator taking the lock over.
+	 * @param lock The Peer++ lock to take over.
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
 		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
@@ -198,7 +199,7 @@ export namespace SlackBot {
 			return;
 		}
 
-		await DB.insert(lock.teamID).catch((reason) => {
+		await DB.markTeamHandled(lock.teamID).catch((reason) => {
 			throw new Error(reason);
 		});
 		Logger.log(`Deleting lock ${lock.id} for ${lock.teamName} on ${lock.projectName}`);
@@ -227,13 +228,13 @@ export namespace SlackBot {
 	//= Command functions =//
 
 	/**
-	 * Display all teams waiting for Peer++ evaluations, aka the ones the bot locked.
+	 * Display every team waiting for a Peer++ evaluation, aka the teams the bot locked.
 	 * @param respond The slack response function, sends a message to user.
 	 */
 	export async function displayEvaluations(respond: RespondFn) {
 		await respond("Please wait, fetching teams waiting for a Peer++ evaluation...");
 
-		let locks: Intra.ScaleTeam[] = await Intra.getBotEvaluations();
+		let locks: Intra.ScaleTeam[] = await Intra.getLocks();
 		if (locks.length == 0) {
 			await respond("Currently no-one needs to be evaluated :feelsbadman:");
 			return;
@@ -283,10 +284,10 @@ export namespace SlackBot {
 	}
 
 	/**
-	 * Book an evaluation by swapping out the scale teams of the bot with the user.
+	 * Take over a Peer++ lock for the given project, becoming the corrector of that team.
 	 * @param projectName The project name.
 	 * @param respond The slack messaging function.
-	 * @param user The corrector.
+	 * @param corrector The Peer++ evaluator taking the lock over.
 	 */
 	export async function bookEvaluation(projectName: string, respond: RespondFn, corrector: User) {
 		// Resolve the given name to its project once, so the lock lookup below cannot disagree
@@ -309,7 +310,7 @@ export namespace SlackBot {
 		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\``);
 		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\`...`);
 
-		const locks = (await Intra.getBotEvaluations()).filter((value) => value.projectName == name);
+		const locks = (await Intra.getLocks()).filter((value) => value.projectName == name);
 		const lock = getHighestPriorityTeam(locks);
 		if (lock === undefined) {
 			await respond(`No-one needs to be evaluated on \`${name}\``);

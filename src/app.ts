@@ -19,13 +19,13 @@ import Raven from "raven";
 
 /*============================================================================*/
 
-/** Check which currently booked evaluations are expired. */
+/** Removes the Peer++ locks that have expired, or whose team already finished the project. */
 async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
 	let locks: Intra.ScaleTeam[] = [];
 	try {
-		locks = await Intra.getBotEvaluations();
+		locks = await Intra.getLocks();
 	} catch (error) {
 		Raven.captureException(error);
 		return Logger.log(`${error}`, LogType.ERROR);
@@ -39,7 +39,7 @@ async function checkExpiredLocks() {
 		// NOTE: setDate() mutates createdAt, so keep a copy of when the lock was actually placed.
 		const lockedAt = new Date(lock.createdAt);
 		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + Config.lockExpirationDays));
-		//Get lock project state --> cancel any locks that are already finished/evaluated
+		// Remove the lock too when the team already finished the project.
 		let teamU: IntraResponse.TeamUser[] = await Intra.getTeamUsers(lock.teamID);
 		Logger.log(`Team: ${JSON.stringify(teamU)}`);
 		let projectState: string | undefined = teamU[0]?.team.status;
@@ -49,7 +49,7 @@ async function checkExpiredLocks() {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
 
 			try {
-				await DB.insert(lock.teamID);
+				await DB.markTeamHandled(lock.teamID);
 				await Intra.deleteEvaluation(lock);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
 				await SlackBot.notifyStaffOfDeletedLock(
@@ -68,13 +68,13 @@ async function checkExpiredLocks() {
 	Logger.log(`Deleted: ${n} locks`);
 }
 
-/** Check which expired evaluations are more than a week old. */
-async function deleteExpiredLocks() {
-	Logger.log("Deleting expired locks from database...");
+/** Deletes the handled-team records that are more than a week old. */
+async function deleteOldHandledTeams() {
+	Logger.log("Deleting the old handled teams from the database...");
 
-	await DB.emptyOldLocks().catch((reason) => {
+	await DB.deleteOldHandledTeams().catch((reason) => {
 		Raven.captureException(reason);
-		Logger.log(`Failed to delete expired locks: ${reason}`, LogType.WARNING);
+		Logger.log(`Failed to delete the old handled teams: ${reason}`, LogType.WARNING);
 	});
 }
 
@@ -82,7 +82,7 @@ async function deleteExpiredLocks() {
 
 util.inspect.defaultOptions.depth = null;
 const expirationJob = new CronJob("*/15 * * * *", checkExpiredLocks);
-const emptyExpiredJob = new CronJob("0 0 * * 0", deleteExpiredLocks);
+const emptyExpiredJob = new CronJob("0 0 * * 0", deleteOldHandledTeams);
 export const db = new Database(Config.dbPath, (err) => {
 	if (err !== null) {
 		Raven.captureException(err);
@@ -114,7 +114,7 @@ export const db = new Database(Config.dbPath, (err) => {
 	Logger.log("Connected to Intra V2");
 
 	checkExpiredLocks();
-	deleteExpiredLocks();
+	deleteOldHandledTeams();
 	expirationJob.start();
 	emptyExpiredJob.start();
 

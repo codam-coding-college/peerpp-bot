@@ -78,4 +78,4 @@ You can use or modify the configuration below:
 3. Run `INSERT INTO expiredTeam(teamID) VALUES ('<teamID>');` in the sqlite3 shell, where `<teamID>` is the teamID of the team you want to cancel the evaluation for.
 4. Run `.exit` to exit the sqlite3 shell.
 5. Tell the team that they can now cancel the evaluation (make them press x next to the evaluation on the Intranet).
-6. Run `node src/scripts/addpoint.js <login>` where `<login>` is the login of the student who lost an evaluation point for the cancellation. This will refund the point to the student.
+6. Run `node src/scripts/addpoint.js <login>` where `<login>` is the login of the student who lost a correction point for the cancellation. This will refund the point to the student.

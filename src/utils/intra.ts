@@ -21,7 +21,7 @@ export namespace Intra {
 		id: number;
 		/** The ID of the evaluation sheet to be used. */
 		scaleID: number;
-		/** The ID of the team by the matching of corrector and corrected. */
+		/** The ID of the team: the attempt of a group of students at a project. */
 		teamID: number;
 		/** The name of the team. */
 		teamName: string;
@@ -29,13 +29,13 @@ export namespace Intra {
 		projectID: number;
 		/** The slugname of the project. E.g: libft */
 		projectName: string;
-		/** The creation date of the evaluation. */
+		/** The date the evaluation was created. For a Peer++ lock, when the team got locked. */
 		createdAt: Date;
 		/** The grade given by the corrector. */
 		finalMark?: number;
-		/** The user doing the correction */
+		/** The corrector: the user doing the evaluation. */
 		corrector: IncompleteUser;
-		/** The users that are part of the team to be corrected. */
+		/** The correcteds: the users of the team being evaluated. */
 		correcteds: IncompleteUser[];
 	}
 
@@ -131,10 +131,11 @@ export namespace Intra {
 	}
 
 	/**
-	 * Fetches all the placeholder evaluations of the bot.
-	 * @returns All currently booked evaluations by the bot.
+	 * Fetches all the Peer++ locks: the placeholder evaluations the bot books on a team's
+	 * final evaluation, so the team cannot book another one and a Peer++ evaluator has to.
+	 * @returns Every lock the bot currently holds.
 	 */
-	export async function getBotEvaluations() {
+	export async function getLocks() {
 		const pages = await api.getAllPages(`/users/${Config.botID}/scale_teams`, {
 			"filter[campus_id]": `${Config.campusID}`,
 			"filter[cursus_id]": `${Config.cursusID}`,
@@ -170,9 +171,9 @@ export namespace Intra {
 	/**
 	 * Get the evaluations of a given, project, scale and team ID.
 	 * @param projectID The project ID.
-	 * @param scaleID The scale used to evaluate the evaluation.
+	 * @param scaleID The id of the scale, the evaluation sheet the corrector fills in.
 	 * @param teamID The team id.
-	 * @returns All the evaluations of that specific team of a given project.
+	 * @returns Every evaluation that team had for the given project, locks included.
 	 */
 	export async function getEvaluations(projectID: number, scaleID: number, teamID: number) {
 		const pages = await api.getAllPages(`/projects/${projectID}/scale_teams`, {
@@ -215,10 +216,10 @@ export namespace Intra {
 	}
 
 	/**
-	 * Returns all the evaluations as a corrector withing a given
+	 * Returns the evaluations a user took part in within a given period.
 	 * @param user The user to fetch the evaluations from.
 	 * @param numDays The day range, for instance 7 days in the past and future.
-	 * @param type The type of evaluations to get the user as, say as being corrected or as corrector.
+	 * @param type Whether to fetch the evaluations where the user was the corrector or one of the correcteds.
 	 * @returns All the evaluations of the given period and type.
 	 */
 	export async function getRecentEvaluations(user: Login, numDays: number, type: "as_corrector" | "as_corrected") {
@@ -267,7 +268,7 @@ export namespace Intra {
 
 	/**
 	 * Book an evaluation.
-	 * @param scaleID The scale/eval sheet to use.
+	 * @param scaleID The id of the scale, the evaluation sheet the corrector fills in.
 	 * @param teamID The team id.
 	 * @param correctorID The user id of the corrector.
 	 * @param date The date on which to book it for.
@@ -292,9 +293,10 @@ export namespace Intra {
 	}
 
 	/**
-	 * Books a placeholder evaluation that will later delete itself.
-	 * @param scaleID The evaluation sheet id.
-	 * @param teamID The team to book the eval for.
+	 * Locks a team's final evaluation by booking the bot itself as the corrector, so the team
+	 * cannot book another evaluation until a Peer++ evaluator takes the lock over.
+	 * @param scaleID The id of the scale, the evaluation sheet the corrector fills in.
+	 * @param teamID The team to lock.
 	 */
 	export async function bookPlaceholderEval(scaleID: number, teamID: number) {
 		const expireDate = new Date(Date.now() + Config.lockExpirationDays * 24 * 60 * 60 * 1000);
@@ -302,8 +304,8 @@ export namespace Intra {
 	}
 
 	/**
-	 * Returns a point to each one in the team.
-	 * @param hook The webhook response carrying the ScaleTeam.
+	 * Returns a correction point to every member of the team.
+	 * @param teamID The team, a group of students' attempt at a project.
 	 */
 	export async function givePointToTeam(teamID: number) {
 		const teamResponse = await Intra.api.get(`/teams/${teamID}/teams_users`);
@@ -326,7 +328,7 @@ export namespace Intra {
 	}
 
 	/**
-	 * Deletes an evaluation, does not reward back the evaluation point however.
+	 * Deletes an evaluation, a Peer++ lock included. Does not return the correction point.
 	 * @param scaleTeam The evaluation to delete.
 	 */
 	export async function deleteEvaluation(scaleTeam: ScaleTeam) {

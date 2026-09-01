@@ -8,10 +8,10 @@ import { Config } from "../config";
 /*============================================================================*/
 
 /**
- * Simply randomly decide if an evaluation is required.
+ * Simply randomly decide if a Peer++ lock is required.
  * The weight / probability can be altered via the config.
  *
- * @return True if check passed, false otherwise.
+ * @return True if the team's final evaluation should be locked, false otherwise.
  */
 export async function Random() {
 	return Math.random() < Config.randomEvalChance / 100;
