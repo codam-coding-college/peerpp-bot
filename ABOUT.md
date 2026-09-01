@@ -63,11 +63,13 @@ without it, the evaluator commands will not work for you.
 
 | Command | Who can use it | Description |
 | --- | --- | --- |
-| `/projects` | everyone | Show which projects the bot can lock evaluations for. |
+| `/projects` | everyone | Show which projects the bot can lock evaluations for, with your favorites marked. |
 | `/evaluations` | everyone | Show all locked evaluations that are currently available to book. |
 | `/book <project_name>` | Peer++ evaluators | Book one of the available evaluations for that project. |
-| `/notify-on` | Peer++ evaluators | Get a Slack message whenever a new evaluation is locked. |
-| `/notify-off` | Peer++ evaluators | Stop receiving those notifications. |
+| `/notify-on <project_name>` | Peer++ evaluators | Mark a project as favorite, and get notified when one of its evaluations is locked. |
+| `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified about it. |
+| `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified about all of them. |
+| `/notify-off-all` | Peer++ evaluators | Remove all your favorites and stop every notification. |
 
 ### Booking an evaluation
 
@@ -80,7 +82,27 @@ without it, the evaluator commands will not work for you.
 
 You cannot book an evaluation for your own team.
 
-Prefer not to poll `/evaluations`? Run `/notify-on` and the bot will tell you as soon as a new evaluation is locked.
+### Favorites
+
+Rather than polling `/evaluations`, mark the projects you enjoy evaluating as favorites:
+
+```
+/notify-on libft
+/notify-on push_swap
+```
+
+From then on the bot messages you as soon as a team is locked on one of those projects — and only those.
+You can favorite as many as you like, and `/notify-off <project_name>` removes one again.
+Both commands need a project name, which has to be one from `/projects`.
+
+Want everything, or nothing at all?
+
+| | |
+| --- | --- |
+| `/notify-on-all` | favorites every project at once |
+| `/notify-off-all` | clears all your favorites and stops every notification |
+
+Running `/projects` shows the full list with a :star: next to the ones you have favorited.
 
 ---
 

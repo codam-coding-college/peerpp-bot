@@ -18,6 +18,14 @@ CREATE TABLE IF NOT EXISTS evaluators(
 	notifyOfNewLock BOOLEAN NOT NULL
 );
 
+-- Projects an evaluator marked as favorite, used to decide who to notify of a new lock.
+CREATE TABLE IF NOT EXISTS favorites(
+	intraUID INTEGER NOT NULL,
+	projectName varchar(512) NOT NULL,
+
+	PRIMARY KEY(intraUID, projectName)
+);
+
 -- Avoid duplicate deliveries.
 CREATE TABLE IF NOT EXISTS webhookDeliveries(
 	delivery varchar(1024) PRIMARY KEY NOT NULL,
