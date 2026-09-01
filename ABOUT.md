@@ -1,62 +1,102 @@
 # Peer++ Evaluations
 
 The Peer++ evaluation system ensures the quality of evaluations by matching students with high-level evaluators in the core curriculum.
-This is to mainly prevent cheating in evaluations and also focus on the code and to have instructive evaluations.
+Its goal is to discourage cheating in evaluations, keep the focus on the code, and make evaluations instructive.
 
-This is achieved with the Peer++ slackbot which locks the last evaluation of your project if it deems it necessary.
-Its decision is influenced by the quality of the previous evaluations, e.g: level of the previous evaluators being too low.
+This is achieved with the Peer++ Slackbot, which reserves ("locks") the last evaluation of your project when it deems it necessary.
+Its decision is based on the quality of your previous evaluations — for example, when every previous evaluator was of a low level.
 
+---
 
-## How to become a Peer++ Evaluator
-Simply inform the Pedago team that you want to be a Peer++ evaluator.
+## When does the bot lock an evaluation?
 
-Once added, you get a fancy tag Peer++ on your profile. This tag is actually important as its used to identify Peer++ evaluators.
-If you do not have this tag you can't request a evaluation via the bot.
+The bot only considers projects from the core curriculum that are on its list — run `/projects` in the Slackbot to see the current list.
 
+When your team books its second-to-last evaluation, the bot checks the evaluations you have had so far.
+Your last slot is **not** locked if any of the following is true:
 
-## The Hitchhiker's Guide to evaluating
-As a Peer++ evaluator you're responsible to ensuring that the quality of the project is of a high standard and rely on your own expertise to make sure this stays true.
+- one of your correctors was at least **2 levels above** the team leader;
+- one of your correctors had **completed the project** themselves;
+- a previous evaluation was a **fail**;
 
-You can use testers to make sure that the project covers all sorts of edge cases. Make sure to actually also read the code and ask questions about it, why did they make certain decisions and if they can explain concepts correctly.
+If none of those apply, the bot reserves your final evaluation slot and you have to wait for a Peer++ evaluator to pick you up.
+Evaluations where the corrector was marked absent do not count towards this check.
 
-The Peer++ Evals are done to increase the standards set by the students. It's NOT an opportunity to burn them to the ground.
+> **NOTE:** the bot can also be configured to lock a small percentage of evaluations at random.
 
-You can be strict and nice at the same time. There is no need to be degrading or otherwise disrespectful of anyone.
+---
+
+## Being evaluated
+
+Once your last evaluation is locked, you cannot continue with regular evaluations for that project.
+You will need to wait for a Peer++ evaluator to book you. This may take some time, but be patient — someone will usually come along.
+
+When a Peer++ evaluator books you, you are notified on Slack with their name.
+From that point it is up to the two of you to agree on when to do the evaluation. It may be in 20 minutes or tomorrow.
+
+### If nobody books you
+
+The lock lasts **1 day**. After that the bot removes it and ignores that project attempt from then on,
+so you can continue with your regular evaluations without the bot interfering.
+
+If you fail the project and retry it, the bot can lock the last evaluation of the new attempt again.
+
+### Do not try to cancel it
+
+Cancelling the bot's evaluation does not get rid of it. The bot notices, immediately re-books your last slot,
+and puts you back in the queue. You are better off waiting.
+
+The evaluation point taken for cancelling the evaluation will not be returned.
+
+---
+
+## Becoming a Peer++ evaluator
+
+Inform the Codam Pedago team that you want to become a Peer++ evaluator.
+
+Once you are added you get a Peer++ tag on your profile. That tag is what the bot uses to recognise evaluators —
+without it, the evaluator commands will not work for you.
+
+---
+
+## Commands
+
+| Command | Who can use it | Description |
+| --- | --- | --- |
+| `/projects` | everyone | Show which projects the bot can lock evaluations for. |
+| `/evaluations` | everyone | Show all locked evaluations that are currently available to book. |
+| `/book <project_name>` | Peer++ evaluators | Book one of the available evaluations for that project. |
+| `/notify-on` | Peer++ evaluators | Get a Slack message whenever a new evaluation is locked. |
+| `/notify-off` | Peer++ evaluators | Stop receiving those notifications. |
 
 ### Booking an evaluation
 
-All available commands:
+1. Run `/projects` to see which projects the bot handles.
+2. Run `/evaluations` to see what is currently available, and how long each has been waiting.
+3. Run `/book <project_name>` to take one.
+4. The bot picks the evaluation that has been waiting the longest, swaps out its reservation for yours,
+   and messages both you and the team.
+5. Agree on a time with the team and conduct the evaluation.
 
-| Command | Description |
-| --- | --- |
-| /projects | Display which projects can be evaluated. |
-| /book <project_name> | Book an available evaluation of a certain project. |
-| /evaluations | Display all currently available evaluations that can be booked. |
+You cannot book an evaluation for your own team.
 
-So the procedure for using the book is as follows:
-1. Type `/projects` to find out which projects are possible to evaluate.
-2. Type `/evaluations` to see wha evaluations are currently available.
-3. Type `/book <PROJECT_NAME>` to book an available evaluation.
-4. Wait for the bot to match you with a student.
-5. Profit!
+Prefer not to poll `/evaluations`? Run `/notify-on` and the bot will tell you as soon as a new evaluation is locked.
 
-Once the `/book` command has executed it will find the oldest locked slot and swaps out its reserved evaluation with yours.
-The bot messages both parties that they have been matched and its up the both evaluator and evaluatee to discuss on when to conduct the evaluation.
+---
 
+## The Hitchhiker's Guide to evaluating
 
-## The Hitchhiker's Guide to being evaluated
-Once you book your second to last evaluation, the bot will check the previous evaluators and see if they were of high quality.
-If this check fails your last evaluation gets reserved by the bot and essentially "locked” meaning you cannot continue with regular evaluations.
+As a Peer++ evaluator you are responsible for making sure the quality of the project is of a high standard,
+and you rely on your own expertise to keep it that way.
 
-This means you need to wait that a Peer++ evaluator books you, this may take some time but be patient, someone will most likely come and book you.
-If you do get booked by a Peer++ evaluator, you will be notified again about who it is and that you must communicate on when to do it.
-It may be in 20 minutes or tomorrow, it’s up to you two to figure this out.
+Use testers to check that the project handles all sorts of edge cases. Read the code as well, and ask about it:
+why were certain decisions made, and can the student explain the concepts correctly?
 
-The lock lasts only 1 day, after which the bot will remove the lock and completely ignore the project in the future.
-In this case you can continue with your regular evaluations and the bot will not interfere anymore.
-However if you fail the project and retry, the bot will again be able to lock your last evaluation for the new attempt.
+Peer++ evaluations exist to raise the standard students hold themselves to.
+They are **not** an opportunity to burn anyone to the ground.
 
-> **NOTE:** ***ANY*** attempt trying to cancel the bot's lock / evaluation will simply cause it to re-lock your last slot, lose a point,
-> put you back on the queue and reset the counter. So don't try it 😉
+You can be strict and kind at the same time. There is never a need to be degrading or disrespectful.
 
-If you encounter any bugs or issues please inform the pedago team about it.
+---
+
+If you run into bugs or issues, please let the Pedago team know.
