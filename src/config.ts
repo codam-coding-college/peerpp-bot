@@ -34,6 +34,9 @@ namespace Configuration {
 		dbPath: string;
 		projects: { id: number; name: string }[];
 		blocked: { studentA: string; studentB: string }[];
+
+		/** Slack member IDs of the staff to notify whenever an evaluation is booked. Optional, leave empty to notify no-one. */
+		staffSlackIDs?: string[];
 	}
 }
 

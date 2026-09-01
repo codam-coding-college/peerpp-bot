@@ -11,7 +11,7 @@ import { Config } from "./config";
 import Intra from "./utils/intra";
 import Fast42 from "@codam/fast42";
 import { Database } from "sqlite3";
-import { slackApp } from "./bots/slackbot";
+import { slackApp, SlackBot } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
 import { IntraResponse } from "./utils/types";
@@ -36,19 +36,28 @@ async function checkExpiredLocks() {
 
 	let n: number = 0;
 	for (const lock of locks) {
+		// NOTE: setDate() mutates createdAt, so keep a copy of when the lock was actually placed.
+		const lockedAt = new Date(lock.createdAt);
 		const unlockDate = new Date(lock.createdAt.setDate(lock.createdAt.getDate() + Config.lockExpirationDays));
 		//Get lock project state --> cancel any locks that are already finished/evaluated
 		let teamU: IntraResponse.TeamUser[] = await Intra.getTeamUsers(lock.teamID);
 		Logger.log(`Team: ${JSON.stringify(teamU)}`);
 		let projectState: string | undefined = teamU[0]?.team.status;
 		Logger.log(`Project state: ${projectState}`);
-		if (Date.now() >= unlockDate.getTime() || projectState == "finished") {
+		const expired = Date.now() >= unlockDate.getTime();
+		if (expired || projectState == "finished") {
 			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
 
 			try {
 				await DB.insert(lock.teamID);
 				await Intra.deleteEvaluation(lock);
 				Logger.log(`Deleted ScaleTeam: ${lock.id}`);
+				await SlackBot.notifyStaffOfDeletedLock(
+					lock,
+					lockedAt,
+					expired ? "the lock expired" : "the project was already finished",
+					teamU.map((teamUser) => teamUser.user.login)
+				);
 			} catch (error) {
 				Raven.captureException(error);
 				return Logger.log(`${error}`, LogType.ERROR);

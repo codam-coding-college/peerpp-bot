@@ -83,6 +83,75 @@ export namespace SlackBot {
 	}
 
 	/**
+	 * Send a message straight to a Slack member ID, for recipients that have no Intra user attached.
+	 * @param slackUID The Slack member ID to message.
+	 * @param message The message to send.
+	 */
+	export async function sendMessageToSlackID(slackUID: string, message: string) {
+		const opt: ChatPostMessageArguments = { channel: slackUID, text: message };
+
+		const response = await slackApp.client.chat.postMessage(opt);
+		if (!response.ok) {
+			throw new Error(`Failed to send Slack message to ${slackUID}: ${response.error}`);
+		}
+	}
+
+	/**
+	 * Sends a message to every staff member configured in the config.
+	 *
+	 * Never throws: these messages report something that already happened, so a staff
+	 * member with a wrong Slack ID must not break the flow that triggered them.
+	 */
+	async function notifyStaff(message: string) {
+		for (const slackUID of Config.staffSlackIDs ?? []) {
+			try {
+				await SlackBot.sendMessageToSlackID(slackUID, message);
+			} catch (error) {
+				Raven.captureException(error instanceof Error ? error : new Error(String(error)));
+				Logger.log(`Failed to notify staff member ${slackUID}: ${error}`, LogType.ERROR);
+			}
+		}
+	}
+
+	/**
+	 * Reports a booked evaluation to the staff.
+	 *
+	 * @param corrector The evaluator that booked the evaluation.
+	 * @param correcteds The team that will be evaluated.
+	 * @param lock The reserved evaluation that was swapped out.
+	 * @param evaluationDate When the evaluation itself will take place.
+	 */
+	export async function notifyStaffOfBooking(corrector: User, correcteds: User[], lock: Intra.ScaleTeam, evaluationDate: Date) {
+		await notifyStaff(
+			`A Peer++ evaluation has been booked.` +
+				`\n• Booked at: \`${new Date().toISOString()}\`` +
+				`\n• Booked by: \`${corrector.intraLogin}\`` +
+				`\n• Team: \`${lock.teamName}\` (${correcteds.map((user) => user.intraLogin).join(", ")})` +
+				`\n• Project: \`${lock.projectName}\`` +
+				`\n• Evaluation at: \`${evaluationDate.toISOString()}\``
+		);
+	}
+
+	/**
+	 * Reports a deleted lock to the staff.
+	 *
+	 * @param lock The lock that was deleted.
+	 * @param lockedAt When the lock was originally placed.
+	 * @param reason Why the lock was deleted.
+	 * @param teamLogins The logins of the team that was locked.
+	 */
+	export async function notifyStaffOfDeletedLock(lock: Intra.ScaleTeam, lockedAt: Date, reason: string, teamLogins: string[]) {
+		await notifyStaff(
+			`A Peer++ lock has been deleted.` +
+				`\n• Deleted at: \`${new Date().toISOString()}\`` +
+				`\n• Reason: ${reason}` +
+				`\n• Team: \`${lock.teamName}\` (${teamLogins.join(", ")})` +
+				`\n• Project: \`${lock.projectName}\`` +
+				`\n• Locked at: \`${lockedAt.toISOString()}\``
+		);
+	}
+
+	/**
 	 *  This function registers a command and handles exceptions.
 	 *  To not use try/catch in the `cb()` function, it will be caught automatically and a message will be logged and sent to the user.
 	 */
@@ -152,6 +221,8 @@ export namespace SlackBot {
 				`You will be evaluated by \`${corrector.intraLogin}\` on your \`${lock.projectName}\`.\nContact them to schedule a time and date for the Peer++ evaluation.\n`
 			);
 		}
+
+		await SlackBot.notifyStaffOfBooking(corrector, correcteds, lock, evaluationDate);
 		Logger.log(`Swapped out lock ${lock.id} for evaluation ${lock.teamName}.`);
 	}
 

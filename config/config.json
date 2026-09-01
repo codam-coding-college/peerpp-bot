@@ -77,5 +77,6 @@
 	],
 	"blocked": [
 		{ "studentA": "salty", "studentB": "jpeg" }
-	]
+	],
+	"staffSlackIDs": []
 }
