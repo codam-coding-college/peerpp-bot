@@ -263,24 +263,29 @@ export namespace SlackBot {
 	 * @param user The corrector.
 	 */
 	export async function bookEvaluation(projectName: string, respond: RespondFn, corrector: User) {
-		if (!projectName || !Config.projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase())) {
+		// Resolve the given name to its project once, so the lock lookup below cannot disagree
+		// with the check here about what the user meant. Locks carry the project name lowercased.
+		const given = projectName.trim().replace(/\s+/g, " ");
+		const project = Config.projects.find((p) => p.name.toLowerCase() === given.toLowerCase());
+		if (!project) {
 			await respond(`Project \`${projectName}\` not recognized, invoke /projects for more info`);
 			return;
 		}
+		const name = project.name.toLowerCase();
 
-		// const canEvaluate = await Intra.validatedProject(corrector.intraUID, projectName); //||
+		// const canEvaluate = await Intra.validatedProject(corrector.intraUID, name); //||
 		// await Intra.hasCompletedCore(corrector.intraLogin); // NOTE: For the future person who comes here, no sure if this thing works?
 		// if (!canEvaluate) {
 		// 	await respond("Sorry, you can't book a project you have not completed :sus:");
 		// 	return;
 		// }
 
-		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\``);
-		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\`...`);
+		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\``);
+		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\`...`);
 
-		const locks = (await Intra.getBotEvaluations()).filter((value) => value.projectName == projectName);
+		const locks = (await Intra.getBotEvaluations()).filter((value) => value.projectName == name);
 		if (locks.length == 0) {
-			await respond(`No-one needs to be evaluated on \`${projectName}\``);
+			await respond(`No-one needs to be evaluated on \`${name}\``);
 			return;
 		}
 
@@ -310,7 +315,7 @@ export namespace SlackBot {
 	 */
 	export async function setFavorite(respond: RespondFn, slackUID: string, projectName: string, favorite: boolean) {
 		const command = favorite ? "/notify-on" : "/notify-off";
-		const given = projectName.trim();
+		const given = projectName.trim().replace(/\s+/g, " ");
 
 		if (!given) {
 			await respond(`Please provide a project, for example \`${command} libft\`. Invoke /projects to see them all.`);
