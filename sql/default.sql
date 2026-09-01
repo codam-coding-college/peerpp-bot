@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS expiredTeam(
 	created_at INTEGER DEFAULT (datetime('now', 'localtime'))
 );
 
--- Students that want to receive notifcations.
+-- Evaluators that can be notified of teams waiting for a Peer++ evaluation.
 CREATE TABLE IF NOT EXISTS evaluators(
 	intraUID INTEGER PRIMARY KEY NOT NULL,
 	slackUID varchar(512) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS evaluators(
 	notifyOfNewLock BOOLEAN NOT NULL
 );
 
--- Projects an evaluator marked as favorite, used to decide who to notify of a new lock.
+-- Projects an evaluator marked as favorite, used to decide who to notify of a new team waiting for a Peer++ evaluation.
 CREATE TABLE IF NOT EXISTS favorites(
 	intraUID INTEGER NOT NULL,
 	projectName varchar(512) NOT NULL,

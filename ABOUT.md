@@ -64,20 +64,20 @@ without it, the evaluator commands will not work for you.
 | Command | Who can use it | Description |
 | --- | --- | --- |
 | `/projects` | everyone | Show which projects the bot can lock evaluations for, with your favorites marked. |
-| `/evaluations` | everyone | Show all locked evaluations that are currently available to book. |
+| `/evaluations` | everyone | Show all teams waiting for a Peer++ evaluation that can be booked. |
 | `/book <project_name>` | Peer++ evaluators | Book one of the available evaluations for that project. |
-| `/notify-on <project_name>` | Peer++ evaluators | Mark a project as favorite, and get notified when one of its evaluations is locked. |
-| `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified about it. |
-| `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified about all of them. |
-| `/notify-off-all` | Peer++ evaluators | Remove all your favorites and stop every notification. |
-| `/evaluators` | Peer++ evaluators | Show which evaluators are notified about which project. |
+| `/notify-on <project_name>` | Peer++ evaluators | Mark a project as favorite, and get notified when a team is waiting for a Peer++ evaluation on it. |
+| `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified of its waiting teams. |
+| `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified of every team waiting for a Peer++ evaluation. |
+| `/notify-off-all` | Peer++ evaluators | Remove all your favorites and stop being notified entirely. |
+| `/evaluators` | Peer++ evaluators | Show which evaluators are notified of teams waiting for a Peer++ evaluation, per project. |
 
 ### Booking an evaluation
 
 1. Run `/projects` to see which projects the bot handles.
 2. Run `/evaluations` to see what is currently available, and how long each has been waiting.
 3. Run `/book <project_name>` to take one.
-4. The bot picks the evaluation that has been waiting the longest, swaps out its reservation for yours,
+4. The bot picks the team that has been waiting the longest, swaps out its reservation for yours,
    and messages both you and the team.
 5. Agree on a time with the team and conduct the evaluation.
 
@@ -92,7 +92,7 @@ Rather than polling `/evaluations`, mark the projects you enjoy evaluating as fa
 /notify-on push_swap
 ```
 
-From then on the bot messages you as soon as a team is locked on one of those projects — and only those.
+From then on the bot messages you as soon as a team is waiting for a Peer++ evaluation on one of those projects — and only those.
 You can favorite as many as you like, and `/notify-off <project_name>` removes one again.
 Both commands need a project name, which has to be one from `/projects`.
 

@@ -255,7 +255,7 @@ export namespace SlackBot {
 	}
 
 	/**
-	 * Display which evaluators are notified about which project, so it is visible
+	 * Display which evaluators are notified of teams waiting for a Peer++ evaluation, so it is visible
 	 * where the coverage is and who to ask about a project.
 	 * @param respond The slack response function, sends a message to user.
 	 */
@@ -274,7 +274,7 @@ export namespace SlackBot {
 			return;
 		}
 
-		let text = "Peer++ evaluators that are notified of new evaluations per project:\n";
+		let text = "Peer++ evaluators that are notified of new teams waiting for a Peer++ evaluation, per project:\n";
 		for (const name of watched) {
 			text += `\`${name}\` - ${watchers.get(name)!.join(", ")}\n`;
 		}
@@ -335,7 +335,7 @@ export namespace SlackBot {
 
 	/**
 	 * Marks a project as favorite, or removes it, for the evaluator invoking the command.
-	 * Only favorited projects are notified about.
+	 * Only teams waiting for a Peer++ evaluation on a favorited project are notified about.
 	 *
 	 * @param projectName The project given by the user, validated against the config.
 	 * @param favorite Whether to add or remove the favorite.
@@ -376,9 +376,10 @@ export namespace SlackBot {
 		);
 	}
 
-	/** Marks every project of the config as favorite, so the evaluator is notified about all of them. */
+	/** Marks every project of the config as favorite, so the evaluator is notified of every team waiting for a Peer++ evaluation. */
 	export async function favoriteAll(respond: RespondFn, slackUID: string) {
-		const projects = Config.projects.map((project) => project.name.toLowerCase());
+		// The config can hold several ids under one name, favorite and count each name only once.
+		const projects = [...new Set(Config.projects.map((project) => project.name.toLowerCase()))];
 		if (projects.length === 0) {
 			await respond(`There are no projects to be notified about.`);
 			return;
@@ -390,13 +391,13 @@ export namespace SlackBot {
 
 		await respond(
 			added === 0
-				? `All ${projects.length} projects already were your favorites, you are notified about every one of them.`
-				: `Added ${added} project(s) to your favorites, you will now be notified about all ${projects.length} of them.` +
+				? `All ${projects.length} projects already were your favorites, you are notified of every team waiting for a Peer++ evaluation.`
+				: `Added ${added} project(s) to your favorites, you will now be notified of teams waiting for a Peer++ evaluation on all ${projects.length} of them.` +
 						`\nUse the command \`/notify-off-all\` to stop receiving these notifications.`
 		);
 	}
 
-	/** Drops every favorite of the evaluator, so they stop receiving notifications entirely. */
+	/** Drops every favorite of the evaluator, so they stop being notified of teams waiting for a Peer++ evaluation. */
 	export async function clearFavorites(respond: RespondFn, slackUID: string) {
 		const user = await getFullUser({ slackUID: slackUID });
 		const removed = await DB.clearFavorites(user.intraUID);
@@ -440,7 +441,9 @@ SlackBot.registerCommand("/projects", async (respond, body) => {
 	}
 
 	if (isEvaluator) {
-		text += `\n:star: = your favorites, the projects you are notified about.` + `\nUse \`/notify-on <project>\` to add one and \`/notify-off <project>\` to remove one.`;
+		text +=
+			`\n:star: = your favorites, the projects you are notified about when a team is waiting for a Peer++ evaluation.` +
+			`\nUse \`/notify-on <project>\` to add one and \`/notify-off <project>\` to remove one.`;
 	}
 	await respond(text);
 });
@@ -450,7 +453,7 @@ SlackBot.registerCommand("/evaluations", async (respond) => {
 	await SlackBot.displayEvaluations(respond);
 });
 
-/** List which evaluators are notified about which project. */
+/** List which evaluators are notified of teams waiting for a Peer++ evaluation, per project. */
 SlackBot.registerEvaluatorCommand("/evaluators", async (respond) => {
 	await SlackBot.displayEvaluators(respond);
 });
@@ -460,22 +463,22 @@ SlackBot.registerEvaluatorCommand("/book", async (respond, body, invoker) => {
 	await SlackBot.bookEvaluation(body.text, respond, invoker);
 });
 
-/** Mark the given project as favorite, notify me when one of its evaluations is locked. */
+/** Mark the given project as favorite, notify me when a team is waiting for a Peer++ evaluation on it. */
 SlackBot.registerEvaluatorCommand("/notify-on", async (respond, body) => {
 	await SlackBot.setFavorite(respond, body.user_id, body.text, true);
 });
 
-/** Remove the given project from my favorites, stop notifying me about it. */
+/** Remove the given project from my favorites, stop notifying me of its teams waiting for a Peer++ evaluation. */
 SlackBot.registerEvaluatorCommand("/notify-off", async (respond, body) => {
 	await SlackBot.setFavorite(respond, body.user_id, body.text, false);
 });
 
-/** Make every project a favorite, notify me about all of them. */
+/** Make every project a favorite, notify me of every team waiting for a Peer++ evaluation. */
 SlackBot.registerEvaluatorCommand("/notify-on-all", async (respond, body) => {
 	await SlackBot.favoriteAll(respond, body.user_id);
 });
 
-/** Remove all my favorites, stop notifying me entirely. */
+/** Remove all my favorites, stop notifying me of teams waiting for a Peer++ evaluation. */
 SlackBot.registerEvaluatorCommand("/notify-off-all", async (respond, body) => {
 	await SlackBot.clearFavorites(respond, body.user_id);
 });
