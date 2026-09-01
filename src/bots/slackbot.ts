@@ -197,14 +197,12 @@ export namespace SlackBot {
 			return;
 		}
 
-		const canEvaluate = await Intra.validatedProject(corrector.intraUID, projectName); //||
-		// NOTE: For the future person who comes here, no sure if this thing works?
-		// await Intra.hasCompletedCore(corrector.intraLogin);
-
-		if (!canEvaluate) {
-			await respond("Sorry, you can't book a project you have not completed :sus:");
-			return;
-		}
+		// const canEvaluate = await Intra.validatedProject(corrector.intraUID, projectName); //||
+		// await Intra.hasCompletedCore(corrector.intraLogin); // NOTE: For the future person who comes here, no sure if this thing works?
+		// if (!canEvaluate) {
+		// 	await respond("Sorry, you can't book a project you have not completed :sus:");
+		// 	return;
+		// }
 
 		Logger.log(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\``);
 		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${projectName}\`...`);
