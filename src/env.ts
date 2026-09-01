@@ -36,7 +36,6 @@ namespace Environment {
 		SENTRY_SECRET: string;
 
 		WEBHOOK_PORT: number;
-		SLACKBOT_PORT: number;
 	}
 
 	/** Returns the value of the given key, or undefined when it is absent or empty. */
@@ -86,7 +85,6 @@ namespace Environment {
 			SENTRY_SECRET: optional("SENTRY_SECRET") ?? "",
 
 			WEBHOOK_PORT: port("WEBHOOK_PORT") ?? 8080,
-			SLACKBOT_PORT: port("SLACKBOT_PORT") ?? 3000,
 		};
 
 		if (problems.length > 0) {
