@@ -30,20 +30,18 @@ export namespace SlackBot {
 	/**
 	 * Find the oldest evaluation that has been booked by the bot.
 	 * @param locks The reserved evaluations by the bot.
-	 * @returns The oldest scaleteam available in the locks.
+	 * @returns The oldest scaleteam available in the locks, or undefined when there are none.
 	 */
-	const getHighestPriorityTeam = (locks: Intra.ScaleTeam[]) => {
-		let shortestAgo = Date.now();
-		let best: Intra.ScaleTeam | null = null;
+	const getHighestPriorityTeam = (locks: Intra.ScaleTeam[]): Intra.ScaleTeam | undefined => {
+		let best: Intra.ScaleTeam | undefined = undefined;
 
 		for (const scaleTeam of locks) {
-			if (scaleTeam.createdAt.getTime() < shortestAgo) {
-				shortestAgo = scaleTeam.createdAt.getTime();
+			if (best === undefined || scaleTeam.createdAt.getTime() < best.createdAt.getTime()) {
 				best = scaleTeam;
 			}
 		}
 
-		return best as Intra.ScaleTeam;
+		return best;
 	};
 
 	/**
@@ -284,13 +282,14 @@ export namespace SlackBot {
 		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\`...`);
 
 		const locks = (await Intra.getBotEvaluations()).filter((value) => value.projectName == name);
-		if (locks.length == 0) {
+		const lock = getHighestPriorityTeam(locks);
+		if (lock === undefined) {
 			await respond(`No-one needs to be evaluated on \`${name}\``);
 			return;
 		}
 
 		await respond(`Found a team to be evaluated, booking evaluation...`);
-		await swapScaleTeams(respond, corrector, getHighestPriorityTeam(locks));
+		await swapScaleTeams(respond, corrector, lock);
 	}
 
 	export function notifyOfNewLock(projectName: string) {
