@@ -97,7 +97,7 @@ export const db = new Database(Config.dbPath, (err) => {
 (async () => {
 	Logger.setPath(Config.logOutput);
 	Logger.log("Starting Peer++ bot 🤖");
-	if (Env.SENTRY_SECRET) Raven.config(`https://${Env.SENTRY_SECRET}@sentry.codam.nl/${Config.sentryID}`).install();
+	if (Env.SENTRY_DSN) Raven.config(`${Env.SENTRY_DSN}`).install();
 
 	Intra.api = await new Fast42([
 		{

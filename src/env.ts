@@ -33,7 +33,7 @@ namespace Environment {
 		INTRA_UID: string;
 		INTRA_SECRET: string;
 
-		SENTRY_SECRET: string;
+		SENTRY_DSN: string;
 
 		WEBHOOK_PORT: number;
 	}
@@ -82,7 +82,7 @@ namespace Environment {
 			INTRA_UID: secret("INTRA_UID"),
 			INTRA_SECRET: secret("INTRA_SECRET"),
 
-			SENTRY_SECRET: optional("SENTRY_SECRET") ?? "",
+			SENTRY_DSN: optional("SENTRY_DSN") ?? "",
 
 			WEBHOOK_PORT: port("WEBHOOK_PORT") ?? 8080,
 		};
