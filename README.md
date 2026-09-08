@@ -30,6 +30,14 @@ The slackbot runs over Websockets instead of HTTP Requests, so it does not liste
 ### Production
 In production environments, use Docker.
 
+The container runs as the unprivileged `node` user (uid 1000), so the
+bind-mounted `db` and `logs` directories must be writable by that uid. Run this
+once, before the first `make up`:
+```
+mkdir -p db logs
+chown -R 1000:1000 db logs
+```
+
 - Use `make up` to run in a docker container.
 - Use `make down` to shut down the docker container.
 
@@ -39,7 +47,8 @@ Or, if you're confident in your Docker skills, you can just use the `docker comp
 In production, we recommend setting up a logrotate in the `logs` directory.
 Create a logrotate config in the `/etc/logrotate.d` folder.
 
-You can use or modify the configuration below:
+You can use or modify the configuration below. Note that the replacement log
+file is created for uid 1000, matching the user inside the container:
 ```
 /root/peer-bot/logs/log.txt {
         weekly
@@ -49,7 +58,7 @@ You can use or modify the configuration below:
         delaycompress
         shred
         ifempty
-        create 644 root root
+        create 644 1000 1000
 }
 ```
 

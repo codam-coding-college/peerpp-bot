@@ -1,13 +1,14 @@
-.git
-build
-node_modules
-.vscode
+# Deny everything, then re-include only what the build actually needs. New files
+# in the repo (tokens, logs, database dumps) then fail closed instead of getting
+# baked into the published image, where every layer stays readable forever.
+*
 
-Dockerfile
-Makefile
-.prettierrc
+!package.json
+!package-lock.json
+!tsconfig.json
+!src
+!sql
+!config
 
-*.yml
-*.txt
-**/*.sqlite
+# Secrets are passed in through the environment, never copied into the image.
 **/*.env
