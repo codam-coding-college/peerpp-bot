@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------------
 
 import { db } from "./app";
-import { Config } from "./config";
+import { Config, Projects } from "./config";
 import Logger, { LogType } from "./utils/logger";
 import { User } from "./utils/user";
 import Raven from "raven";
@@ -94,45 +94,85 @@ namespace DB {
 	}
 
 	/**
-	 * Marks a project as one of the evaluator's favorites.
-	 * @param intraUID The evaluator.
-	 * @param projectName The project, lowercased.
+	 * Moves a favorites table that still stores project names over to project ids, which is what
+	 * the rest of the code expects. Favorites used to be stored by name, so renaming a project in
+	 * the config silently stopped everyone that favorited it from being notified.
+	 *
+	 * Names are matched against the config with their spaces and hyphens replaced by underscores,
+	 * because that rename is what made the ids necessary in the first place. A favorite whose
+	 * project the config no longer lists is dropped, there is nothing left to notify about.
+	 *
+	 * Does nothing when the table already stores ids, so it can run on every startup.
+	 * @returns The amount of favorites that were carried over.
 	 */
-	export async function addFavorite(intraUID: number, projectName: string): Promise<void> {
-		await dbRun(`INSERT OR IGNORE INTO favorites(intraUID, projectName) VALUES(?, ?)`, [intraUID, projectName]);
-	}
-
-	/**
-	 * Removes a project from the evaluator's favorites.
-	 * @returns True if it was a favorite, false if there was nothing to remove.
-	 */
-	export async function removeFavorite(intraUID: number, projectName: string): Promise<boolean> {
-		return new Promise((resolve, reject) => {
-			db.run(`DELETE FROM favorites WHERE intraUID = ? AND projectName = ?`, [intraUID, projectName], function (err) {
-				if (err !== null) {
-					Raven.captureException(err);
-					return reject(`Failed to remove favorite ${projectName} for ${intraUID}: ${err}`);
-				}
-				return resolve(this.changes > 0);
-			});
+	export async function migrateFavoritesToProjectIDs(): Promise<number> {
+		const columns = await new Promise<{ name: string }[]>((resolve, reject) => {
+			db.all<{ name: string }>(`PRAGMA table_info(favorites)`, [], (err, rows) => (err !== null ? reject(`Failed to inspect the favorites table: ${err}`) : resolve(rows)));
 		});
+		if (!columns.some((column) => column.name === "projectName")) return 0;
+
+		const outdated = await new Promise<{ intraUID: number; projectName: string }[]>((resolve, reject) => {
+			db.all<{ intraUID: number; projectName: string }>(`SELECT intraUID, projectName FROM favorites`, [], (err, rows) =>
+				err !== null ? reject(`Failed to read the favorites to migrate: ${err}`) : resolve(rows)
+			);
+		});
+
+		// One favorited name can stand for several ids, so every id behind it is carried over.
+		const carried: [number, number][] = [];
+		for (const { intraUID, projectName } of outdated) {
+			const project = Projects.find(projectName.replace(/[\s-]/g, "_"));
+			if (project === undefined) {
+				Logger.log(`Dropping the favorite of ${intraUID} on "${projectName}", the config no longer lists that project`, LogType.WARNING);
+				continue;
+			}
+			carried.push(...project.ids.map((id): [number, number] => [intraUID, id]));
+		}
+
+		await dbRun(`DROP TABLE favorites`);
+		await dbRun(`CREATE TABLE favorites(intraUID INTEGER NOT NULL, projectID INTEGER NOT NULL, PRIMARY KEY(intraUID, projectID))`);
+		for (const [intraUID, projectID] of carried) {
+			await dbRun(`INSERT OR IGNORE INTO favorites(intraUID, projectID) VALUES(?, ?)`, [intraUID, projectID]);
+		}
+
+		return carried.length;
 	}
 
 	/**
 	 * Marks all the given projects as favorites of the evaluator, skipping the ones already favorited.
 	 * @returns The amount of favorites that were actually added.
 	 */
-	export async function addFavorites(intraUID: number, projectNames: string[]): Promise<number> {
-		if (projectNames.length === 0) return 0;
+	export async function addFavorites(intraUID: number, projectIDs: number[]): Promise<number> {
+		if (projectIDs.length === 0) return 0;
 
-		const values = projectNames.map(() => `(?, ?)`).join(", ");
-		const params = projectNames.flatMap((projectName) => [intraUID, projectName]);
+		const values = projectIDs.map(() => `(?, ?)`).join(", ");
+		const params = projectIDs.flatMap((projectID) => [intraUID, projectID]);
 
 		return new Promise((resolve, reject) => {
-			db.run(`INSERT OR IGNORE INTO favorites(intraUID, projectName) VALUES ${values}`, params, function (err) {
+			db.run(`INSERT OR IGNORE INTO favorites(intraUID, projectID) VALUES ${values}`, params, function (err) {
 				if (err !== null) {
 					Raven.captureException(err);
 					return reject(`Failed to add the favorites of ${intraUID}: ${err}`);
+				}
+				return resolve(this.changes);
+			});
+		});
+	}
+
+	/**
+	 * Removes all the given projects from the favorites of the evaluator, skipping the ones that were not favorited.
+	 * @returns The amount of favorites that were actually removed.
+	 */
+	export async function removeFavorites(intraUID: number, projectIDs: number[]): Promise<number> {
+		if (projectIDs.length === 0) return 0;
+
+		const placeholders = projectIDs.map(() => `?`).join(", ");
+		const params = [intraUID, ...projectIDs];
+
+		return new Promise((resolve, reject) => {
+			db.run(`DELETE FROM favorites WHERE intraUID = ? AND projectID IN (${placeholders})`, params, function (err) {
+				if (err !== null) {
+					Raven.captureException(err);
+					return reject(`Failed to remove the favorites of ${intraUID}: ${err}`);
 				}
 				return resolve(this.changes);
 			});
@@ -155,25 +195,25 @@ namespace DB {
 		});
 	}
 
-	/** The projects the given evaluator marked as favorite, lowercased. */
-	export async function favoritesOf(intraUID: number): Promise<string[]> {
+	/** The ids of the projects the given evaluator marked as favorite. */
+	export async function favoritesOf(intraUID: number): Promise<number[]> {
 		return new Promise((resolve, reject) => {
-			db.all<{ projectName: string }>(`SELECT projectName FROM favorites WHERE intraUID = ?`, [intraUID], (err, rows) => {
+			db.all<{ projectID: number }>(`SELECT projectID FROM favorites WHERE intraUID = ?`, [intraUID], (err, rows) => {
 				if (err !== null) {
 					Raven.captureException(err);
 					return reject(`Failed to get the favorites of ${intraUID}: ${err}`);
 				}
-				return resolve(rows.map((row) => row.projectName));
+				return resolve(rows.map((row) => row.projectID));
 			});
 		});
 	}
 
 	/** Every favorite, with the login of the evaluator that marked it. */
-	export async function allFavorites(): Promise<{ projectName: string; intraLogin: string }[]> {
-		const query = `SELECT f.projectName, e.intraLogin FROM favorites f ` + `INNER JOIN evaluators e ON e.intraUID = f.intraUID ORDER BY f.projectName, e.intraLogin`;
+	export async function allFavorites(): Promise<{ projectID: number; intraLogin: string }[]> {
+		const query = `SELECT f.projectID, e.intraLogin FROM favorites f ` + `INNER JOIN evaluators e ON e.intraUID = f.intraUID ORDER BY e.intraLogin`;
 
 		return new Promise((resolve, reject) => {
-			db.all<{ projectName: string; intraLogin: string }>(query, [], (err, rows) => {
+			db.all<{ projectID: number; intraLogin: string }>(query, [], (err, rows) => {
 				if (err !== null) {
 					Raven.captureException(err);
 					return reject(`Failed to get all favorites: ${err}`);
@@ -184,14 +224,14 @@ namespace DB {
 	}
 
 	/** Calls onData for every evaluator that marked the given project as favorite. */
-	export function allEvaluatorsFavoriting(projectName: string, onData: (user: User) => void) {
+	export function allEvaluatorsFavoriting(projectID: number, onData: (user: User) => void) {
 		const query =
 			`SELECT e.intraUID, e.slackUID, e.intraLogin, e.email, e.level, e.staff, e.campusID FROM evaluators e ` +
-			`INNER JOIN favorites f ON f.intraUID = e.intraUID WHERE f.projectName = ?`;
-		db.each<User>(query, [projectName], (err, row) => {
+			`INNER JOIN favorites f ON f.intraUID = e.intraUID WHERE f.projectID = ?`;
+		db.each<User>(query, [projectID], (err, row) => {
 			if (err) {
 				Raven.captureException(err);
-				Logger.log(`Failed to get evaluators favoriting ${projectName}: ${err}`, LogType.ERROR);
+				Logger.log(`Failed to get evaluators favoriting project ${projectID}: ${err}`, LogType.ERROR);
 			} else {
 				onData(row);
 			}

@@ -21,11 +21,12 @@ CREATE TABLE IF NOT EXISTS evaluators(
 );
 
 -- Projects an evaluator marked as favorite, used to decide who to notify of a new team waiting for a Peer++ evaluation.
+-- Stored by Intra project id, so renaming a project in the config does not lose anyone's favorites.
 CREATE TABLE IF NOT EXISTS favorites(
 	intraUID INTEGER NOT NULL,
-	projectName varchar(512) NOT NULL,
+	projectID INTEGER NOT NULL,
 
-	PRIMARY KEY(intraUID, projectName)
+	PRIMARY KEY(intraUID, projectID)
 );
 
 -- Avoid duplicate deliveries.

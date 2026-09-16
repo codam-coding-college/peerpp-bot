@@ -68,6 +68,17 @@ async function checkExpiredLocks() {
 	Logger.log(`Deleted: ${n} locks`);
 }
 
+/** Moves a favorites table that still stores project names over to project ids. */
+async function migrateFavorites() {
+	try {
+		const carried = await DB.migrateFavoritesToProjectIDs();
+		if (carried > 0) Logger.log(`Migrated ${carried} favorite(s) from project names to project ids`);
+	} catch (reason) {
+		Raven.captureException(reason);
+		Logger.log(`Failed to migrate the favorites to project ids: ${reason}`, LogType.ERROR);
+	}
+}
+
 /** Deletes the handled-team records that are more than a week old. */
 async function deleteOldHandledTeams() {
 	Logger.log("Deleting the old handled teams from the database...");
@@ -113,6 +124,7 @@ export const db = new Database(Config.dbPath, (err) => {
 		});
 	Logger.log("Connected to Intra V2");
 
+	await migrateFavorites();
 	checkExpiredLocks();
 	deleteOldHandledTeams();
 	expirationJob.start();

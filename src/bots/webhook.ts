@@ -212,7 +212,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 				hook,
 				`Your \`${hook.project.name}\` has been selected for a Peer++ evaluation. Wait for a Peer++ evaluator to book an evaluation with you - they will contact you.\nFor more information visit: https://github.com/codam-coding-college/peerpp-bot/blob/main/ABOUT.md`
 			);
-			SlackBot.notifyOfNewLock(hook.project.name);
+			SlackBot.notifyOfNewLock(hook.project.id);
 			Logger.log("Booked a Peer++ evaluation, notified users!");
 		} else {
 			Logger.log("Ignored: Peer++ evaluation not required");

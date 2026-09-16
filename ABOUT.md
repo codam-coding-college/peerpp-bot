@@ -79,11 +79,12 @@ without it, the evaluator commands will not work for you.
 
 | Command | Who can use it | Description |
 | --- | --- | --- |
+| `/help` | everyone | List every command of the bot and what it is for. |
 | `/projects` | everyone | Show which projects the bot can lock a final evaluation for, with your favorites marked. |
 | `/evaluations` | everyone | Show all teams waiting for a Peer++ evaluation that can be booked. |
 | `/book <project_name>` | Peer++ evaluators | Take over the lock of a waiting team for that project, becoming its corrector. |
-| `/notify-on <project_name>` | Peer++ evaluators | Mark a project as favorite, and get notified when a team is waiting for a Peer++ evaluation on it. |
-| `/notify-off <project_name>` | Peer++ evaluators | Remove a project from your favorites and stop being notified of its waiting teams. |
+| `/notify-on <project_name>...` | Peer++ evaluators | Mark one or more projects as favorite, and get notified when a team is waiting for a Peer++ evaluation on them. |
+| `/notify-off <project_name>...` | Peer++ evaluators | Remove one or more projects from your favorites and stop being notified of their waiting teams. |
 | `/notify-on-all` | Peer++ evaluators | Make every project a favorite, get notified of every team waiting for a Peer++ evaluation. |
 | `/notify-off-all` | Peer++ evaluators | Remove all your favorites and stop being notified entirely. |
 | `/evaluators` | Peer++ evaluators | Show which evaluators are notified of teams waiting for a Peer++ evaluation, per project. |
@@ -105,12 +106,14 @@ Rather than polling `/evaluations`, mark the projects you enjoy evaluating as fa
 
 ```
 /notify-on libft
-/notify-on push_swap
+/notify-on push_swap cpp_module_00 cpp_module_01
 ```
 
 From then on the bot messages you as soon as a team is waiting for a Peer++ evaluation on one of those projects — and only those.
-You can favorite as many as you like, and `/notify-off <project_name>` removes one again.
-Both commands need a project name, which has to be one from `/projects`.
+You can favorite as many as you like, and `/notify-off <project_name>...` removes them again.
+
+Both commands take one or more project names, separated by a space, and every name has to be one from `/projects`.
+If one of them is not, the bot says so and changes nothing at all — so a typo never leaves you with half of what you asked for.
 
 Want everything, or nothing at all?
 
