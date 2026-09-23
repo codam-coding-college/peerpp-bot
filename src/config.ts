@@ -81,11 +81,23 @@ export namespace Projects {
 	}
 
 	/**
+	 * Strips what users paste around a project name. Every command prints project names wrapped
+	 * in backticks, so copying one straight out of `/projects` hands the bot ``libft`` — which
+	 * matches nothing, and mangles the reply that echoes it, because Slack pairs the backticks
+	 * with the ones the bot added itself.
+	 *
+	 * No project name contains one of these characters, so dropping them cannot hide a real name.
+	 */
+	export function clean(given: string): string {
+		return given.replace(/[`'"]/g, "").trim().toLowerCase();
+	}
+
+	/**
 	 * Resolves what a user typed to a project of the config.
 	 * @returns The name lowercased and every id behind it, or undefined when it is not a project.
 	 */
 	export function find(given: string): { name: string; ids: number[] } | undefined {
-		const name = given.trim().toLowerCase();
+		const name = clean(given);
 		const ids = Config.projects.filter((project) => project.name.toLowerCase() === name).map((project) => project.id);
 
 		return ids.length > 0 ? { name, ids } : undefined;

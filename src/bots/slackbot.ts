@@ -331,7 +331,7 @@ export namespace SlackBot {
 		// with the check here about what the user meant. Locks carry the project name lowercased.
 		const project = Projects.find(projectName);
 		if (!project) {
-			await respond(`Project \`${projectName.trim()}\` not recognized, invoke /projects for more info`);
+			await respond(`Project \`${Projects.clean(projectName)}\` not recognized, invoke /projects for more info`);
 			return;
 		}
 		const name = project.name;
@@ -391,7 +391,12 @@ export namespace SlackBot {
 		const projects = new Map<string, { name: string; ids: number[] }>();
 		const unknown: string[] = [];
 
-		for (const given of text.split(/[\s,]+/).filter((word) => word !== "")) {
+		for (const word of text.split(/[\s,]+/)) {
+			// What is echoed back has to be cleaned too, or the backticks the user pasted end up
+			// pairing with the ones the message adds around it.
+			const given = Projects.clean(word);
+			if (given === "") continue;
+
 			const project = Projects.find(given);
 			project !== undefined ? projects.set(project.name, project) : unknown.push(given);
 		}
