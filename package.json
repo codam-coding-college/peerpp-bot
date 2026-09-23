@@ -1,6 +1,6 @@
 {
 	"name": "peerpp-bot",
-	"version": "4.18.1",
+	"version": "4.18.2",
 	"description": "",
 	"main": "src/app.ts",
 	"engines": {
