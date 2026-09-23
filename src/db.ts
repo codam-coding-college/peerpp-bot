@@ -7,7 +7,7 @@ import { db } from "./app";
 import { Config, Projects } from "./config";
 import Logger, { LogType } from "./utils/logger";
 import { User } from "./utils/user";
-import Raven from "raven";
+import { captureException } from "./utils/sentry";
 
 /*============================================================================*/
 
@@ -150,7 +150,7 @@ namespace DB {
 		return new Promise((resolve, reject) => {
 			db.run(`INSERT OR IGNORE INTO favorites(intraUID, projectID) VALUES ${values}`, params, function (err) {
 				if (err !== null) {
-					Raven.captureException(err);
+					captureException(err, { action: "addFavorites", intraUID, projectIDs });
 					return reject(`Failed to add the favorites of ${intraUID}: ${err}`);
 				}
 				return resolve(this.changes);
@@ -171,7 +171,7 @@ namespace DB {
 		return new Promise((resolve, reject) => {
 			db.run(`DELETE FROM favorites WHERE intraUID = ? AND projectID IN (${placeholders})`, params, function (err) {
 				if (err !== null) {
-					Raven.captureException(err);
+					captureException(err, { action: "removeFavorites", intraUID, projectIDs });
 					return reject(`Failed to remove the favorites of ${intraUID}: ${err}`);
 				}
 				return resolve(this.changes);
@@ -187,7 +187,7 @@ namespace DB {
 		return new Promise((resolve, reject) => {
 			db.run(`DELETE FROM favorites WHERE intraUID = ?`, [intraUID], function (err) {
 				if (err !== null) {
-					Raven.captureException(err);
+					captureException(err, { action: "clearFavorites", intraUID });
 					return reject(`Failed to clear the favorites of ${intraUID}: ${err}`);
 				}
 				return resolve(this.changes);
@@ -200,7 +200,7 @@ namespace DB {
 		return new Promise((resolve, reject) => {
 			db.all<{ projectID: number }>(`SELECT projectID FROM favorites WHERE intraUID = ?`, [intraUID], (err, rows) => {
 				if (err !== null) {
-					Raven.captureException(err);
+					captureException(err, { action: "favoritesOf", intraUID });
 					return reject(`Failed to get the favorites of ${intraUID}: ${err}`);
 				}
 				return resolve(rows.map((row) => row.projectID));
@@ -215,7 +215,7 @@ namespace DB {
 		return new Promise((resolve, reject) => {
 			db.all<{ projectID: number; intraLogin: string }>(query, [], (err, rows) => {
 				if (err !== null) {
-					Raven.captureException(err);
+					captureException(err, { action: "allFavorites" });
 					return reject(`Failed to get all favorites: ${err}`);
 				}
 				return resolve(rows);
@@ -230,7 +230,7 @@ namespace DB {
 			`INNER JOIN favorites f ON f.intraUID = e.intraUID WHERE f.projectID = ?`;
 		db.each<User>(query, [projectID], (err, row) => {
 			if (err) {
-				Raven.captureException(err);
+				captureException(err, { action: "allEvaluatorsFavoriting", projectID });
 				Logger.log(`Failed to get evaluators favoriting project ${projectID}: ${err}`, LogType.ERROR);
 			} else {
 				onData(row);

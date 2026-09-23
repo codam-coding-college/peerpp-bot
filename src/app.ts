@@ -15,6 +15,7 @@ import { slackApp, SlackBot } from "./bots/slackbot";
 import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
 import { IntraResponse } from "./utils/types";
+import { captureException } from "./utils/sentry";
 import Raven from "raven";
 
 /*============================================================================*/
@@ -27,7 +28,7 @@ async function checkExpiredLocks() {
 	try {
 		locks = await Intra.getLocks();
 	} catch (error) {
-		Raven.captureException(error);
+		captureException(error, { action: "checkExpiredLocks: Intra.getLocks" });
 		return Logger.log(`${error}`, LogType.ERROR);
 	}
 
@@ -59,7 +60,13 @@ async function checkExpiredLocks() {
 					teamU.map((teamUser) => teamUser.user.login)
 				);
 			} catch (error) {
-				Raven.captureException(error);
+				captureException(error, {
+					action: "checkExpiredLocks: delete lock",
+					lockID: lock.id,
+					teamID: lock.teamID,
+					teamName: lock.teamName,
+					projectName: lock.projectName,
+				});
 				return Logger.log(`${error}`, LogType.ERROR);
 			}
 			n++;
@@ -74,7 +81,7 @@ async function migrateFavorites() {
 		const carried = await DB.migrateFavoritesToProjectIDs();
 		if (carried > 0) Logger.log(`Migrated ${carried} favorite(s) from project names to project ids`);
 	} catch (reason) {
-		Raven.captureException(reason);
+		captureException(reason, { action: "migrateFavorites" });
 		Logger.log(`Failed to migrate the favorites to project ids: ${reason}`, LogType.ERROR);
 	}
 }
@@ -84,7 +91,7 @@ async function deleteOldHandledTeams() {
 	Logger.log("Deleting the old handled teams from the database...");
 
 	await DB.deleteOldHandledTeams().catch((reason) => {
-		Raven.captureException(reason);
+		captureException(reason, { action: "deleteOldHandledTeams" });
 		Logger.log(`Failed to delete the old handled teams: ${reason}`, LogType.WARNING);
 	});
 }
@@ -96,7 +103,7 @@ const expirationJob = new CronJob("*/15 * * * *", checkExpiredLocks);
 const emptyExpiredJob = new CronJob("0 0 * * 0", deleteOldHandledTeams);
 export const db = new Database(Config.dbPath, (err) => {
 	if (err !== null) {
-		Raven.captureException(err);
+		captureException(err, { action: "openDatabase", path: Config.dbPath });
 		Logger.log(`Failed to create / open Database: ${err}`, LogType.ERROR);
 		process.exit(1);
 	}
@@ -118,7 +125,7 @@ export const db = new Database(Config.dbPath, (err) => {
 	])
 		.init()
 		.catch((reason) => {
-			Raven.captureException(reason);
+			captureException(reason, { action: "Fast42.init" });
 			Logger.log(`Failed to connect: ${reason}`, LogType.ERROR);
 			process.exit(1);
 		});

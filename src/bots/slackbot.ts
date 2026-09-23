@@ -8,7 +8,7 @@ import { Env } from "../env";
 import { Config, Projects } from "../config";
 import Intra from "../utils/intra";
 import Logger, { LogType } from "../utils/logger";
-import Raven from "raven";
+import { captureException } from "../utils/sentry";
 import prettyMilliseconds from "pretty-ms";
 import { App, LogLevel, RespondFn, SlashCommand } from "@slack/bolt";
 import { ChatPostMessageArguments } from "@slack/web-api";
@@ -105,7 +105,7 @@ export namespace SlackBot {
 			try {
 				await SlackBot.sendMessageToSlackID(slackUID, message);
 			} catch (error) {
-				Raven.captureException(error instanceof Error ? error : new Error(String(error)));
+				captureException(error, { action: "notifyStaff", slackUID });
 				Logger.log(`Failed to notify staff member ${slackUID}: ${error}`, LogType.ERROR);
 			}
 		}
@@ -171,7 +171,13 @@ export namespace SlackBot {
 			try {
 				await cb(context.respond, context.body);
 			} catch (error) {
-				Raven.captureException(error instanceof Error ? error : new Error(String(error)));
+				captureException(error, {
+					command: cmd,
+					text: context.body.text,
+					invokedBy: context.body.user_name,
+					invokedBySlackID: context.body.user_id,
+					channel: context.body.channel_name,
+				});
 				Logger.log(`Request failed: ${error}`);
 				await context.respond(`:panic: The request for command \`${cmd}\` failed with:\n${error}`);
 			}

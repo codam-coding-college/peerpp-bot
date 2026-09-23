@@ -12,7 +12,7 @@ import { SlackBot } from "./slackbot";
 import { getFullUser } from "../utils/user";
 import { IntraWebhook } from "../utils/types";
 import Logger, { LogType } from "../utils/logger";
-import Raven from "raven";
+import { captureException } from "../utils/sentry";
 import { Request, Response, NextFunction } from "express";
 import * as Checks from "../checks/index";
 import db from "../db";
@@ -220,7 +220,14 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 	} catch (error) {
 		res.status(500).send();
 		const err = error instanceof Error ? error : new Error(String(error));
-		Raven.captureException(err);
+		captureException(err, {
+			route: "/create",
+			delivery: req.headers["x-delivery"],
+			teamID: hook.team.id,
+			teamName: hook.team.name,
+			projectID: hook.project.id,
+			projectName: hook.project.name,
+		});
 		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
@@ -274,7 +281,14 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 	} catch (error) {
 		res.status(500).send();
 		const err = error instanceof Error ? error : new Error(String(error));
-		Raven.captureException(err);
+		captureException(err, {
+			route: "/delete",
+			delivery: req.headers["x-delivery"],
+			teamID: hook.team.id,
+			teamName: hook.team.name,
+			projectID: hook.project.id,
+			projectName: hook.project.name,
+		});
 		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
@@ -303,7 +317,15 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	} catch (error) {
 		res.status(500).send();
 		const err = error instanceof Error ? error : new Error(String(error));
-		Raven.captureException(err);
+		captureException(err, {
+			route: "/update",
+			stage: "isTeamHandled",
+			delivery: req.headers["x-delivery"],
+			teamID: hook.team.id,
+			teamName: hook.team.name,
+			projectID: hook.project.id,
+			projectName: hook.project.name,
+		});
 		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 
@@ -315,7 +337,15 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 		} catch (error) {
 			res.status(500).send();
 			const err = error instanceof Error ? error : new Error(String(error));
-			Raven.captureException(err);
+			captureException(err, {
+				route: "/update",
+				stage: "markTeamHandled (bot marked absent)",
+				delivery: req.headers["x-delivery"],
+				teamID: hook.team.id,
+				teamName: hook.team.name,
+				projectID: hook.project.id,
+				projectName: hook.project.name,
+			});
 			return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 		}
 		res.status(204).send();
@@ -340,7 +370,15 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	} catch (error) {
 		res.status(500).send();
 		const err = error instanceof Error ? error : new Error(String(error));
-		Raven.captureException(err);
+		captureException(err, {
+			route: "/update",
+			stage: "markIsPass / deleteEvaluation",
+			delivery: req.headers["x-delivery"],
+			teamID: hook.team.id,
+			teamName: hook.team.name,
+			projectID: hook.project.id,
+			projectName: hook.project.name,
+		});
 		return Logger.log(`Something went wrong: ${err.message}`, LogType.ERROR);
 	}
 	res.status(204).send();
