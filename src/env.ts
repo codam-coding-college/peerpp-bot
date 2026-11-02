@@ -4,23 +4,12 @@
 // -----------------------------------------------------------------------------
 
 import dotenv from "dotenv";
-import { MissingConfigFileError, readConfigFile } from "./utils/configfile";
 
 /*============================================================================*/
 
 namespace Environment {
-	function read(): string {
-		try {
-			return readConfigFile("./config/.env", "Copy config/.env-example to config/.env and fill in the values. In Docker, mount ./config into /app/config.");
-		} catch (error) {
-			if (!(error instanceof MissingConfigFileError)) throw error;
-
-			console.error(error.message);
-			process.exit(1);
-		}
-	}
-
-	const file = dotenv.parse(read());
+	// Loads ./.env if present; never overrides variables already set on the process.
+	dotenv.config();
 
 	export interface Layout {
 		SLACK_TOKEN: string;
@@ -40,7 +29,7 @@ namespace Environment {
 
 	/** Returns the value of the given key, or undefined when it is absent or empty. */
 	function optional(key: string): string | undefined {
-		const value = file[key]?.trim();
+		const value = process.env[key]?.trim();
 		return value ? value : undefined;
 	}
 
@@ -88,9 +77,9 @@ namespace Environment {
 		};
 
 		if (problems.length > 0) {
-			console.error("Invalid configuration in ./config/.env:");
+			console.error("Invalid environment:");
 			for (const problem of problems) console.error(`  - ${problem}`);
-			console.error("See config/.env-example for the values the bot expects.");
+			console.error("See .env-example for the variables the bot expects. Set them in .env or in the container's env_file.");
 			process.exit(1);
 		}
 

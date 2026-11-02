@@ -33,7 +33,7 @@ RUN apt-get update \
 
 COPY package.json package-lock.json ./
 COPY sql ./sql
-COPY config ./config
+COPY config.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 

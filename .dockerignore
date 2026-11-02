@@ -8,7 +8,7 @@
 !tsconfig.json
 !src
 !sql
-!config
+!config.json
 
 # Secrets are passed in through the environment, never copied into the image.
 **/*.env

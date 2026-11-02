@@ -10,7 +10,7 @@ import { MissingConfigFileError, readConfigFile } from "./utils/configfile";
 namespace Configuration {
 	function read(): string {
 		try {
-			return readConfigFile("./config/config.json", "config/config.json is part of the repository. In Docker, mount ./config into /app/config.");
+			return readConfigFile("./config.json", "config.json is part of the repository. In Docker, mount it at /app/config.json.");
 		} catch (error) {
 			if (!(error instanceof MissingConfigFileError)) throw error;
 
@@ -49,7 +49,7 @@ namespace Configuration {
 		if (invalid.length === 0) return;
 
 		throw new Error(
-			`config/config.json: project names cannot contain whitespace, use underscores instead. Offending project(s): ` +
+			`config.json: project names cannot contain whitespace, use underscores instead. Offending project(s): ` +
 				invalid.map((project) => `${project.id} "${project.name}"`).join(", ")
 		);
 	}

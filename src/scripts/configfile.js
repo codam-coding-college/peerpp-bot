@@ -22,14 +22,15 @@ function readConfigFile(path, hint) {
 	}
 }
 
-/** Reads the secrets from config/.env. */
+/** Reads the secrets from ./.env and the process environment. */
 function readEnv() {
-	return dotenv.parse(readConfigFile("./config/.env", "Copy config/.env-example to config/.env and fill in the values, and run the script from the repository root."));
+	dotenv.config();
+	return process.env;
 }
 
-/** Reads the bot configuration from config/config.json. */
+/** Reads the bot configuration from config.json. */
 function readConfig() {
-	return JSON.parse(readConfigFile("./config/config.json", "config/config.json is part of the repository. Run the script from the repository root."));
+	return JSON.parse(readConfigFile("./config.json", "config.json is part of the repository. Run the script from the repository root."));
 }
 
 module.exports = { readConfig, readEnv };

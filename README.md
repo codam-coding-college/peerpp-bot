@@ -15,7 +15,10 @@ Read more about it in [ABOUT.md](ABOUT.md).
 ---
 
 ## Installation
-Copy `./config/.env-example` to `.config/.env` and fill in the secret data.
+The bot reads its secrets from the environment variables listed in [.env-example](.env-example).
+
+- For development, copy `.env-example` to `.env` in the repository root and fill in the secret data.
+- In Docker, pass them through `env_file` in `docker-compose.yml` (see [Production](#production)).
 
 By default port `8080` is used for the webhooks express server.
 
@@ -30,6 +33,10 @@ The slackbot runs over Websockets instead of HTTP Requests, so it does not liste
 ### Production
 In production environments, use Docker.
 
+Copy `.env-example` to `.env` next to your compose file and fill in the secret
+data. Docker's env file format takes no quotes or spaces around the `=`, so
+write `SLACK_TOKEN=xoxb-...`.
+
 The container runs as the unprivileged `node` user (uid 1000), so the
 bind-mounted `db` and `logs` directories must be writable by that uid. Run this
 once, before the first `make up`:
@@ -42,6 +49,23 @@ chown -R 1000:1000 db logs
 - Use `make down` to shut down the docker container.
 
 Or, if you're confident in your Docker skills, you can just use the `docker compose` command directly.
+To run the published image, a compose service looks similar to this:
+```yaml
+services:
+  peerpp-bot:
+    container_name: peerpp-bot
+    restart: unless-stopped
+    image: ghcr.io/codam-coding-college/peerpp-bot:latest
+    pull_policy: always
+    volumes:
+      - ./data/config.json:/app/config.json
+      - ./data/logs:/app/logs
+      - ./data/db:/app/db
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8080"
+```
 
 #### Logrotate
 In production, we recommend setting up a logrotate in the `logs` directory.
