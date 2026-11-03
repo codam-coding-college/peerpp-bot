@@ -181,7 +181,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
+		return Logger.log(`Webhook: ${JSON.stringify(filter)}`);
 	}
 
 	Logger.log(`Evaluation created: ${hook.team.name} -> ${hook.project.name}`);
@@ -242,7 +242,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 	const filter = await filterHook(req, Env.WEBHOOK_DELETE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
+		return Logger.log(`Webhook: ${JSON.stringify(filter)}`);
 	}
 
 	Logger.log(`Evaluation destroyed: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
@@ -303,7 +303,7 @@ webhookApp.post("/update", async (req: Request, res: Response) => {
 	const filter = await filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
 	if (filter) {
 		res.status(filter.code).send(filter.msg);
-		return Logger.log(`Webhook: ${filter}`);
+		return Logger.log(`Webhook: ${JSON.stringify(filter)}`);
 	}
 
 	Logger.log(`Evaluation update: ${hook.team.name} -> ${hook.project.name} -> ID: ${req.headers["x-delivery"]}`);
