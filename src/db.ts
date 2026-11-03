@@ -17,9 +17,9 @@ async function dbRun(query: string, params: any[] = []): Promise<void> {
 	});
 }
 
-async function dbGet<T>(query: string): Promise<Partial<T>> {
+async function dbGet<T>(query: string, params: any[] = []): Promise<Partial<T>> {
 	return new Promise((resolve, reject) => {
-		db.get<Partial<T>>(query, (err, t) => (err ? reject(err) : resolve(t)));
+		db.get<Partial<T>>(query, params, (err, t) => (err ? reject(err) : resolve(t)));
 	});
 }
 
@@ -31,7 +31,7 @@ namespace DB {
 	 */
 	export function deleteOldHandledTeams() {
 		return new Promise<void>((resolve, reject) => {
-			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', '-${Config.lockExpirationDays} days')`, (err) => {
+			db.run(`DELETE FROM expiredTeam WHERE datetime(created_at) < datetime('now', ?)`, [`-${Config.lockExpirationDays} days`], (err) => {
 				if (err != null) return reject(`Failed to clear database: ${err}`);
 				return resolve();
 			});
@@ -48,7 +48,7 @@ namespace DB {
 	 */
 	export function markTeamHandled(teamID: number) {
 		return new Promise<void>((resolve, reject) => {
-			db.run(`INSERT INTO expiredTeam(teamID) VALUES(${teamID})`, (err) => {
+			db.run(`INSERT INTO expiredTeam(teamID) VALUES(?)`, [teamID], (err) => {
 				if (err != null) return reject(`Failed to insert value ${teamID}: ${err}`);
 				return resolve();
 			});
@@ -71,11 +71,11 @@ namespace DB {
 	}
 
 	export async function hasWebhookDelivery(id: string): Promise<boolean> {
-		return !!(await dbGet<any>(`SELECT delivery FROM webhookDeliveries WHERE delivery = '${id}'`));
+		return !!(await dbGet<any>(`SELECT delivery FROM webhookDeliveries WHERE delivery = ?`, [id]));
 	}
 
 	export async function addWebhookDelivery(id: string, body: any): Promise<void> {
-		await dbRun(`INSERT INTO webhookDeliveries(delivery, body) VALUES('${id}', '${JSON.stringify(body)}')`);
+		await dbRun(`INSERT INTO webhookDeliveries(delivery, body) VALUES(?, ?)`, [id, JSON.stringify(body)]);
 	}
 
 	/** Stores a Peer++ evaluator so their favorites can be linked to them. */
