@@ -74,8 +74,8 @@ namespace DB {
 		return !!(await dbGet<any>(`SELECT delivery FROM webhookDeliveries WHERE delivery = '${id}'`));
 	}
 
-	export async function addWebhookDelivery(id: string): Promise<void> {
-		await dbRun(`INSERT INTO webhookDeliveries(delivery) VALUES('${id}')`);
+	export async function addWebhookDelivery(id: string, body: any): Promise<void> {
+		await dbRun(`INSERT INTO webhookDeliveries(delivery, body) VALUES('${id}', '${JSON.stringify(body)}')`);
 	}
 
 	/** Stores a Peer++ evaluator so their favorites can be linked to them. */

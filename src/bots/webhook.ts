@@ -37,8 +37,8 @@ async function filterAlreadyDeliveredWebhook(req: Request) {
 		return true;
 	}
 
-	await db.addWebhookDelivery(id).catch((e) => {
-		Logger.log(`WEBHOOK: Could not add webhook delivery: ${e}`);
+	await db.addWebhookDelivery(id, req.body).catch((e) => {
+		Logger.log(`WEBHOOK: Could not add webhook delivery to database: ${e}`);
 	});
 
 	return false;
