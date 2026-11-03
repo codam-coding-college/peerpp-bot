@@ -175,7 +175,7 @@ webhookApp.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Runs whenever a ScaleTeam / Evaluation is created.
 webhookApp.post("/create", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+	Logger.log(`Incoming webhook headers: ${JSON.stringify(req.headers)}`);
 	const hook: IntraWebhook.Root = req.body;
 	const filter = await filterHook(req, Env.WEBHOOK_CREATE_SECRET);
 
@@ -237,7 +237,7 @@ webhookApp.post("/create", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is destroyed.
 webhookApp.post("/delete", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+	Logger.log(`Incoming webhook headers: ${JSON.stringify(req.headers)}`);
 	const hook: IntraWebhook.Root = req.body;
 	const filter = await filterHook(req, Env.WEBHOOK_DELETE_SECRET);
 	if (filter) {
@@ -298,7 +298,7 @@ webhookApp.post("/delete", async (req: Request, res: Response) => {
 
 // Runs whenever a ScaleTeam / Evaluation is changed in some way.
 webhookApp.post("/update", async (req: Request, res: Response) => {
-	Logger.log(JSON.stringify(req.headers));
+	Logger.log(`Incoming webhook headers: ${JSON.stringify(req.headers)}`);
 	const hook: IntraWebhook.Root = req.body;
 	const filter = await filterHook(req, Env.WEBHOOK_UPDATE_SECRET);
 	if (filter) {
