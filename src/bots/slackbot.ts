@@ -248,9 +248,9 @@ export namespace SlackBot {
 		await Intra.bookEvaluation(lock.scaleID, lock.teamID, corrector.intraUID, evaluationDate);
 
 		await respond(
-			`You will evaluate team \`${lock.teamName}\`, consisting of ${correcteds
-				.map((u) => u.intraLogin)
-				.join(", ")} at ${evaluationDate}. They will be notified on slack. Please contact each other.`
+			`You will evaluate team \`${lock.teamName}\`, consisting of ${correcteds.map((u) => u.intraLogin).join(", ")}, on \`${
+				lock.projectName
+			}\`. They will be notified on slack. Please contact each other to schedule the Peer++ evaluation.`
 		);
 
 		for (const user of correcteds) {
