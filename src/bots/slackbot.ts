@@ -233,7 +233,7 @@ export namespace SlackBot {
 	 */
 	async function swapScaleTeams(respond: RespondFn, corrector: User, lock: Intra.ScaleTeam) {
 		const correcteds: User[] = await Promise.all(lock.correcteds.map((c) => getFullUser(c)));
-		if (correcteds.includes(corrector)) {
+		if (correcteds.some((corrected) => corrected.intraUID === corrector.intraUID)) {
 			await respond("You can't book yourself. Nice try :dongle:");
 			return;
 		}
