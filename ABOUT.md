@@ -100,6 +100,9 @@ without it, the evaluator commands will not work for you.
 
 You cannot book an evaluation for your own team.
 
+You also cannot book a team you already evaluated, or are booked to evaluate, on that project.
+`/book` then takes the next team waiting on it instead, and you are not notified about such a team either.
+
 ### Favorites
 
 Rather than polling `/evaluations`, mark the projects you enjoy evaluating as favorites:

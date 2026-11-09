@@ -215,6 +215,12 @@ export namespace Intra {
 		return evals;
 	}
 
+	/** The Intra user ids of everyone who evaluated the team on the given scale, or is booked to. */
+	export async function correctorsOf(projectID: number, scaleID: number, teamID: number): Promise<Set<number>> {
+		const evaluations = await getEvaluations(projectID, scaleID, teamID);
+		return new Set(evaluations.map((evaluation) => evaluation.corrector.intraUID!));
+	}
+
 	/**
 	 * Returns the evaluations a user took part in within a given period.
 	 * @param user The user to fetch the evaluations from.

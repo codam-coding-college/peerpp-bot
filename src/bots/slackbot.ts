@@ -28,20 +28,19 @@ export const slackApp = new App({
 /** Utility functions for the slack bot */
 export namespace SlackBot {
 	/**
-	 * Find the Peer++ lock that has been waiting the longest for an evaluator.
+	 * Find the Peer++ lock that has been waiting the longest, skipping teams the corrector
+	 * already evaluated or is booked to evaluate.
 	 * @param locks The Peer++ locks.
-	 * @returns The oldest lock, or undefined when there are none.
+	 * @param corrector The Peer++ evaluator looking to book.
+	 * @returns The oldest bookable lock, or undefined when there is none.
 	 */
-	const getHighestPriorityTeam = (locks: Intra.ScaleTeam[]): Intra.ScaleTeam | undefined => {
-		let best: Intra.ScaleTeam | undefined = undefined;
+	const getHighestPriorityTeam = async (locks: Intra.ScaleTeam[], corrector: User): Promise<Intra.ScaleTeam | undefined> => {
+		const oldestFirst = [...locks].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-		for (const scaleTeam of locks) {
-			if (best === undefined || scaleTeam.createdAt.getTime() < best.createdAt.getTime()) {
-				best = scaleTeam;
-			}
+		for (const lock of oldestFirst) {
+			if (!(await Intra.correctorsOf(lock.projectID, lock.scaleID, lock.teamID)).has(corrector.intraUID)) return lock;
 		}
-
-		return best;
+		return undefined;
 	};
 
 	/**
@@ -353,9 +352,14 @@ export namespace SlackBot {
 		await respond(`Peer++ evaluation requested by ${corrector.intraLogin} for \`${name}\`...`);
 
 		const locks = (await Intra.getLocks()).filter((value) => value.projectName == name);
-		const lock = getHighestPriorityTeam(locks);
-		if (lock === undefined) {
+		if (locks.length === 0) {
 			await respond(`No-one needs to be evaluated on \`${name}\``);
+			return;
+		}
+
+		const lock = await getHighestPriorityTeam(locks, corrector);
+		if (lock === undefined) {
+			await respond(`You already evaluated, or are booked to evaluate, every team waiting on \`${name}\`. Someone else has to take ${locks.length > 1 ? "them" : "it"}.`);
 			return;
 		}
 
@@ -364,17 +368,33 @@ export namespace SlackBot {
 	}
 
 	/**
-	 * Notifies every evaluator watching the project of a team that now waits for an evaluation.
+	 * Notifies every evaluator watching the project of a team that now waits for an evaluation,
+	 * except the ones that already evaluated the team or are booked to.
 	 * @param projectID The project the team was locked on, as Intra knows it.
+	 * @param scaleID The scale of the locked evaluation.
+	 * @param teamID The team that was locked.
 	 */
-	export function notifyOfNewLock(projectID: number) {
+	export async function notifyOfNewLock(projectID: number, scaleID: number, teamID: number) {
 		const name = Projects.nameOf(projectID);
 		if (name === undefined) {
 			Logger.log(`Not notifying anyone of the new lock: project ${projectID} is not in the config`, LogType.WARNING);
 			return;
 		}
 
+		// Notifying a past corrector beats notifying no-one, /book refuses them anyway.
+		let correctors = new Set<number>();
+		try {
+			correctors = await Intra.correctorsOf(projectID, scaleID, teamID);
+		} catch (error) {
+			captureException(error, { action: "notifyOfNewLock", projectID, scaleID, teamID });
+			Logger.log(`Could not fetch the correctors of team ${teamID}, notifying every watcher: ${error}`, LogType.WARNING);
+		}
+
 		DB.allEvaluatorsFavoriting(projectID, (user) => {
+			if (correctors.has(user.intraUID)) {
+				Logger.log(`Not notifying ${user.intraLogin} of the new lock on team ${teamID}: they already evaluated it or are booked to`);
+				return;
+			}
 			SlackBot.sendMessage(
 				user,
 				`A \`${name}\` team is waiting for a Peer++ evaluator to book an evaluation with them.` +
