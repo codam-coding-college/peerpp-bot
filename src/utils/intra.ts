@@ -7,7 +7,7 @@ import { IncompleteUser } from "./user";
 import Fast42 from "@codam/fast42";
 import { Config } from "../config";
 import { IntraResponse } from "./types";
-import Logger from "./logger";
+import Logger, { LogType } from "./logger";
 
 /*============================================================================*/
 
@@ -150,14 +150,17 @@ export namespace Intra {
 
 			const locksData = await page.json();
 			for (const lock of locksData) {
-				const project = Config.projects.find((p) => p.id === lock.team.project_id)!;
+				// Kept even when the config no longer lists the project, so checkExpiredLocks can drop it.
+				const project = Config.projects.find((p) => p.id === lock.team.project_id);
+				if (project === undefined) Logger.log(`Lock ${lock.id} is on project ${lock.team.project_id}, which is not in the config`, LogType.WARNING);
+
 				const tempLock: ScaleTeam = {
 					id: lock.id,
 					scaleID: lock.scale_id,
 					teamID: lock.team.id,
 					teamName: lock.team.name,
-					projectID: project.id,
-					projectName: project.name.toLowerCase(),
+					projectID: lock.team.project_id,
+					projectName: project?.name.toLowerCase() ?? `project ${lock.team.project_id}`,
 					createdAt: new Date(lock.created_at),
 					corrector: { intraLogin: lock.corrector.login, intraUID: lock.corrector.id },
 					correcteds: lock.correcteds.map((c) => ({ intraLogin: c.login, intraUID: c.id })),

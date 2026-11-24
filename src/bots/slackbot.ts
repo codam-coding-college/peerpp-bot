@@ -272,7 +272,8 @@ export namespace SlackBot {
 	export async function displayEvaluations(respond: RespondFn) {
 		await respond("Please wait, fetching teams waiting for a Peer++ evaluation...");
 
-		let locks: Intra.ScaleTeam[] = await Intra.getLocks();
+		// Locks on projects the config no longer lists cannot be booked, so they are not shown.
+		let locks: Intra.ScaleTeam[] = (await Intra.getLocks()).filter((lock) => Projects.nameOf(lock.projectID) !== undefined);
 		if (locks.length == 0) {
 			await respond("Currently no-one needs to be evaluated :feelsbadman:");
 			return;

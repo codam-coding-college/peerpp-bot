@@ -7,7 +7,7 @@ import DB from "./db";
 import util from "util";
 import { Env } from "./env";
 import { CronJob } from "cron";
-import { Config } from "./config";
+import { Config, Projects } from "./config";
 import Intra from "./utils/intra";
 import Fast42 from "@codam/fast42";
 import { Database } from "sqlite3";
@@ -20,7 +20,7 @@ import Raven from "raven";
 
 /*============================================================================*/
 
-/** Removes the Peer++ locks that have expired, or whose team already finished the project. */
+/** Removes the Peer++ locks that have expired, whose team already finished the project, or whose project is no longer in the config. */
 async function checkExpiredLocks() {
 	Logger.log("Checking for expired locks ...");
 
@@ -46,8 +46,10 @@ async function checkExpiredLocks() {
 		let projectState: string | undefined = teamU[0]?.team.status;
 		Logger.log(`Project state: ${projectState}`);
 		const expired = Date.now() >= unlockDate.getTime();
-		if (expired || projectState == "finished") {
-			Logger.log(`Deleting expired lock on ${lock.teamName} for project ${lock.projectName}`);
+		const unknownProject = Projects.nameOf(lock.projectID) === undefined;
+		if (expired || projectState == "finished" || unknownProject) {
+			const reason = unknownProject ? "its project is no longer in the config" : expired ? "the lock expired" : "the project was already finished";
+			Logger.log(`Deleting lock on ${lock.teamName} for project ${lock.projectName}: ${reason}`);
 
 			try {
 				await DB.markTeamHandled(lock.teamID);
@@ -56,7 +58,7 @@ async function checkExpiredLocks() {
 				await SlackBot.notifyStaffOfDeletedLock(
 					lock,
 					lockedAt,
-					expired ? "the lock expired" : "the project was already finished",
+					reason,
 					teamU.map((teamUser) => teamUser.user.login)
 				);
 			} catch (error) {
