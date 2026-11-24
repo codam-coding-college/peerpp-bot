@@ -120,6 +120,13 @@ export namespace Intra {
 		return groups.find((value: any) => value.group.id === groupID) != undefined;
 	}
 
+	/** The display name of the given project, e.g. libft. */
+	export async function getProjectName(projectID: number): Promise<string> {
+		const response = await api.get(`/projects/${projectID}`);
+		if (!response.ok) throw new Error(`Failed to fetch project ${projectID}: ${response.statusText}`);
+		return (await response.json()).name;
+	}
+
 	/**
 	 * Fetch all team users of the given team.
 	 * @param teamID The team id.

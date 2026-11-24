@@ -52,7 +52,7 @@ From that point it is up to the two of you to agree on when to do the evaluation
 
 ### If nobody books you
 
-The lock lasts **1 day**. After that the bot removes it and ignores that team from then on,
+The lock lasts **1 day**. After that the bot removes it, lets you know on Slack, and ignores that team from then on,
 so you can continue with your regular evaluations without the bot interfering.
 
 If you fail the project and retry it, you form a new team, and the bot can lock the final evaluation of that team again.

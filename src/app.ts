@@ -16,9 +16,47 @@ import { webhookApp } from "./bots/webhook";
 import Logger, { LogType } from "./utils/logger";
 import { IntraResponse } from "./utils/types";
 import { captureException } from "./utils/sentry";
+import { getFullUser } from "./utils/user";
 import Raven from "raven";
 
 /*============================================================================*/
+
+/** Why checkExpiredLocks dropped a lock. */
+type DropReason = "unknownProject" | "expired" | "finished";
+
+/** The reason as reported to the staff. */
+const staffReasons: Record<DropReason, string> = {
+	unknownProject: "its project is no longer in the config",
+	expired: "the lock expired",
+	finished: "the project was already finished",
+};
+
+/** The message the team gets for the reason. */
+function teamMessage(reason: DropReason, project: string): string {
+	switch (reason) {
+		case "unknownProject":
+			return `Peer++ no longer handles \`${project}\`, so your Peer++ evaluation has been removed. You can book your final evaluation as usual.`;
+		case "expired":
+			return `No Peer++ evaluator booked your \`${project}\` in time, so your Peer++ evaluation has been removed. You can book your final evaluation as usual.`;
+		case "finished":
+			return `Your \`${project}\` is already finished, so your Peer++ evaluation has been removed.`;
+	}
+}
+
+/** Tells the team why their lock was dropped. */
+async function notifyTeamOfDroppedLock(lock: Intra.ScaleTeam, teamUsers: IntraResponse.TeamUser[], reason: DropReason) {
+	const project = reason === "unknownProject" ? await Intra.getProjectName(lock.projectID).catch(() => lock.projectName) : lock.projectName;
+
+	for (const teamUser of teamUsers) {
+		try {
+			const user = await getFullUser({ intraLogin: teamUser.user.login, intraUID: teamUser.user_id });
+			await SlackBot.sendMessage(user, teamMessage(reason, project));
+		} catch (error) {
+			captureException(error, { action: "notifyTeamOfDroppedLock", lockID: lock.id, teamID: lock.teamID, login: teamUser.user.login });
+			Logger.log(`Failed to notify ${teamUser.user.login} of their dropped lock: ${error}`, LogType.ERROR);
+		}
+	}
+}
 
 /** Removes the Peer++ locks that have expired, whose team already finished the project, or whose project is no longer in the config. */
 async function checkExpiredLocks() {
@@ -45,11 +83,10 @@ async function checkExpiredLocks() {
 		Logger.log(`Team: ${JSON.stringify(teamU)}`);
 		let projectState: string | undefined = teamU[0]?.team.status;
 		Logger.log(`Project state: ${projectState}`);
-		const expired = Date.now() >= unlockDate.getTime();
-		const unknownProject = Projects.nameOf(lock.projectID) === undefined;
-		if (expired || projectState == "finished" || unknownProject) {
-			const reason = unknownProject ? "its project is no longer in the config" : expired ? "the lock expired" : "the project was already finished";
-			Logger.log(`Deleting lock on ${lock.teamName} for project ${lock.projectName}: ${reason}`);
+		const reason: DropReason | undefined =
+			Projects.nameOf(lock.projectID) === undefined ? "unknownProject" : Date.now() >= unlockDate.getTime() ? "expired" : projectState == "finished" ? "finished" : undefined;
+		if (reason !== undefined) {
+			Logger.log(`Deleting lock on ${lock.teamName} for project ${lock.projectName}: ${staffReasons[reason]}`);
 
 			try {
 				await DB.markTeamHandled(lock.teamID);
@@ -58,7 +95,7 @@ async function checkExpiredLocks() {
 				await SlackBot.notifyStaffOfDeletedLock(
 					lock,
 					lockedAt,
-					reason,
+					staffReasons[reason],
 					teamU.map((teamUser) => teamUser.user.login)
 				);
 			} catch (error) {
@@ -71,6 +108,7 @@ async function checkExpiredLocks() {
 				});
 				return Logger.log(`${error}`, LogType.ERROR);
 			}
+			await notifyTeamOfDroppedLock(lock, teamU, reason);
 			n++;
 		}
 	}
